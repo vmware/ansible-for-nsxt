@@ -634,6 +634,23 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
       time.sleep(5)
       return
 
+def cmp_dict(dict1, dict2): # dict1 contain dict2
+    #print dict2
+    for k2, v2 in dict2.items():
+        found = False
+        if k2 not in dict1:
+            continue
+        if type(v2) != list and dict1[k2] != dict2[k2]:
+            return False
+            
+        for obj2 in v2:
+            for obj1 in dict1[k2]:
+                if all(item in obj1.items() for item in obj2.items()):
+                           found = True
+        if not found:
+            return False
+    return True
+
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params ):
     if transport_node_params.__contains__('host_switch_spec'):
         for host_switch in transport_node_params['host_switch_spec']['host_switches']:
@@ -665,7 +682,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
             transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                                     mgr_username, mgr_password, validate_certs,
                                                                                     "/transport-zones", transport_zone_name)
-    if transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
+    if transport_node_params.__contains__('node_deployment_info') and transport_node_params['node_deployment_info'].__contains__('resource_type') and transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
         vc_name = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vc_name', None)
         transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['vc_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
                     "/fabric/compute-managers", vc_name)
@@ -689,6 +706,7 @@ def id_exist_in_list_dict_obj(key, list_obj1, list_obj2):
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_with_ids):
     existing_transport_node = get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_with_ids['display_name'])
+    
     if existing_transport_node is None:
         return False
     if not existing_transport_node.__contains__('description') and transport_node_with_ids.__contains__('description'):
@@ -697,10 +715,16 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     if existing_transport_node.__contains__('description') and not transport_node_with_ids.__contains__('description'):
         return True
-    if existing_transport_node.__contains__('host_switch_spec') and existing_transport_node['host_switch_spec'].__contains__('host_switches') and \
-        transport_node_with_ids.__contains__('host_switch_spec') and transport_node_with_ids['host_switch_spec'].__contains__('host_switches') and \
-        existing_transport_node['host_switch_spec']['host_switches'] != transport_node_with_ids['host_switch_spec']['host_switches']:
-        return True
+    if  transport_node_with_ids.__contains__('host_switch_spec') and transport_node_with_ids['host_switch_spec'].__contains__('host_switches'):
+        existing_host_switches = existing_transport_node['host_switch_spec']['host_switches']
+        sorted_existing_host_switches = sorted(existing_host_switches, key = lambda i: i['host_switch_name'])
+        sorted_new_host_switches = sorted(transport_node_with_ids['host_switch_spec']['host_switches'], key = lambda i: i['host_switch_name'])
+        if len(sorted_existing_host_switches) != len(sorted_new_host_switches):
+           return False
+        for i in range(len(sorted_existing_host_switches)):
+           diff_obj = {k: sorted_existing_host_switches[i][k] for k in sorted_existing_host_switches[i] if k in sorted_new_host_switches[i] and sorted_existing_host_switches[i][k] != sorted_new_host_switches[i][k]}
+           if not cmp_dict(diff_obj, sorted_new_host_switches[i]):
+              return True
     return False
 
 def get_api_cert_thumbprint(ip_address, module):
@@ -883,7 +907,7 @@ def main():
       node_deployment_revision = transport_node_dict['node_deployment_info']['_revision']
 
   if state == 'present':
-    if transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
+    if transport_node_params.__contains__('node_deployment_info') and transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
       inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params)
 
     body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params)
