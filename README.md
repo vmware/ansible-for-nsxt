@@ -55,5 +55,5 @@ refer to [CONTRIBUTING.md](CONTRIBUTING.md).
 # License
 Copyright (c) 2018 VMware, Inc.  All rights reserved
 
-The BSD-2 license (the ìLicenseî) set forth below applies to all parts of the ansible-for-nsxt
-project.  You may not use this file except in compliance with the License.†
+The NSX-T Ansible modules in this repository are available under [BSD-2 license](https://github.com/vmware/ansible-for-nsxt/blob/master/LICENSE.txt) applies to all parts of the ansible-for-nsxt.
+You may not use them except in compliance with the License.†
