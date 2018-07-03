@@ -1,0 +1,38 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Create transport node
+      nsxt_transport_nodes:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: TransportNode
+        display_name: "{{item.display_name}}"
+        #transport_node_id: "8b8747f4-3dda-41e9-8949-754929f02034"
+        description: NSX configured Test Transport Node
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches: "{{item.host_switches}}"
+        # to update
+        # host_switches:
+        # - host_switch_profile_ids:
+        #   - value: c2622113-7efa-44c1-82e3-23236271b8a6
+        #     key: UplinkHostSwitchProfile
+        #   - value: 8cb3de94-2834-414c-b07d-c034d878db56
+        #     key: NiocProfile
+        #   - value: 9e0b4d2d-d155-4b4b-8947-fbfe5b79f7cb
+        #     key: LldpHostSwitchProfile
+        #   host_switch_name: hostswitch1
+        #   pnics:
+        #   - device_name: vmnic1
+        #     uplink_name: uplink-1
+        #   static_ip_pool_id: 8bf61eac-6787-4ac5-bcf4-9206d60ee8c3
+        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
+        fabric_node_name: "{{item.fabric_node_name}}"
+        state: present
+      with_items:
+        - "{{transport_nodes}}"

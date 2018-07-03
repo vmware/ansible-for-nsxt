@@ -1,0 +1,17 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Create logical switch
+      nsxt_logical_switches:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "test_lswitch"
+        replication_mode: SOURCE
+        admin_state: UP
+        transport_zone_id: "d530bdc8-af38-45ac-8c19-f58f7808041c"
+        state: "present"

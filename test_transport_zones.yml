@@ -1,0 +1,23 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Create transport zone
+      nsxt_transport_zones:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: "TransportZone"
+        display_name: "{{item.display_name}}"
+        description: "NSX configured Test Transport Zone"
+        transport_type: "{{item.transport_type}}"
+        host_switch_name: "{{item.host_switch_name}}"
+        #zone_id: "21ff0e36-1624-4c18-be2f-070513079185"
+        state: "present"
+      register: result
+      with_items:
+        - "{{transportzones}}"
+    - debug: var=result.id

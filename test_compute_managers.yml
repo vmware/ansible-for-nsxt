@@ -1,0 +1,22 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Deploy compute manager
+      nsxt_fabric_compute_managers:
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: False
+          #compute_manager_id: "25d314b6-97f2-48e2-87b5-f9ce04caf5f8"
+          display_name: "vCenter"
+          server: "10.160.97.142"
+          origin_type: vCenter
+          credential:
+            credential_type: UsernamePasswordLoginCredential
+            username: "administrator@vsphere.local"
+            password: "Admin!23"
+            thumbprint: "03:EF:F7:D2:4F:E1:0C:9C:77:BA:C1:BA:14:31:53:31:FB:65:7F:2D:2F:45:51:65:1F:20:83:7C:B2:0D:B8:E6"
+          state: present

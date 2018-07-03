@@ -1,0 +1,34 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: deploy NSX Manager OVA
+      nsxt_deploy_ova:
+        # ovftool_path: "/usr/bin"
+        # folder: '1-folder-100'
+        # datacenter: "private_dc"
+        # datastore: "data store"
+        # portgroup: "VM Network"
+        # cluster: "nsxt_cluster"
+        # vmname: "nsxt-manager"
+        # hostname: "nsxt-manager-10"
+        # dns_server: "10.161.244.213"
+        # dns_domain: "eng.vmware.com"
+        # ntp_server: "123.108.200.124"
+        # gateway: "10.112.203.253"
+        # ip_address: "10.112.201.24"
+        # netmask: "255.255.224.0"
+        # admin_password: "Admin!23Admin"
+        # cli_password: "Admin!23Admin"
+        # path_to_ova: "http://build-squid.eng.vmware.com/build/mts/release/bora-8411846/publish/nsx-unified-appliance/exports/ovf"
+        # ova_file: "nsx-unified-appliance-2.2.0.0.0.8411854.ovf"
+        # vcenter: "10.161.244.213"
+        # vcenter_user: "administrator@vsphere.local"
+        # vcenter_passwd: "Admin!23"
+        # deployment_size: "small"
+        # role: "nsx-manager"
+
+#- debug: var=deploy_nsx_ova

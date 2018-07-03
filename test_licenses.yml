@@ -1,0 +1,14 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Add license
+      nsxt_licenses:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        license_key: "00000-00000-00000-00000-00000"
+        state: "absent"

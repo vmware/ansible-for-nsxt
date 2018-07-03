@@ -1,0 +1,84 @@
+hostname: "10.192.215.6"
+username: "admin"
+password: "Admin!23Admin"
+validate_certs: False
+
+fabric_host_nodes:
+- display_name: "Host_1"
+  ip_addresses: ["10.160.113.154"]
+  os_type: "ESXI"
+  os_version: "6.5.0"
+  host_username: "root"
+  host_password: "ca$hc0w"
+  host_thumbprint: "63:84:24:EC:B4:1F:89:B1:20:F8:02:8C:B5:06:40:D2:44:8B:FC:75:6A:E1:A8:1A:E8:62:58:D8:FC:B3:6E:9F"
+# - display_name: "Host_2"
+#   ip_addresses: ["10.193.26.169"]
+#   os_type: "ESXI"
+#   os_version: "6.5.0"
+#   host_username: "root"
+#   host_password: "ca$hc0w"
+#   host_thumbprint: "CD:69:D9:2C:C1:76:2A:90:50:31:D9:E1:75:D1:FA:B5:7D:D8:8C:0A:95:86:CC:34:E0:94:3F:F5:EE:48:72:77"
+
+ip_pools:
+- display_name: IPPool-IPV4-1
+  subnets:
+  - allocation_ranges:
+    - start: "10.112.201.28"
+      end: "10.112.201.29"
+    cidr: "10.112.201.0/24"
+
+transportzones:
+- display_name: "TZ1"
+  transport_type: "OVERLAY"
+  host_switch_name: "hostswitch1"
+# - display_name: "TZ2"
+#   transport_type: "VLAN"
+#   host_switch_name: "hostswitch2"
+
+uplink_profiles:
+- display_name: uplinkProfile1
+  teaming:
+    active_list:
+    - uplink_name: "uplink-1"
+      uplink_type: PNIC
+    policy: FAILOVER_ORDER
+  transport_vlan: 0
+# - display_name: uplinkProfile2
+#   teaming:
+#     active_list:
+#     - uplink_name: "uplink-2"
+#       uplink_type: PNIC
+#     policy: FAILOVER_ORDER
+#   transport_vlan: 0
+
+transport_nodes:
+- display_name: TN1
+  host_switches:
+  - host_switch_profiles:
+    - name: uplinkProfile1
+      type: UplinkHostSwitchProfile
+    host_switch_name: hostswitch1
+    pnics:
+    - device_name: vmnic1
+      uplink_name: "uplink-1"
+    ip_assignment_spec:
+      resource_type: StaticIpPoolSpec
+      ip_pool_name: "IPPool-IPV4-1"
+  transport_zone_endpoints:
+  - transport_zone_name: "TZ1"
+  fabric_node_name: "Host_1"
+# - display_name: TN2
+#   host_switches:
+#   - host_switch_profiles:
+#     - name: uplinkProfile2
+#       type: UplinkHostSwitchProfile
+#     host_switch_name: hostswitch2
+#     pnics:
+#     - device_name: vmnic1
+#       uplink_name: "uplink-2"
+#     ip_assignment_spec:
+#       resource_type: StaticIpPoolSpec
+#       ip_pool_name: "IPPool-IPV4-1"
+#   transport_zone_endpoints:
+#   - transport_zone_name: "TZ2"
+#   fabric_node_name: "Host_2"
