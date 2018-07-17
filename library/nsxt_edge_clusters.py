@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -98,10 +98,11 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     return False
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params ):
-    for transport_node in edge_cluster_params['members']:
-        transport_node_name = transport_node.pop('transport_node_name', None)
-        transport_node['transport_node_id'] = get_id_from_display_name(module, manager_url, mgr_username, mgr_password,
-
+    if edge_cluster_params.__contains__('members'):
+        for transport_node in edge_cluster_params['members']:
+            transport_node_name = transport_node.pop('transport_node_name', None)
+            transport_node['transport_node_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                    "/transport-nodes", transport_node_name)
     return edge_cluster_params
 
 def main():
@@ -118,7 +119,7 @@ def main():
   mgr_username = module.params['username']
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
-  display_name = moduel.params['display_name']
+  display_name = module.params['display_name']
 
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 

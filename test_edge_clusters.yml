@@ -1,0 +1,17 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Add edge cluster
+      nsxt_edge_clusters:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: edge-cluster-1
+        cluster_profile_bindings:
+        - profile_id: 91bcaa06-47a1-11e4-8316-17ffc770799b
+          resource_type: EdgeHighAvailabilityProfile
+        state: present
