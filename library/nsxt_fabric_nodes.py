@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -149,13 +149,15 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     return False
 
 def wait_till_create(id, module, manager_url, mgr_username, mgr_password, validate_certs):
+    DEPLOYMENT_PROGRESS = ['INSTALL_IN_PROGRESS', 'VM_DEPLOYMENT_IN_PROGRESS', 'VM_DEPLOYMENT_QUEUED', 'VM_POWER_ON_IN_PROGRESS', 'REGISTRATION_PENDING']
+    DEPLOYMENT_SUCCESS = ['NODE_READY', 'INSTALL_SUCCESSFUL']
     try:
       while True:
           (rc, resp) = request(manager_url+ '/fabric/nodes/%s/status'% id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-          if resp['host_node_deployment_status'] == "INSTALL_IN_PROGRESS":
+          if resp['host_node_deployment_status'] in DEPLOYMENT_PROGRESS:
               time.sleep(10)
-          elif resp['host_node_deployment_status'] == "INSTALL_SUCCESSFUL":
+          elif resp['host_node_deployment_status'] in DEPLOYMENT_SUCCESS:
               time.sleep(5)
               return
           else:
