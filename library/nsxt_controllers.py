@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -85,11 +85,13 @@ def get_controllers(module, manager_url, mgr_username, mgr_password, validate_ce
       module.fail_json(msg='Error accessing controller. Error [%s]' % (to_native(err)))
     return resp
 
-def check_controller_node_exist(node_id, controllers_data):
-    for result in controllers_data['results']:
-        if result.__contains__('vm_id') and result['vm_id'] == node_id:
-            return True
-    return False
+def check_controller_node_exist(existing_controllers_data, module):
+    new_deployment_requests = module.params['deployment_requests']
+    for result in existing_controllers_data['results']:
+        for new_deployment_request in new_deployment_requests:
+            if result['deployment_config']['hostname'] == new_deployment_request['deployment_config']['hostname']:
+                return True, result['deployment_config']['hostname']
+    return False, None
 
 def wait_till_create(vm_id, module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
@@ -143,8 +145,9 @@ def main():
   if state == 'present':
     # add controller
     results = get_controllers(module, manager_url, mgr_username, mgr_password, validate_certs)
-    if module.params.__contains__('node_id') and check_controller_node_exist(module.params['node_id'], results):
-      module.exit_json(changed=False, message="controller with node id %s already exist."% module.params['node_id'])
+    is_controller_node_exist, hostname = check_controller_node_exist(results, module)
+    if is_controller_node_exist:
+      module.exit_json(changed=False, message="controller with hostname %s already exist."% hostname)
 
     if module.check_mode:
       module.exit_json(changed=True, debug_out=str(request_data))

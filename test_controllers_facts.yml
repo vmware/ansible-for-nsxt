@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Deploy controller
+    - name: List controllers
       nsxt_controllers_facts:
           hostname: "{{hostname}}"
           username: "{{username}}"

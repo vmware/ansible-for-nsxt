@@ -10,7 +10,6 @@
           username: "{{username}}"
           password: "{{password}}"
           validate_certs: False
-          node_id: "712f99d0-d8f5-4f0a-96d8-671c39f32d65"
           deployment_requests:
           - roles:
             - CONTROLLER
@@ -20,9 +19,9 @@
               root_password: "Admin!23Admin"
             deployment_config:
               placement_type: VsphereClusterNodeVMDeploymentConfig
-              vc_id: "67dbce0d-973e-4b7d-813d-7ae5a91754c2"
+              vc_id: "2e582544-b6e6-446c-999c-5b5ccf7f5e80"
               management_network_id: "network-44"
-              hostname: "controller-1"
+              hostname: "controller2.vmware.com"
               compute_id: "domain-c49"
               storage_id: "datastore-43"
               default_gateway_addresses:
@@ -35,4 +34,5 @@
             clustering_type: ControlClusteringConfig
             shared_secret: "123456"
             join_to_existing_cluster: false
-          state: absent
+          #node_id: b56f3b3d-51e1-4177-ac02-bd2d14f1d667
+          state: present
