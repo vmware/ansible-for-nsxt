@@ -104,6 +104,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
             return True
         if existing_logical_router['advanced_config'].__contains__('external_transit_networks') and logical_router_with_ids['advanced_config'].__contains__('external_transit_networks') and \
             existing_logical_router['advanced_config']['external_transit_networks'] != logical_router_with_ids['advanced_config']['external_transit_networks']:
+            return True
     return False
 
 
