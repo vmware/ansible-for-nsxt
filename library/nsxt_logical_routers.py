@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -31,11 +31,7 @@ EXAMPLES = '''
       resource_type: LogicalRouter
       description: "Router West"
       display_name: "tier-0"
-      edge_cluster_id: "a9dc562c-effd-4225-883d-3f7d2c887c6b"
-      advanced_config:
-        external_transit_networks:
-        - "100.64.1.0/10"
-        internal_transit_network: "169.254.0.0/28"
+      edge_cluster_name: edge-cluster-1
       router_type: TIER0
       high_availability_mode: ACTIVE_ACTIVE
 '''
@@ -84,12 +80,18 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
     module.fail_json(msg='No id existe with display name %s' % display_name)
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_params ):
-    logical_router_params['edge_cluster_id'] = logical_router_params.pop('edge_cluster_name', None)
+
+    if logical_router_params.__contains__('edge_cluster_name'):
+        edge_cluster_name = logical_router_params.pop('edge_cluster_name', None)
+        logical_router_params['edge_cluster_id'] = get_id_from_display_name (module, manager_url,
+                                                                                mgr_username, mgr_password, validate_certs,
+                                                                                "/edge-clusters", edge_cluster_name)
     if logical_router_params.__contains__('advanced_config') and logical_router_params['advanced_config'].__contains__('transport_zone_name'):
         transport_zone_name= logical_router_params['advanced_config'].pop('transport_zone_name', None)
         logical_router_params['advanced_config']['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                                 mgr_username, mgr_password, validate_certs,
                                                                                 "/transport-zones", transport_zone_name)
+    return logical_router_params
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_with_ids):
     existing_logical_router = get_lr_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_with_ids['display_name'])
