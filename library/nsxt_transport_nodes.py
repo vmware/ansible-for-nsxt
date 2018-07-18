@@ -82,7 +82,7 @@ def get_transport_nodes(module, manager_url, mgr_username, mgr_password, validat
       module.fail_json(msg='Error accessing transport nodes. Error [%s]' % (to_native(err)))
     return resp
 
-def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name):
+def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
     try:
       (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
@@ -92,7 +92,8 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
     for result in resp['results']:
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result['id']
-    module.fail_json(msg='No id exist with display name %s' % display_name)
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
 
 def get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     transport_nodes = get_transport_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
@@ -230,7 +231,7 @@ def main():
       request_data = json.dumps(body)
       try:
           if not transport_node_id:
-              transport_node_id = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, '/transport-nodes', display_name)
+              transport_node_id = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, '/transport-nodes', display_name, exit_if_not_found=False)
           if transport_node_id:
               module.exit_json(changed=False, id=transport_node_id, message="Transport node with display_name %s already exist."% module.params['display_name'])
 
