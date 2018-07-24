@@ -143,7 +143,7 @@ def main():
                         id=dict(required=True, type='str')),
                         admin_state=dict(required=True, type='str'),
                         extra_configs=dict(required=False, type='list'),
-                        address_bindings=dict(required=False, type='list')),
+                        address_bindings=dict(required=False, type='list'),
                         state=dict(reauired=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
