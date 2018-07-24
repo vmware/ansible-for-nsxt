@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -70,9 +70,10 @@ def get_logical_ports(module, manager_url, mgr_username, mgr_password, validate_
 
 def get_logical_port_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     logical_ports = get_logical_ports(module, manager_url, mgr_username, mgr_password, validate_certs)
-    for logical_port in logical_ports['results']:
-        if logical_port.__contains__('display_name') and logical_port['display_name'] == display_name:
-            return logical_port
+    if logical_ports and len(logical_ports['results'])>0:
+        for logical_port in logical_ports['results']:
+            if logical_port.__contains__('display_name') and logical_port['display_name'] == display_name:
+                return logical_port
     return None
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name):
@@ -92,13 +93,15 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
                                             '/logical-switches', logical_port_params.pop('logical_switch_name', None))
     host_switch_profile_ids = []
     host_switch_profiles = logical_port_params.pop('switching_profiles', None)
-    for host_switch_profile in host_switch_profiles:
-        profile_obj = {}
-        profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                "/host-switch-profiles", host_switch_profile['name'])
-        profile_obj['key'] = host_switch_profile['type']
-        host_switch_profile_ids.append(profile_obj)
+    if host_switch_profiles:
+        for host_switch_profile in host_switch_profiles:
+            profile_obj = {}
+            profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                    "/host-switch-profiles", host_switch_profile['name'])
+            profile_obj['key'] = host_switch_profile['type']
+            host_switch_profile_ids.append(profile_obj)
     logical_port_params['switching_profile_ids'] = host_switch_profile_ids
+    return logical_port_params
 
 # def ordered(obj):
 #     if isinstance(obj, dict):
@@ -109,7 +112,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
 #         return obj
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_port_with_ids):
-    existing_logical_port = get_logical_port_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_port_with_ids['display_name'])
+    existing_logical_port = get_logical_port_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, logical_port_with_ids['display_name'])
     if existing_logical_port is None:
         return False
     if existing_logical_port.__contains__('attachment') and existing_logical_port['attachment'].__contains__('attachment_type') and \
@@ -143,7 +146,7 @@ def main():
                         id=dict(required=True, type='str')),
                         admin_state=dict(required=True, type='str'),
                         extra_configs=dict(required=False, type='list'),
-                        address_bindings=dict(required=False, type='list')),
+                        address_bindings=dict(required=False, type='list'),
                         state=dict(reauired=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

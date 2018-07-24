@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -97,6 +97,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         profile_obj['key'] = switch_profile['type']
         switch_profile_ids.append(profile_obj)
     logical_switch_params['switching_profile_ids'] = switch_profile_ids
+    return logical_switch_params
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_switch_with_ids):
     existing_logical_switch = get_lswitch_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_switch_with_ids['display_name'])
@@ -149,7 +150,7 @@ def main():
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
   changed = True
-  lswitch_dict, revision = get_lswitch_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
+  lswitch_dict = get_lswitch_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   lswitch_id, revision = None, None
   if lswitch_dict:
     lswitch_id = lswitch_dict['id']
