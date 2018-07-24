@@ -80,7 +80,8 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
     module.fail_json(msg='No id existe with display name %s' % display_name)
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_switch_params ):
-    logical_switch_params['ip_pool_id'] = get_id_from_display_name (module, manager_url,
+    if 'ip_pool_name' in logical_switch_params:
+        logical_switch_params['ip_pool_id'] = get_id_from_display_name (module, manager_url,
                                                                 mgr_username, mgr_password, validate_certs,
                                                                 "/pools/ip-pools", logical_switch_params.pop('ip_pool_name', None))
     logical_switch_params['transport_zone_id'] = get_id_from_display_name (module, manager_url,
@@ -90,7 +91,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
     switch_profiles = logical_switch_params.pop('switching_profiles', None)
 
     switch_profile_ids = []
-    for switch_profile in switch_profiles:
+    for switch_profile in switch_profiles or []:
         profile_obj = {}
         profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
                                                 "/host-switch-profiles", switch_profile['name'])
@@ -108,7 +109,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
 
     if logical_switch_with_ids.__contains__('vlan_trunk_spec') and existing_logical_switch.__contains__('vlan_trunk_spec') and \
-        existing_logical_switch['vlan_trunk_spec']['vlan_ranges']) != logical_switch_with_ids['vlan_trunk_spec']['vlan_ranges']:
+        existing_logical_switch['vlan_trunk_spec']['vlan_ranges'] != logical_switch_with_ids['vlan_trunk_spec']['vlan_ranges']:
         return True
     if existing_logical_switch.__contains__('switching_profile_ids') and logical_switch_with_ids.__contains__('switching_profile_ids') and \
         existing_logical_switch['switching_profile_ids'] != logical_switch_with_ids['switching_profile_ids']:
