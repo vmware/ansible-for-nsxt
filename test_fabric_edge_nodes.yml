@@ -12,7 +12,7 @@
         validate_certs: False
         resource_type: "EdgeNode"
         display_name: "EdegeNode1"
-        node_id: "58c42d2c-d9bb-4d88-9d9c-3d032ad455e2"
+        #node_id: "58c42d2c-d9bb-4d88-9d9c-3d032ad455e2"
         ip_addresses:
           - 10.112.201.26
         deployment_config:
@@ -22,19 +22,19 @@
             root_password: "Admin!23Admin"
           vm_deployment_config:
             placement_type: VsphereDeploymentConfig
-            vc_id: "67dbce0d-973e-4b7d-813d-7ae5a91754c2"
+            vc_id: "1de65058-fa28-42fa-8f69-a1bb7b4516fa"
             data_network_ids:
-            - network-44
-            - network-44
-            - network-44
-            management_network_id: "network-44"
+            - network-16
+            - network-16
+            - network-16
+            management_network_id: "network-16"
             hostname: "EdgeVM1"
-            compute_id: "domain-c49"
-            storage_id: "datastore-43"
+            compute_id: "domain-c8"
+            storage_id: "datastore-12"
             default_gateway_addresses:
             - 10.112.203.253
             management_port_subnets:
             - ip_addresses:
               - 10.112.201.26
               prefix_length: "19"
-        state: "absent"
+        state: present
