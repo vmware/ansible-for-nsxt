@@ -90,7 +90,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             ovftool_path=dict(type='str'),
-            folder=dict(required=True, type='str'),
+            folder=dict(required=False, type='str'),
             datacenter=dict(required=True, type='str'),
             datastore=dict(required=True, type='str'),
             portgroup=dict(required=True, type='str'),
