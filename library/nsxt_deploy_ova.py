@@ -90,7 +90,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             ovftool_path=dict(type='str'),
-            folder=dict(required=True, type='str'),
+            folder=dict(required=False, type='str'),
             datacenter=dict(required=True, type='str'),
             datastore=dict(required=True, type='str'),
             portgroup=dict(required=True, type='str'),
@@ -175,7 +175,7 @@ def main():
 
     vi_string = 'vi://{}:{}@{}/'.format(module.params['vcenter_user'],
                                                    module.params['vcenter_passwd'], module.params['vcenter'])
-    if module.params.__contains__('folder'):
+    if module.params.__contains__('folder') and module.params['folder']:
         vi_string = vi_string + module.params['folder']
 
     vi_string = vi_string + '/{}/host/{}/'.format(module.params['datacenter'], module.params['cluster'])

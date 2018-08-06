@@ -149,7 +149,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     return False
 
 def wait_till_create(id, module, manager_url, mgr_username, mgr_password, validate_certs):
-    DEPLOYMENT_PROGRESS = ['INSTALL_IN_PROGRESS', 'VM_DEPLOYMENT_IN_PROGRESS', 'VM_DEPLOYMENT_QUEUED', 'VM_POWER_ON_IN_PROGRESS', 'REGISTRATION_PENDING']
+    DEPLOYMENT_PROGRESS = ['INSTALL_IN_PROGRESS', 'VM_DEPLOYMENT_IN_PROGRESS', 'VM_DEPLOYMENT_QUEUED', 'VM_POWER_ON_IN_PROGRESS', 'NODE_NOT_READY', 'REGISTRATION_PENDING']
     DEPLOYMENT_SUCCESS = ['NODE_READY', 'INSTALL_SUCCESSFUL']
     try:
       while True:
