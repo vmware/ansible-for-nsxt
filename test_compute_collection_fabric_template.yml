@@ -1,0 +1,16 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Create ip pool
+      nsxt_compute_collection_fabric_templates:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: CC_fabric_template
+        compute_collection_id: "7a83e20a-0108-47ca-93a0-5bd1c44126e0:domain-c8"
+        auto_install_nsx: True
+        state: present
