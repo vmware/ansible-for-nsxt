@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -82,7 +82,7 @@ def get_fabric_compute_managers(module, manager_url, mgr_username, mgr_password,
       (rc, resp) = request(manager_url+ '/fabric/compute-managers', headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-      module.fail_json(msg='Error accessing fabric computer manager. Error [%s]' % (to_native(err)))
+      module.fail_json(msg='Error accessing fabric compute manager. Error [%s]' % (to_native(err)))
     return resp
 
 def get_compute_manager_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
@@ -183,7 +183,7 @@ def main():
 
       wait_till_create(resp['id'], module, manager_url, mgr_username, mgr_password, validate_certs)
 
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="fabric computer manager with ip %s created." % module.params['server'])
+      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="fabric compute manager with ip %s created." % module.params['server'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(fabric_compute_manager_params)), id=compute_manager_id)
@@ -195,7 +195,7 @@ def main():
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
           module.fail_json(msg="Failed to update compute_manager with id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="fabric computer manager with compute manager id %s updated." % id)
+      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="fabric compute manager with compute manager id %s updated." % id)
 
   elif state == 'absent':
     # delete the array
@@ -208,11 +208,11 @@ def main():
         (rc, resp) = request(manager_url + "/fabric/compute-managers/%s" % id, method='DELETE',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
     except Exception as err:
-        module.fail_json(msg="Failed to delete fabric computer manager with id %s. Error[%s]." % (id, to_native(err)))
+        module.fail_json(msg="Failed to delete fabric compute manager with id %s. Error[%s]." % (id, to_native(err)))
 
     wait_till_delete(id, module, manager_url, mgr_username, mgr_password, validate_certs)
 
-    module.exit_json(changed=True, id=id, message="fabric computer manager with compute manager id %s deleted." % id)
+    module.exit_json(changed=True, id=id, message="fabric compute manager with compute manager id %s deleted." % id)
 
 
 if __name__ == '__main__':
