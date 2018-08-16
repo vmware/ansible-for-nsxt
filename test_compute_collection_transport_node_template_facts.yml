@@ -1,0 +1,13 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Get compute collection fabric tempalte
+      nsxt_compute_collection_transport_templates_facts:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+      check_mode: yes
