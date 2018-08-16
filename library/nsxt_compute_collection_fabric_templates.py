@@ -23,20 +23,15 @@ author: Rahul Raghuvanshi
 '''
 
 EXAMPLES = '''
-- nsxt_compute_collection_templates:
-    hostname: "10.192.167.137"
-    username: "admin"
-    password: "Admin!23Admin"
+- name: Create compute collection fabric tempalte
+    nsxt_compute_collection_fabric_templates:
+    hostname: "{{hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
     validate_certs: False
-    #compute_collection_templates_id: "25d314b6-97f2-48e2-87b5-f9ce04caf5f8"
-    display_name: "vCenter"
-    server: "10.161.244.213"
-    origin_type: vCenter
-    credential:
-    credential_type: UsernamePasswordLoginCredential
-    username: "administrator@vsphere.local"
-    password: "Admin!23"
-    thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
+    display_name: CC_fabric_template
+    compute_collection_id: "7a83e20a-0108-47ca-93a0-5bd1c44126e0:domain-c8"
+    auto_install_nsx: True
     state: present
 '''
 
@@ -67,6 +62,19 @@ def get_compute_collection_templates(module, manager_url, mgr_username, mgr_pass
       module.fail_json(msg='Error accessing fabric compute collection fabric template. Error [%s]' % (to_native(err)))
     return resp
 
+def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['id']
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
+
 def get_compute_collection_templates_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     compute_collection_templates = get_compute_collection_templates(module, manager_url, mgr_username, mgr_password, validate_certs)
     for compute_collection_templates in compute_collection_templates['results']:
@@ -84,6 +92,29 @@ def wait_till_delete(id, module, manager_url, mgr_username, mgr_password, valida
       time.sleep(5)
       return
 
+def get_compute_collecting_id (module, manager_url, mgr_username, mgr_password, validate_certs, manager_name, cluster_name):
+    try:
+      (rc, resp) = request(manager_url+ '/fabric/compute-collections', headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+      compute_manager_id = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                        "/fabric/compute-managers", manager_name)
+    except Exception as err:
+      module.fail_json(msg='Error accessing compute collection id for manager %s, cluster %s. Error [%s]' % (manager_name, cluster_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == cluster_name and \
+            result['origin_id'] == compute_manager_id:
+            return result['external_id']
+    module.fail_json(msg='No compute collection id exist with cluster name %s for compute manager %s' % (cluster_name, manager_name))
+
+def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, fabric_template ):
+    compute_manager_name = fabric_template.pop('compute_manager_name', None)
+    compute_cluster_name = fabric_template.pop('cluster_name', None)
+    compute_collection_id = get_compute_collecting_id (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                        compute_manager_name, compute_cluster_name)
+    fabric_template['compute_collection_id'] = compute_collection_id
+    return fabric_template
+
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_templates_with_ids):
     existing_compute_collection_templates = get_compute_collection_templates_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_templates_with_ids['display_name'])
     if existing_compute_collection_templates is None:
@@ -95,11 +126,13 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
-                    compute_collection_id=dict(required=True, type='str'),
-                    auto_install_nsx=dict(required=True, type='bool'),
+                    compute_manager_name=dict(required=False, type='str'),
+                    cluster_name=dict(required=False, type='str'),
+                    auto_install_nsx=dict(required=False, type='bool'),
                     state=dict(reauired=True, choices=['present', 'absent']))
 
-  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
+                         required_if=[['state', 'present', ['compute_manager_name', 'cluster_name', 'auto_install_nsx']]])
   compute_collection_templates_params = get_compute_collection_templates_params(module.params.copy())
   state = module.params['state']
   mgr_hostname = module.params['hostname']
@@ -116,9 +149,10 @@ def main():
     revision = compute_collection_templates_dict['_revision']
 
   if state == 'present':
+    body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_templates_params)
+    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_templates_params)
     if not updated:
       # add the compute_collection_templates
       request_data = json.dumps(compute_collection_templates_params)
@@ -132,7 +166,7 @@ def main():
       except Exception as err:
                 module.fail_json(msg="Failed to add compute_collection_templates. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Compute collection fabric template for id %s created." % module.params['compute_collection_id'])
+      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Compute collection fabric template created for cluster %s." % module.params['cluster_name'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(compute_collection_templates_params)), id=compute_collection_templates_id)

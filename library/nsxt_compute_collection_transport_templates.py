@@ -204,7 +204,6 @@ def main():
     updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_transport_templates_params)
     if not updated:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(request_data), id='12345')
