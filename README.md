@@ -2,7 +2,7 @@
 
 # Overview
 This repository contains NSX-T Ansible Modules, which one can use with
-Ansible to work with [VMware NSX-T][vmware-nsxt].
+Ansible to work with [VMware NSX-T Data Center][vmware-nsxt].
 
 [vmware-nsxt]: https://www.vmware.com/products/nsx.html
 
@@ -44,7 +44,7 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_compute_collection_transport_templates
 * nsxt_compute_collection_transport_templates_facts
 
-##### Logiccal networking modules
+##### Logical networking modules
 * nsxt_logical_ports
 * nsxt_logical_ports_facts
 * nsxt_logical_routers
@@ -60,7 +60,7 @@ The modules in this repository are focused on enabling automation of installatio
 
 # Prerequisites
 We assume that ansible is already installed. 
-Support ansible version 2.6 and onwards. 
+These modules support ansible version 2.6 and onwards. 
 
 * PyVmOmi - Python library for vCenter api.
 
