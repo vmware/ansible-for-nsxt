@@ -19,7 +19,7 @@ The modules in this repository are focused on enabling automation of installatio
 
 #### Deployment and installation modules
 
-*nsxt_deploy_ova
+* nsxt_deploy_ova
 *nsxt_licenses
 *nsxt_manager_status
 *nsxt_licenses_facts
