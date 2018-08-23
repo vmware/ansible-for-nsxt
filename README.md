@@ -62,18 +62,19 @@ The modules in this repository are focused on enabling automation of installatio
 We assume that ansible is already installed. 
 Support ansible version 2.6 and onwards. 
 
-* PyVmOmi - It is used for initial .ova deployment.
-```
-pip install --upgrade pyvmomi pyvim requests ssl
-```
+* PyVmOmi - Python library for vCenter api.
 
-* OVF Tools
-Ovftool is used for ovf deployment. 
-Download Ovf tool:
-https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353
+* OVF Tools - Ovftool is used for ovf deployment. 
 
 
 # Build & Run
+
+Install PyVmOmi
+```
+pip install --upgrade pyvmomi pyvim requests ssl
+```
+Download and Install Ovf tool - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353)
+
 git clone https://github.com/vmware/ansible-for-nsxt.git
 
 # Interoperability
