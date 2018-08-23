@@ -45,24 +45,22 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_compute_collection_transport_templates_facts
 
 ##### Logiccal networking modules
-*nsxt_logical_ports
-*nsxt_logical_ports_facts
-*nsxt_logical_routers
-*nsxt_logical_routers_facts
-*nsxt_logical_routers_ports
-*nsxt_logical_routers_ports_facts
-*nsxt_logical_router_static_routes
-*nsxt_logical_switches
-*nsxt_logical_switches_facts
-*nsxt_ip_blocks
-*nsxt_ip_blockes_facts
+* nsxt_logical_ports
+* nsxt_logical_ports_facts
+* nsxt_logical_routers
+* nsxt_logical_routers_facts
+* nsxt_logical_routers_ports
+* nsxt_logical_routers_ports_facts
+* nsxt_logical_router_static_routes
+* nsxt_logical_switches
+* nsxt_logical_switches_facts
+* nsxt_ip_blocks
+* nsxt_ip_blockes_facts
 
 
 # Prerequisites
 We assume that ansible is already installed. 
-From Ansible 2.6 onwards, connection of VMs to NSX-T Logical Switches is supported. 
-The modules in this repository can also uased with earlier versions.
-https://github.com/ansible/ansible/pull/37979
+Support ansible version 2.6 and onwards. 
 
 * PyVmOmi - you need it for the initial .ova deployment only
 ```
