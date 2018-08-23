@@ -74,14 +74,23 @@ Install PyVmOmi
 pip install --upgrade pyvmomi pyvim requests ssl
 ```
 Download and Install Ovf tool - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353)
+Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
+```
+unzip ansible-for-nsxt-master.zip
+cd ansible-for-nsxt-master
+```
+To run a sample Ansible playbook - To create a sample test topology using deployments and install module.
 
-git clone https://github.com/vmware/ansible-for-nsxt.git
-
+Edit test_basic_topology.yml and answerfile.yml to match values to your environment.
+```
+ansible-playbook test_basic_topology.yml -vvv
+```
 # Interoperability
 
 The following versions of NSX are supported:
 
  * NSX-T 2.2.*
+ * Ansible 2.6
 
 # Contributing
 
