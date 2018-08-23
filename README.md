@@ -20,29 +20,29 @@ The modules in this repository are focused on enabling automation of installatio
 #### Deployment and installation modules
 
 * nsxt_deploy_ova
-*nsxt_licenses
-*nsxt_manager_status
-*nsxt_licenses_facts
-*nsxt_controllers
-*nsxt_controllers_facts
-*nsxt_edge_clusters
-*nsxt_edge_clusters_facts
-*nsxt_compute_managers
-*nsxt_compute_managers_facts
-*nsxt_fabric_nodes
-*nsxt_fabric_nodes_facts
-*nsxt_compute_collection_fabric_templates
-*nsxt_compute_collection_fabric_templates_facts
-*nsxt_ip_pools
-*nsxt_ip_pools_facts
-*nsxt_uplink_profiles
-*nsxt_uplink_profiles_facts
-*nsxt_transport_zones
-*nsxt_transport_zones_facts
-*nsxt_transport_nodes
-*nsxt_transport_nodes_facts
-*nsxt_compute_collection_transport_templates
-*nsxt_compute_collection_transport_templates_facts
+* nsxt_licenses
+* nsxt_manager_status
+* nsxt_licenses_facts
+* nsxt_controllers
+* nsxt_controllers_facts
+* nsxt_edge_clusters
+* nsxt_edge_clusters_facts
+* nsxt_compute_managers
+* nsxt_compute_managers_facts
+* nsxt_fabric_nodes
+* nsxt_fabric_nodes_facts
+* nsxt_compute_collection_fabric_templates
+* nsxt_compute_collection_fabric_templates_facts
+* nsxt_ip_pools
+* nsxt_ip_pools_facts
+* nsxt_uplink_profiles
+* nsxt_uplink_profiles_facts
+* nsxt_transport_zones
+* nsxt_transport_zones_facts
+* nsxt_transport_nodes
+* nsxt_transport_nodes_facts
+* nsxt_compute_collection_transport_templates
+* nsxt_compute_collection_transport_templates_facts
 
 ##### Logiccal networking modules
 *nsxt_logical_ports
