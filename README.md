@@ -74,6 +74,7 @@ Install PyVmOmi
 pip install --upgrade pyvmomi pyvim requests ssl
 ```
 Download and Install Ovf tool - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353)
+
 Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
 ```
 unzip ansible-for-nsxt-master.zip
