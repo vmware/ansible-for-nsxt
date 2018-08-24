@@ -55,7 +55,7 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_logical_switches
 * nsxt_logical_switches_facts
 * nsxt_ip_blocks
-* nsxt_ip_blockes_facts
+* nsxt_ip_blocks_facts
 
 
 # Prerequisites
