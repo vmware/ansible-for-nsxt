@@ -23,7 +23,7 @@ author: Rahul Raghuvanshi
 '''
 
 EXAMPLES = '''
-- nsxt_logical_routers_ports:
+- nsxt_logical_router_ports:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"

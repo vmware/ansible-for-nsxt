@@ -23,7 +23,7 @@ author: Rahul Raghuvanshi
 '''
 
 EXAMPLES = '''
-- nsxt_edge_clusters_facts:
+- nsxt_edge_clusters:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"

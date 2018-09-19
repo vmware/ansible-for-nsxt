@@ -23,7 +23,7 @@ author: Rahul Raghuvanshi
 '''
 
 EXAMPLES = '''
-- nsxt_fabric_compute_collection_transport_node_templates_facts:
+- nsxt_compute_collection_transport_templates_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"

@@ -31,7 +31,7 @@ author: Rahul Raghuvanshi
 '''
 
 EXAMPLES = '''
-- nsxt_ip_block_facts:
+- nsxt_ip_blocks_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"

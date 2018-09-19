@@ -24,7 +24,7 @@ author: Rahul Raghuvanshi
 
 EXAMPLES = '''
 - name: Deploy NSX Manager OVA
-  deploy_ova:
+  nsxt_deploy_ova:
     ovftool_path: "{{ ovfToolPath }}"
     datacenter: "private_dc"
     datastore: "data store"
