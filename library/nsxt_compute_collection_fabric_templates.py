@@ -129,7 +129,7 @@ def main():
                     compute_manager_name=dict(required=False, type='str'),
                     cluster_name=dict(required=False, type='str'),
                     auto_install_nsx=dict(required=False, type='bool'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['state', 'present', ['compute_manager_name', 'cluster_name', 'auto_install_nsx']]])

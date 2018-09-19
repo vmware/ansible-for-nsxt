@@ -213,7 +213,7 @@ def main():
                     ip_addresses=dict(required=False, type='list'),
                     external_id=dict(required=False, type='str'),
                     resource_type=dict(required=True, type='str', choices=['HostNode', 'EdgeNode']),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['resource_type', 'HostNode', ['os_type']],

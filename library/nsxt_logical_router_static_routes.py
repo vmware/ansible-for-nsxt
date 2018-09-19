@@ -92,7 +92,7 @@ def main():
                 logical_router_id=dict(required=False, type='str'),
                 network=dict(required=True, type='str'),
                 id=dict(required=False, type= 'str'),
-                state=dict(reauired=True, choices=['present', 'absent']))
+                state=dict(required=True, choices=['present', 'absent']))
 
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

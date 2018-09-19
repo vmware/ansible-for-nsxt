@@ -144,7 +144,7 @@ def main():
                     credential_type=dict(required=True, type='str')),
                     origin_type=dict(required=True, type='str'),
                     server=dict(required=True, type='str'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   fabric_compute_manager_params = get_fabric_compute_manager_params(module.params.copy())

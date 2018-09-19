@@ -126,7 +126,7 @@ def main():
                     shared_secret=dict(required=False, type='str'),
                     clustering_type=dict(required=True, type='str')),
                     node_id=dict(required=False, type='str'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['state', 'absent', ['node_id']]])

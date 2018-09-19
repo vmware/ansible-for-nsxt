@@ -200,7 +200,7 @@ def main():
                         fabric_node_name=dict(required=True, type='str'),
                         host_switches=dict(required=False, type='list'),
                         transport_zone_endpoints=dict(required=False, type='list'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   transport_node_params = get_transport_node_params(module.params.copy())

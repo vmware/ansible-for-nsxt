@@ -87,7 +87,7 @@ def main():
                         named_teamings=dict(required=False, type='list'),
                         lags=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str', choices=['UplinkHostSwitchProfile']),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   profile_params = get_profile_params(module.params.copy())

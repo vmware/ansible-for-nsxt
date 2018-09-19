@@ -110,7 +110,7 @@ def main():
   argument_spec.update(display_name=dict(required=True, type='str'),
                         cluster_profile_bindings=dict(required=False, type='list'),
                         members=dict(required=False, type='list'), # tranpost_node_name
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   edge_cluster_params = get_edge_cluster_params(module.params.copy())

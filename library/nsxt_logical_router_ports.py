@@ -139,7 +139,7 @@ def main():
                         logical_router_id=dict(required=True, type='str'),
                         service_bindings=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   logical_router_port_params = get_logical_router_port_params(module.params.copy())

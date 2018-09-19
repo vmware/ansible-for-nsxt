@@ -91,7 +91,7 @@ def main():
   argument_spec.update(display_name=dict(required=True, type='str'),
                         subnets=dict(required=False, type='list'),
                         tags=dict(required=False, type='str'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   ip_pool_params = get_ip_pool_params(module.params.copy())

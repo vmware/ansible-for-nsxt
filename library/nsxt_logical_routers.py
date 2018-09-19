@@ -128,7 +128,7 @@ def main():
                         high_availability_mode=dict(required=False, type='str'),
                         edge_cluster_name=dict(required=False, type='str'),
                         resource_type=dict(required=False, type='str', choices=['LogicalRouter']),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   logical_router_params = get_logical_router_params(module.params.copy())

@@ -180,7 +180,7 @@ def main():
                     value=dict(required=True, type='str'),
                     key=dict(required=False, type='str')),
                     compute_collections=dict(required=False, type='list'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['state', 'present', ['compute_collections']]])

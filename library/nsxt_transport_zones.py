@@ -90,7 +90,7 @@ def main():
                         transport_zone_profile_ids=dict(required=False, type='list'),
                         resource_type=dict(required=False),
                         description=dict(required=False),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   transport_zone_params = get_transport_zone_params(module.params.copy())

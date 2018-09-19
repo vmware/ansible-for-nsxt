@@ -138,7 +138,7 @@ def main():
                         address_bindings=dict(required=False, type='list'),
                         switching_profiles=dict(required=False, type='list'),
                         lswitch_id=dict(required=False, type='str'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   logical_switch_params = get_logical_switch_params(module.params.copy())

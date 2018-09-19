@@ -61,7 +61,7 @@ def check_license_exist(module, manager_url, mgr_username, mgr_password, validat
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(license_key=dict(required=True, type='str', no_log=True),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   license_params = get_license_params(module.params.copy())
