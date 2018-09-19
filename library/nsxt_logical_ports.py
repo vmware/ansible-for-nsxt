@@ -24,7 +24,7 @@ author: Rahul Raghuvanshi
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',

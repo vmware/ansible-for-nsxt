@@ -19,7 +19,7 @@ def vmware_argument_spec():
         username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
         port=dict(type='int', default=443),
-        validate_certs=dict(type='bool', requried=False, default=True),
+        validate_certs=dict(type='bool', required=False, default=True),
     )
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
