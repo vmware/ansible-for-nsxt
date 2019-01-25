@@ -1,14 +1,35 @@
+#!/usr/bin/env python
+# coding=utf-8
+#
+# Copyright © 2015 VMware, Inc. All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+# to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions
+# of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+# TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+# CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+#__author__ = 'VJ49'
+
 import yaml
 import yamlordereddictloader
 from collections import OrderedDict
 
 import logging
-logger = logging.getLogger('Transport Node Host Details')
+logger = logging.getLogger('vswitch')
 hdlr = logging.FileHandler('/var/log/chaperone/ChaperoneNSXtLog.log')
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(funcName)s: %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr) 
 logger.setLevel(10)
+
 
 def main():
     module = AnsibleModule(
@@ -21,38 +42,28 @@ def main():
     sub_dict = {}
     main_dict = {}
     main_list= list()
-    content_dict={}
-    final_list = list()
-    imp_list=list()
     stream1 = open('/var/lib/chaperone/answerfile.yml', 'r')    
     dict1 = yaml.load(stream1, Loader=yamlordereddictloader.Loader)
 
     try:
         for data in dict1:
-            if data.startswith('check_compute_cluster') == True:
+            if data.startswith('check_edge_node') == True:
                 sub_dict[data] = dict1[data]
-        for count in range(len(sub_dict)):
-            cluster= "cluster"+str(count+1)
-            for content in dict1:
-                if 'ip' in content and 'esxi_compute'+str(count+1) in content: 
-                    main_list.append(dict1[content])
-            main_dict[cluster] = main_list
-            main_list=[]
+        for content in dict1: 
+            if content.startswith('esxi_compute') == True:
+                if 'host' in content and 'ip' in content:
+                    main_dict["ip_address"]=dict1[content]
+                    logger.info(main_dict)
+                if 'host' in content and 'vmnic' in content:
+                    main_dict["vmnic"]=dict1[content]
+                    logger.info(main_dict)
+                    main_list.append(main_dict)
+                    main_dict={}
+        #logger.info(main_list)
+        #logger.info(main_dict)             
+        final_dict['transport_host_nodes']=main_list
+	module.exit_json(changed=True, id=final_dict, msg= "Successfully got the information")
 
-        for check in range(len(sub_dict)):
-            if(sub_dict["check_compute_cluster"+str(check+1)] == '1'):
-                for i in main_dict["cluster"+str(check+1)]:
-                    final_list.append(i)
-        for key in range(len(final_list)):
-            logger.info(final_list[key])
-            content_dict["ip_address"]=final_list[key]
-            imp_list.append(content_dict)
-            content_dict={}
-        logger.info(imp_list)
-        final_dict['transport_host_nodes'] = imp_list
-        module.exit_json(changed= True,id=final_dict, msg = "Successfully got the Transport Host Nodes information")
-        
-                    
     except Exception as err:
         module.fail_json(changed=False, msg= "Failure: %s" %(err))
 

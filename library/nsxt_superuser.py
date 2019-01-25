@@ -1,44 +1,39 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Copyright 2016 VMware, Inc.  All rights reserved.
-
-# Portions Copyright (c) 2015 VMware, Inc. All rights reserved.
+# coding=utf-8
 #
-# This file is part of Ansible
+# Copyright © 2015 VMware, Inc. All Rights Reserved.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+# to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions
+# of the Software.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+# TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+# CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+#__author__ = 'VJ49'
 
 import paramiko
+import time
 import string
-import pyVim.task
-
-from pyVmomi import vim, vmodl
-from pyVim import connect
-from pyVim.connect import SmartConnect, SmartConnectNoSSL
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 import logging
-logger = logging.getLogger('nsxt_superuser')
+logger = logging.getLogger('vswitch')
 hdlr = logging.FileHandler('/var/log/chaperone/ChaperoneNSXtLog.log')
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(funcName)s: %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr) 
 logger.setLevel(10)
+
 
 create_cert = 'openssl req -newkey rsa:2048 -x509 -nodes -keyout '"'$NSX_SUPERUSER_KEY_FILE'"' -new -out '"'$NSX_SUPERUSER_CERT_FILE'"' -subj /CN=pks-nsx-t-superuser -extensions client_server_ssl -config <(cat /etc/ssl/openssl.cnf <(printf "[client_server_ssl]\nextendedKeyUsage = clientAuth\n")) -sha256 -days 730'
 
@@ -51,7 +46,10 @@ cert_reg = """cat <<END
   }
 END"""   
 
+
 register_cert_curl ="""curl -k -X POST 'https://${NSX_MANAGER}/api/v1/trust-management/certificates?action=import' -u '$NSX_USER:$NSX_PASSWORD' -H 'content-type: application/json' -d '$register_cert'"""
+					   
+					 
 					   
 pi_request="""cat <<END
   {
@@ -79,37 +77,42 @@ verify = """curl -k -X GET \
 def SuperUser(module,pi,NSX_MANAGER,NSX_USER,NSX_PASSWORD,PI_NAME,validate_certs,NSX_SUPERUSER_CERT_FILE,NSX_SUPERUSER_KEY_FILE,NODE_ID,manager_url):
     create_cert1 = string.replace(create_cert, "$NSX_SUPERUSER_KEY_FILE",NSX_SUPERUSER_KEY_FILE)
     create_cert2 = string.replace(create_cert1, "$NSX_SUPERUSER_CERT_FILE",NSX_SUPERUSER_CERT_FILE)
+
     search_pemcode1 = string.replace(search_pemcode, "$NSX_SUPERUSER_CERT_FILE",NSX_SUPERUSER_CERT_FILE)
-    logger.info(search_pemcode1)    
+    logger.info(search_pemcode1)
+
+	
+
+    
     register_cert_curl1 = string.replace(register_cert_curl, "${NSX_MANAGER}",NSX_MANAGER)
     register_cert_curl2 = string.replace(register_cert_curl1, "$NSX_USER",NSX_USER)
     register_cert_curl3 = string.replace(register_cert_curl2, "$NSX_PASSWORD",NSX_PASSWORD)  
     try:
+
         (sshin1, sshout1, ssherr1) = pi.exec_command(create_cert2)
         logger.info(create_cert2)
         logger.info(sshout1.read())
-		
         (sshin,sshout,ssherr) = pi.exec_command(search_pemcode1)
         pem_code_out = repr(sshout.read())
         pem_code_out = pem_code_out.replace("'",'"')
         logger.info("Pemcode:{}".format(pem_code_out))
-		
+
         register_cert1 = string.replace(cert_reg, "$PI_NAME", PI_NAME)
         register_cert1 = string.replace(register_cert1, "pemcode", pem_code_out)
-		
         (sshin2, sshout2, ssherr2) = pi.exec_command(register_cert1)
         register_cert_out=sshout2.read()
         logger.info(register_cert_out)
         logger.info(ssherr2)
+
         register_cert_curl4 = string.replace(register_cert_curl3, "$register_cert",register_cert_out)
         logger.info(register_cert_curl4)
-		
         (sshin3, sshout3, ssherr3) = pi.exec_command(register_cert_curl4)
         output = sshout3.read()
-        logger.info(output)
+	logger.info(output)
+
         cert_id = get_certificate_id_with_name(manager_url, NSX_USER, NSX_PASSWORD, validate_certs,PI_NAME )
         logger.info(cert_id)
-		
+
         pi_request1 = string.replace(pi_request,"$PI_NAME",PI_NAME)
         pi_request2 = string.replace(pi_request1,"$CERTIFICATE_ID", cert_id)
         pi_request3 = string.replace(pi_request2, "$NODE_ID",NODE_ID)
@@ -131,11 +134,11 @@ def SuperUser(module,pi,NSX_MANAGER,NSX_USER,NSX_PASSWORD,PI_NAME,validate_certs
 
         (sshin6,sshout6,ssherr6) = pi.exec_command(verify3)
         logger.info(sshout6.read())
-        module.exit_json(changed=True,msg ="Successfully Created Super User with name %s having id %s" %(PI_NAME,cert_id))
+	module.exit_json(changed=True,msg ="Successfully Created")
 
     except Exception as err:
         logger.info("Error occured at Super User Creation: {}".format(err))
-        module.fail_json(chagned=False, msg = "Error at Super User Creation:{}".format(err))
+	module.fail_json(chagned=False, msg = "Error at Super User Creation:{}".format(err))
         
 
 def get_certificate_id_with_name(manager_url, NSX_USER, NSX_PASSWORD, validate_certs,PI_NAME ):
@@ -160,15 +163,14 @@ def main():
                        NSX_MANAGER =dict(required=True, type= 'str'),
                        NSX_USER =dict(required=True, type= 'str'),
                        NSX_PASSWORD=dict(required=True, type='str'),
-		       validate_certs= dict(required=True, type= 'bool'),
-			        PI_NAME = dict(required=True, type= 'str'))
+		       validate_certs= dict(required=True, type= 'bool'))
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)  
     logger.info("after module")       
     NSX_MANAGER = module.params["NSX_MANAGER"]
     NSX_USER = module.params["NSX_USER"]
     NSX_PASSWORD = module.params["NSX_PASSWORD"]
-    PI_NAME = module.params["PI_NAME"]
-    validate_certs = module.params["validate_certs"]
+    PI_NAME = "nsxt_superuser_cert"
+    validate_certs = module.params["validate_certs"]   
     NSX_SUPERUSER_CERT_FILE = "/home/vmware/pks-nsx-t-superuser.crt"
     NSX_SUPERUSER_KEY_FILE = "/home/vmware/pks-nsx-t-superuser.key"
     NODE_ID = "$(cat /proc/sys/kernel/random/uuid)"

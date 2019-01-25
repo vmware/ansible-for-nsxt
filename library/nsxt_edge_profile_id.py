@@ -47,14 +47,7 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr) 
 logger.setLevel(10)
 
-def get_logical_params(args=None):
-    args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs', 'edge_profile']
-    for key in args_to_remove:
-        args.pop(key, None)
-    for key, value in args.copy().items():
-        if value == None:
-            args.pop(key, None)
-    return args
+
 
 def get_edge_profile_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_profile):
     try:
@@ -69,13 +62,16 @@ def get_edge_profile_id(module, manager_url, mgr_username, mgr_password, validat
     module.fail_json(msg="No name exist with that cluster profile name - %s" % edge_profile)
 
 
+
+
+
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(edge_profile=dict(required=True, type= "str"),
                        state=dict(required=True, choices=['present', 'absent']),)
   logger.info("enter into main")            
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-  logical_params = get_logical_params(module.params.copy())
+
   state = module.params['state']
   mgr_hostname = module.params['hostname']
   mgr_username = module.params['username']
