@@ -40,25 +40,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
-'''
-
-EXAMPLES = '''
-- nsxt_logical_ports:
-      hostname: "10.192.167.137"
-      username: "admin"
-      password: "Admin!23Admin"
-      validate_certs: False
-      logical_switch_name: LS1
-      attachment:
-        attachment_type: VIF
-        id: vif1
-      admin_state: UP
-'''
-
-RETURN = '''# '''
-
 
 def get_routing_advertisement_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs', 'router_name']
