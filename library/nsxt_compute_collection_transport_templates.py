@@ -157,6 +157,20 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         transport_template_params['compute_collection_ids'] = compute_collection_ids
     return transport_template_params
 
+def id_exist_in_list_dict_obj(key, list_obj1, list_obj2):
+    all_id_presents = False
+    if len(list_obj1) != len(list_obj2):
+        return all_id_presents
+    for dict_obj1 in list_obj1:
+        if dict_obj1.__contains__(key):
+            for dict_obj2 in list_obj2:
+                if dict_obj2.__contains__(key) and dict_obj1[key] == dict_obj2[key]:
+                    all_id_presents = True
+                    continue
+            if not all_id_presents:
+                return False
+    return True
+
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_transport_templates_ids):
     existing_transport_node = get_compute_collection_transport_templates_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_transport_templates_ids['display_name'])
     if existing_transport_node is None:
