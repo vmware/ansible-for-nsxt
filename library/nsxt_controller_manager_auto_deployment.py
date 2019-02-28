@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_controllers
+module: nsxt_controller_manager_auto_deployment
 short_description: Deploy and register a cluster node VM
 description: Deploys a cluster node VM as specified by the deployment config.
 Once the VM is deployed and powered on, it will automatically join the
@@ -38,30 +38,6 @@ options:
     password:
         description: The password to authenticate with the NSX manager.
         required: True
-    clustering_config:
-      clustering_type:
-        desc_field: "Specifies the type of clustering config to be used."
-        required: True
-        type: str
-      desc_field: "This property is deprecated since ClusteringConfig is no longer
-                    needed for auto-installation and will be ignored if provided."
-      join_to_existing_cluster:
-        desc_field: 'Specifies whether or not the cluster node VM should try to join to
-          the existing control cluster or initialize a new one.
-          Only required in uncertainty case, i.e. when there are manually-
-          deployed controllers that are registered but not connected to the
-          cluster and no auto-deployed controllers are part of the cluster.'
-        required: True
-        type: boolean
-      required: True
-      shared_secret:
-        desc_field: 'Shared secret to be used when joining the cluster node VM to a control
-          cluster or for initializing a new cluster with the VM.
-          Must contain at least 4 unique characters and be at least 6 characters
-          long.'
-        required: False
-        type: str
-      type: dict
     deployment_requests:
       desc_field: "Cluster node VM deployment requests to be deployed by the Manager."
       required: True
@@ -82,14 +58,15 @@ options:
 '''
 
 EXAMPLES = '''
-  - name : Deploy and register a cluster node VM
-    nsxt_controllers:
+  - name: Deploy and register a cluster node VM
+    nsxt_manager_controllers:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
       deployment_requests:
       - roles:
+      - MANAGER
       - CONTROLLER
         form_factor: "MEDIUM"
         user_settings:
@@ -97,9 +74,9 @@ EXAMPLES = '''
           root_password: "Admin!23Admin"
         deployment_config:
           placement_type: VsphereClusterNodeVMDeploymentConfig
-          vc_id: "67dbce0d-973e-4b7d-813d-7ae5a91754c2"
+          vc_id: "7503e86e-c502-46fc-8d91-45a06d314d88"
           management_network_id: "network-44"
-          hostname: "controller-1"
+          hostname: "manager-2"
           compute_id: "domain-c49"
           storage_id: "datastore-43"
           default_gateway_addresses:
@@ -108,10 +85,6 @@ EXAMPLES = '''
           - ip_addresses:
             - 10.112.201.25
             prefix_length: "19"
-      clustering_config:
-        clustering_type: ControlClusteringConfig
-        shared_secret: "123456"
-        join_to_existing_cluster: false
       state: present
 '''
 
@@ -128,7 +101,7 @@ IN_PROGRESS_STATES = ["VM_DEPLOYMENT_QUEUED", "VM_DEPLOYMENT_IN_PROGRESS", "VM_P
                       "VM_WAITING_TO_COME_ONLINE", "VM_CLUSTERING_IN_PROGRESS", "WAITING_TO_UNDEPLOY_VM", "VM_DECLUSTER_IN_PROGRESS",
                       "VM_POWER_OFF_IN_PROGRESS", "VM_UNDEPLOY_IN_PROGRESS", "VM_UNDEPLOY_SUCCESSFUL"]
 SUCCESS_STATES = ["VM_CLUSTERING_SUCCESSFUL", "VM_DECLUSTER_SUCCESSFUL"]
-def get_controller_node_params(args=None):
+def get_node_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs', 'node_id']
     for key in args_to_remove:
         args.pop(key, None)
@@ -137,17 +110,17 @@ def get_controller_node_params(args=None):
             args.pop(key, None)
     return args
 
-def get_controllers(module, manager_url, mgr_username, mgr_password, validate_certs):
+def get_nodes(module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
       (rc, resp) = request(manager_url+ '/cluster/nodes/deployments', headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-      module.fail_json(msg='Error accessing controller. Error [%s]' % (to_native(err)))
+      module.fail_json(msg='Error accessing controller-manager node. Error [%s]' % (to_native(err)))
     return resp
 
-def check_controller_node_exist(existing_controllers_data, module):
+def check_node_exist(existing_nodes_data, module):
     new_deployment_requests = module.params['deployment_requests']
-    for result in existing_controllers_data['results']:
+    for result in existing_nodes_data['results']:
         for new_deployment_request in new_deployment_requests:
             if result['deployment_config']['hostname'] == new_deployment_request['deployment_config']['hostname']:
                 return True, result['deployment_config']['hostname']
@@ -184,16 +157,22 @@ def wait_till_create(vm_id, module, manager_url, mgr_username, mgr_password, val
               time.sleep(5)
               return
           else:
-              module.fail_json(msg= 'Error in controller status: %s'%(str(resp['status'])))
+              module.fail_json(msg= 'Error in controller-manager node deployment: %s'%(str(resp['status'])))
     except Exception as err:
-      module.fail_json(msg='Error accessing controller status. Error [%s]' % (to_native(err)))
+      module.fail_json(msg='Error accessing controller-manager node status. Error [%s]' % (to_native(err)))
 
 def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
-      while True:
+      count = 0;
+      #Wait for maximum 10 minute for vm deletion
+      while True and count < 20:
           (rc, resp) = request(manager_url+ '/cluster/nodes/deployments/%s/status'% vm_id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-          time.sleep(10)
+          if (resp == {}):
+              time.sleep(10)
+              break
+          time.sleep(30)
+          count = count + 1
     except Exception as err:
       time.sleep(5)
       return
@@ -201,16 +180,12 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(deployment_requests=dict(required=True, type='list'),
-                    clustering_config=dict(required=True, type='dict',
-                    join_to_existing_cluster=dict(required=True, type='boolean'),
-                    shared_secret=dict(required=False, type='str'),
-                    clustering_type=dict(required=True, type='str')),
                     node_id=dict(required=False, type='str'),
                     state=dict(reauired=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['state', 'absent', ['node_id']]])
-  node_params = get_controller_node_params(module.params.copy())
+  node_params = get_node_params(module.params.copy())
   state = module.params['state']
   mgr_hostname = module.params['hostname']
   mgr_username = module.params['username']
@@ -223,41 +198,42 @@ def main():
   headers['Content-Type'] = 'application/json'
   update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, node_params)
   request_data = json.dumps(node_params)
+  results = get_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
+  is_node_exist, hostname = check_node_exist(results, module)
   if state == 'present':
-    # add controller
-    results = get_controllers(module, manager_url, mgr_username, mgr_password, validate_certs)
-    is_controller_node_exist, hostname = check_controller_node_exist(results, module)
-    if is_controller_node_exist:
-      module.exit_json(changed=False, message="controller with hostname %s already exist."% hostname)
-
+    # add Manager Controller node
+    if is_node_exist:
+      module.exit_json(changed=False, message="Controller-manager node with hostname %s already exist."% hostname)
     if module.check_mode:
       module.exit_json(changed=True, debug_out=str(request_data))
     try:
       (rc, resp) = request(manager_url+ '/cluster/nodes/deployments', data=request_data, headers=headers, method='POST',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-      module.fail_json(msg="Failed to add controller. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
+      module.fail_json(msg="Failed to add controller-manager node. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
-    for controller in resp['results']:
-      wait_till_create(controller['vm_id'], module, manager_url, mgr_username, mgr_password, validate_certs)
+    for node in resp['results']:
+      wait_till_create(node['vm_id'], module, manager_url, mgr_username, mgr_password, validate_certs)
     time.sleep(5)
-    module.exit_json(changed=True, body= str(resp), message="Controllers deployed.")
+    module.exit_json(changed=True, body= str(resp), message="Controller-manager node deployed.")
 
   elif state == 'absent':
-    # delete controller
     id = module.params['node_id']
-    if module.check_mode:
-      module.exit_json(changed=True, debug_out=str(request_data))
-    try:
-
-      (rc, resp) = request(manager_url+ '/cluster/nodes/deployments/%s?action=delete' % id, headers=headers, method='POST',
+    if is_node_exist:
+      # delete node
+      if module.check_mode:
+        module.exit_json(changed=True, debug_out=str(request_data))
+      try:
+        (rc, resp) = request(manager_url+ '/cluster/nodes/deployments/%s?action=delete' % id, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-    except Exception as err:
-      module.fail_json(msg="Failed to delete controller with id %s. Error[%s]." % (id, to_native(err)))
+      except Exception as err:
+        module.fail_json(msg="Failed to delete controller-manager node with id %s. Error[%s]." % (id, to_native(err)))
+    else:
+      module.fail_json(msg="Controller-manager node with id %s does not exist." % id)
 
     wait_till_delete(id, module, manager_url, mgr_username, mgr_password, validate_certs)
     time.sleep(5)
-    module.exit_json(changed=True, id=id, message="controller with node id %s deleted." % id)
+    module.exit_json(changed=True, id=id, message="Controller-manager node with node id %s deleted." % id)
 
 if __name__ == '__main__':
     main()

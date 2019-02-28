@@ -5,15 +5,13 @@
     - answerfile.yml
   tasks:
     - name: Create logical router
-      nsxt_logical_ports:
+      nsxt_logical_routers:
         hostname: "{{hostname}}"
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        display_name: "logical_port_1"
-        logical_switch_name: "ls1"
-        # attachment:
-        #   attachment_type: "VIF"
-        #   id: "vif2"
-        admin_state: "UP"
+        display_name: "tier-0"
+        edge_cluster_name: "edge-cluster-1"
+        router_type: "TIER0"
+        high_availability_mode: "ACTIVE_ACTIVE"
         state: "present"

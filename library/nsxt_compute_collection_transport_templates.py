@@ -18,44 +18,100 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_compute_collection_transport_templates
+short_description: Create transport node template for compute collection.
+description: If automated transport node creation is configured on compute collection, this template will serve as the default setting for transport node creation.
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    compute_collections:
+      desc_field: Associated compute collections
+      required: False
+      type: list
+    display_name:
+      desc_field: Display name
+      required: False
+      type: str
+    host_switch_spec:
+      desc_field: Property 'host_switch_spec' can be used to create either standard host
+        switch or preconfigured host switch.
+      host_switches:
+        desc_field: Transport Node host switches
+        required: True
+        type: array of HostSwitch
+      required: False
+      resource_type:
+        desc_field: Selects the type of the transport zone profile
+        required: True
+        type: str
+      type: dict
+    network_migration_spec_ids:
+      desc_field: Property 'network_migration_spec_ids' should only be used for compute
+        collections which are clusters in VMware vCenter. Currently only HostProfileNetworkMigrationSpec
+        type is supported. This specification will only apply to Stateless ESX hosts which
+        are under this vCenter cluster.
+      required: False
+      type: array of NetworkMigrationSpecTypeIdEntry
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                    'present' is used to create or update resource. 
+                    'absent' is used to delete resource."
+      required: True
+    transport_zone_endpoints:
+      desc_field: Transport zone endpoints
+      required: False
+      type: array of TransportZoneEndPoint
+    
 '''
 
 EXAMPLES = '''
-  - name: Create compute collection transport tempalte
+  - name: Create compute collection transport template
     nsxt_compute_collection_transport_templates:
-    hostname: "{{hostname}}"
-    username: "{{username}}"
-    password: "{{password}}"
-    validate_certs: False
-    display_name: CCTT2
-    compute_collections:
-    - compute_manager_name: VC2
-      cluster_name: "ControlCluster1-$$"
-    host_switch_spec:
-        resource_type: StandardHostSwitchSpec
-        host_switches:
-        - host_switch_profiles:
-          - name: uplinkProfile1
-            type: UplinkHostSwitchProfile
-          host_switch_name: hostswitch1
-          pnics:
-          - device_name: vmnic1
-            uplink_name: "uplink-1"
-          ip_assignment_spec:
-            resource_type: StaticIpPoolSpec
-            ip_pool_name: "IPPool-IPV4-1"
-    transport_zone_endpoints:
-    - transport_zone_name: "TZ1"
-    state: present
+      hostname: "{{hostname}}"
+      username: "{{username}}"
+      password: "{{password}}"
+      validate_certs: False
+      display_name: CCTT2
+      compute_collections:
+      - compute_manager_name: VC2
+        cluster_name: "ControlCluster1-$$"
+      host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches:
+          - host_switch_profiles:
+            - name: uplinkProfile1
+              type: UplinkHostSwitchProfile
+            host_switch_name: hostswitch1
+            pnics:
+            - device_name: vmnic1
+              uplink_name: "uplink-1"
+            ip_assignment_spec:
+              resource_type: StaticIpPoolSpec
+              ip_pool_name: "IPPool-IPV4-1"
+      transport_zone_endpoints:
+      - transport_zone_name: "TZ1"
+      state: present
 '''
 
 RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 import ssl
 import socket
@@ -176,9 +232,7 @@ def main():
                     host_switches=dict(required=True, type='list'),
                     resource_type=dict(required=True, type='str')),
                     transport_zone_endpoints=dict(required=False, type='list'),
-                    network_migration_spec_id=dict(required=False, type='dict',
-                    value=dict(required=True, type='str'),
-                    key=dict(required=False, type='str')),
+                    network_migration_spec_ids=dict(required=False, type='list'),
                     compute_collections=dict(required=False, type='list'),
                     state=dict(reauired=True, choices=['present', 'absent']))
 

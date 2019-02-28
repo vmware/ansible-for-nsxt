@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+author: Ramesh Chandra
 '''
 
 EXAMPLES = '''
@@ -42,7 +42,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_ip_pool_params(args=None):
@@ -83,7 +83,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return False
     if  existing_ip_pool.__contains__('subnets') and ip_pool_params.__contains__('subnets') and existing_ip_pool['subnets'] != ip_pool_params['subnets']:
         return True
-
     return False
 
 def main():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,18 +18,326 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_logical_router_ports
+short_description: Create a Logical Router Port
+description: Creates a logical router port. The required parameters include resource_type
+(LogicalRouterUpLinkPort, LogicalRouterDownLinkPort, LogicalRouterLinkPort,
+LogicalRouterLoopbackPort, LogicalRouterCentralizedServicePort); and
+logical_router_id (the router to which each logical router port is assigned).
+The service_bindings parameter is optional.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    admin_state:
+      desc_field: Admin state of port.
+      required: False
+      type: str
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    edge_cluster_member_index:
+      desc_field: Member index of the edge node on the cluster
+      required: False
+      type: list
+    enable_netx:
+      desc_field: Port is exclusively used for N-S service insertion
+      required: False
+      type: boolean
+    linked_logical_router_port_id:
+      desc_field: Identifier of connected LogicalRouterLinkPortOnTIER1 of TIER1 logical
+        router
+      is_valid:
+        desc_field: Will be set to false if the referenced NSX resource has been deleted.
+        required: False
+        type: boolean
+      profile_type:
+        desc_field: Profile type of the ServiceConfig
+        required: True
+        type: str
+      required: False
+      selected:
+        desc_field: Set to true if this resource has been selected to be acted upon
+        required: True
+        type: boolean
+      service:
+        alg:
+          desc_field: "The Application Layer Gateway (ALG) protocol.
+                        Please note, protocol NBNS_BROADCAST and NBDG_BROADCAST are  deprecated.
+                        Please use UDP protocol and create L4 Port Set type of service instead."
+          required: True
+          type: str
+        desc_field: Service which registered the ip.
+        destination_ports:
+          desc_field: Destination ports
+          required: False
+          type: list
+        ether_type:
+          desc_field: Type of the encapsulated protocol
+          required: True
+          type: int
+        icmp_code:
+          desc_field: 'Code of the IPv4 ICMP message.
+    
+            '
+          required: False
+          type: int
+        icmp_type:
+          desc_field: ICMP message type
+          required: False
+          type: int
+        l4_protocol:
+          desc_field: L4 protocol
+          required: True
+          type: str
+        protocol:
+          desc_field: Export protocol
+          required: True
+          type: str
+        protocol_number:
+          desc_field: The IP protocol number
+          required: True
+          type: int
+        required: False
+        resource_type:
+          desc_field: "LogicalRouterUpLinkPort is allowed only on TIER0 logical router.
+                        It is the north facing port of the logical router. LogicalRouterLinkPortOnTIER0
+                        is allowed only on TIER0 logical router.
+                        This is the port where the LogicalRouterLinkPortOnTIER1
+                        of TIER1 logical router connects to. LogicalRouterLinkPortOnTIER1 is allowed
+                        only on TIER1 logical router.
+                        This is the port using which the user connected to TIER1 logical router for 
+                        upwards connectivity via TIER0 logical router.
+
+                        Connect this port to the LogicalRouterLinkPortOnTIER0 of the TIER0 logical
+                        router.
+                        LogicalRouterDownLinkPort is for the connected subnets on the logical
+                        router.
+                        LogicalRouterLoopbackPort is a loopback port for logical router
+                        component which is placed on chosen edge cluster member.
+                        LogicalRouterIPTunnelPort is a IPSec VPN tunnel port created on
+                        logical router when route based VPN session configured.
+                        LogicalRouterCentralizedServicePort is allowed only on Active/Standby 
+                        TIER0 and TIER1 logical router. Port can be connected to VLAN or overlay 
+                        logical switch. Unlike downlink port it does not participate in distributed 
+                        routing and hosted on all edge cluster members associated
+                        with logical router.
+                        Stateful services can be applied on this port."
+          required: True
+          type: str
+        source_ports:
+          desc_field: Source ports
+          required: False
+          type: list
+        type: dict
+      target_display_name:
+        desc_field: Display name of the NSX resource.
+        required: False
+        type: str
+      target_id:
+        desc_field: Identifier of the NSX resource.
+        required: False
+        type: str
+      target_type:
+        desc_field: Type of the Policy object corresponding to the source type (e.g. Segment).
+        required: False
+        type: str
+      type: dict
+    linked_logical_switch_port_id:
+      desc_field: Reference to the logical switch port to connect to
+      is_valid:
+        desc_field: Will be set to false if the referenced NSX resource has been deleted.
+        required: False
+        type: boolean
+      profile_type:
+        desc_field: Profile type of the ServiceConfig
+        required: True
+        type: str
+      required: False
+      selected:
+        desc_field: Set to true if this resource has been selected to be acted upon
+        required: True
+        type: boolean
+      service:
+        alg:
+          desc_field: "The Application Layer Gateway (ALG) protocol.
+                        Please note, protocol NBNS_BROADCAST and 
+                        NBDG_BROADCAST are  deprecated.
+                        Please use UDP protocol and create L4 Port 
+                        Set type of service instead."
+          required: True
+          type: str
+        desc_field: Service which registered the ip.
+        destination_ports:
+          desc_field: Destination ports
+          required: False
+          type: list
+        ether_type:
+          desc_field: Type of the encapsulated protocol
+          required: True
+          type: int
+        icmp_code:
+          desc_field: 'Code of the IPv4 ICMP message.
+    
+            '
+          required: False
+          type: int
+        icmp_type:
+          desc_field: ICMP Type
+          required: False
+          type: int
+        l4_protocol:
+          desc_field: L4 Protocol
+          required: True
+          type: str
+        protocol:
+          desc_field: Export protocol
+          required: True
+          type: str
+        protocol_number:
+          desc_field: The IP protocol number
+          required: True
+          type: int
+        required: False
+        resource_type:
+          desc_field: LogicalRouterUpLinkPort is allowed only on TIER0 logical router.
+                        It is the north facing port of the logical router. LogicalRouterLinkPortOnTIER0
+                        is allowed only on TIER0 logical router.
+                        This is the port where the LogicalRouterLinkPortOnTIER1
+                        of TIER1 logical router connects to. LogicalRouterLinkPortOnTIER1 is allowed
+                        only on TIER1 logical router.
+                        This is the port using which the user connected to TIER1 logical router for 
+                        upwards connectivity via TIER0 logical router.
+
+                        Connect this port to the LogicalRouterLinkPortOnTIER0 of the TIER0 logical
+                        router.
+                        LogicalRouterDownLinkPort is for the connected subnets on the logical
+                        router.
+                        LogicalRouterLoopbackPort is a loopback port for logical router
+                        component which is placed on chosen edge cluster member.
+                        LogicalRouterIPTunnelPort is a IPSec VPN tunnel port created on
+                        logical router when route based VPN session configured.
+                        LogicalRouterCentralizedServicePort is allowed only on Active/Standby 
+                        TIER0 and TIER1 logical router. Port can be connected to VLAN or overlay 
+                        logical switch. Unlike downlink port it does not participate in distributed 
+                        routing and hosted on all edge cluster members associated
+                        with logical router.
+                        Stateful services can be applied on this port."
+          required: True
+          type: str
+        source_ports:
+          desc_field: Source ports
+          required: False
+          type: list
+        type: dict
+      target_display_name:
+        desc_field: Display name of the NSX resource.
+        required: False
+        type: str
+      target_id:
+        desc_field: Identifier of the NSX resource.
+        required: False
+        type: str
+      target_type:
+        desc_field: Type of the Policy object corresponding to the source type (e.g. Segment).
+        required: False
+        type: str
+      type: dict
+    logical_router_name:
+      desc_field: Name of the logical router
+      required: True
+      type: str
+    mac_address:
+      desc_field: MAC address
+      required: False
+      type: str
+    mtu:
+      desc_field: 'Maximum transmission unit specifies the size of the largest packet
+        that
+    
+        a network protocol can transmit. If not specified, the global logical
+    
+        MTU set in the /api/v1/global-configs/RoutingGlobalConfig API will be
+    
+        used.
+    
+        '
+      required: False
+      type: int
+    resource_type:
+      desc_field: LogicalRouterUpLinkPort is allowed only on TIER0 logical router.
+                        It is the north facing port of the logical router. LogicalRouterLinkPortOnTIER0
+                        is allowed only on TIER0 logical router.
+                        This is the port where the LogicalRouterLinkPortOnTIER1
+                        of TIER1 logical router connects to. LogicalRouterLinkPortOnTIER1 is allowed
+                        only on TIER1 logical router.
+                        This is the port using which the user connected to TIER1 logical router for 
+                        upwards connectivity via TIER0 logical router.
+
+                        Connect this port to the LogicalRouterLinkPortOnTIER0 of the TIER0 logical
+                        router.
+                        LogicalRouterDownLinkPort is for the connected subnets on the logical
+                        router.
+                        LogicalRouterLoopbackPort is a loopback port for logical router
+                        component which is placed on chosen edge cluster member.
+                        LogicalRouterIPTunnelPort is a IPSec VPN tunnel port created on
+                        logical router when route based VPN session configured.
+                        LogicalRouterCentralizedServicePort is allowed only on Active/Standby 
+                        TIER0 and TIER1 logical router. Port can be connected to VLAN or overlay 
+                        logical switch. Unlike downlink port it does not participate in distributed 
+                        routing and hosted on all edge cluster members associated
+                        with logical router.
+                        Stateful services can be applied on this port."
+      required: True
+      type: str
+    service_bindings:
+      desc_field: Service Bindings
+      required: False
+      type: array of ServiceBinding
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                    'present' is used to create or update resource. 
+                    'absent' is used to delete resource."
+      required: True
+    subnets:
+      desc_field: Logical router port subnets
+      required: False
+      type: array of IPSubnet
+    urpf_mode:
+      desc_field: Unicast Reverse Path Forwarding mode
+      required: False
+      type: str
+    vpn_session_id:
+      desc_field: Associated VPN session identifier.
+      required: False
+      type: str
+    
 '''
 
 EXAMPLES = '''
-- nsxt_logical_routers_ports:
+- name: Create a Logical Router Port
+  nsxt_logical_routers_ports:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
       resource_type: LogicalRouterDownLinkPort
-      logical_router_id: "723c1e3e-c82c-4243-bba0-2e1ef4815143"
+      logical_router_name: "lr-1"
       linked_logical_switch_port_id:
         target_type: LogicalPort
         target_id: "18691381-b08f-4d90-8c0c-98d0e449b141"
@@ -43,7 +351,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_logical_router_port_params(args=None):
@@ -70,13 +378,23 @@ def get_lr_port_from_display_name(module, manager_url, mgr_username, mgr_passwor
             return logical_router_port
     return None
 
-# def ordered(obj):
-#     if isinstance(obj, dict):
-#         return sorted((k, ordered(v)) for k, v in obj.items())
-#     if isinstance(obj, list):
-#         return sorted(ordered(x) for x in obj)
-#     else:
-#         return obj
+def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['id']
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
+
+def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params ):
+    logical_router_port_params['logical_router_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                '/logical-routers', logical_router_port_params.pop('logical_router_name', None))
+    return logical_router_port_params
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params):
     existing_lr_port = get_lr_port_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params['display_name'])
@@ -89,6 +407,9 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_lr_port.__contains__('service_bindings') and logical_router_port_params.__contains__('service_bindings') and \
         existing_lr_port['service_bindings'] != logical_router_port_params['service_bindings']:
         return True
+    if existing_lr_port.__contains__('subnets') and logical_router_port_params.__contains__('subnets') and \
+        existing_lr_port['subnets'] != logical_router_port_params['subnets']:
+        return True
     return False
 
 def main():
@@ -98,6 +419,7 @@ def main():
                         urpf_mode=dict(required=False, type='str'),
                         mac_address=dict(required=False, type='str'),
                         linked_logical_switch_port_id=dict(required=False, type='dict',
+                        profile_type=dict(required=True, type='str'),
                         selected=dict(required=True, type='boolean'),
                         service=dict(required=False, type='dict',
                         ether_type=dict(required=True, type='int'),
@@ -120,6 +442,7 @@ def main():
                         edge_cluster_member_index=dict(required=False, type='list'),
                         mtu=dict(required=False, type='int'),
                         linked_logical_router_port_id=dict(required=False, type='dict',
+                        profile_type=dict(required=True, type='str'),
                         selected=dict(required=True, type='boolean'),
                         service=dict(required=False, type='dict',
                         ether_type=dict(required=True, type='int'),
@@ -136,7 +459,7 @@ def main():
                         is_valid=dict(required=False, type='boolean'),
                         target_id=dict(required=False, type='str'),
                         target_type=dict(required=False, type='str')),
-                        logical_router_id=dict(required=True, type='str'),
+                        logical_router_name=dict(required=True, type='str'),
                         service_bindings=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str'),
                         state=dict(reauired=True, choices=['present', 'absent']))
@@ -160,7 +483,8 @@ def main():
   if state == 'present':
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params)
+    body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params)
+    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
 
     if not updated:
       # add the logical_router_port

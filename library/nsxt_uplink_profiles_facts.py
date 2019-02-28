@@ -18,12 +18,36 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_uplink_profiles_facts
+short_description: List Hostswitch Profiles
+description: Returns information about the configured hostswitch profiles. Hostswitch
+profiles define networking policies for hostswitches (sometimes referred to
+as bridges in OVS). Currently, only uplink teaming is supported. Uplink
+teaming allows NSX to load balance traffic across different physical NICs
+(PNICs) on the hypervisor hosts. Multiple teaming policies are supported,
+including LACP active, LACP passive, load balancing based on source ID, and
+failover order.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+
 '''
 
 EXAMPLES = '''
-- nsxt_uplink_profiles_facts:
+- name: List Hostswitch Profiles
+  nsxt_uplink_profiles_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -35,7 +59,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def main():

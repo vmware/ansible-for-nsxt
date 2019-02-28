@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+author: Ramesh Chandra
 '''
 
 EXAMPLES = '''
@@ -29,26 +29,60 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    resource_type: TransportNode
-    display_name: NSX Configured TN
-    #transport_node_id: "8b8747f4-3dda-41e9-8949-754929f02034"
-    description: NSX configured Test Transport Node
+    resource_type: "TransportNode"
+    display_name: "NSX Configured TN"
+    description: "NSX configured Test Transport Node"
     host_switch_spec:
-      resource_type: StandardHostSwitchSpec
+      resource_type: "StandardHostSwitchSpec"
       host_switches:
-      - host_switch_profile_ids:
-        - value: "8a97847e-9a17-45a5-aa21-e00e4527ab9b"
-          key: UplinkHostSwitchProfile
-        host_switch_name: hostswitch4
+      - host_switch_profiles:
+        - name: "uplinkProfile1"
+          type: "UplinkHostSwitchProfile"
+        host_switch_name: "hostswitch1"
         pnics:
-        - device_name: vmnic3
+        - device_name: "vmnic1"
           uplink_name: "uplink-1"
         ip_assignment_spec:
-          resource_type: StaticIpPoolSpec
-          ip_pool_id: "ab9cda20-6114-49f1-8c93-f758a59371a4"
+          resource_type: "StaticIpPoolSpec"
+          ip_pool_name: "IPPool-IPV4-1"
     transport_zone_endpoints:
-    - transport_zone_id: "d530bdc8-af38-45ac-8c19-f58f7808041c"
-    node_id: "8b8747f4-3dda-41e9-8949-754929f02034"
+    - transport_zone_name: "TZ1"
+    node_deployment_info:
+      resource_type: "HostNode"
+      display_name: "Host_1"
+      ip_addresses: ["10.149.55.21"]
+      os_type: "ESXI"
+      os_version: "6.5.0"
+      host_credential:
+        username: "root"
+        password: "ca$hc0w"
+        thumbprint: "e7fd7dd84267da10f991812ca62b2bedea3a4a62965396a04728da1e7f8e1cb9"
+    # Edge node_deployment_info
+    # node_deployment_info:
+    #   resource_type: "EdgeNode"
+    #   display_name: "EdegeNode1"
+    #   ip_addresses:
+    #   deployment_type: "VIRTUAL_MACHINE"
+    #   deployment_config:
+    #     form_factor: "SMALL"
+    #     node_user_settings:
+    #       cli_password: "Admin!23Admin"
+    #       root_password: "Admin!23Admin"
+    #     vm_deployment_config:
+    #       placement_type: VsphereDeploymentConfig
+    #       vc_name: "VC2"
+    #       data_network_ids:
+    #       - network-16
+    #       - network-16
+    #       - network-16
+    #       management_network_id: "network-16"
+    #       hostname: "edge1.com"
+    #       compute_id: "domain-c7"
+    #       storage_id: "datastore-15"
+    #       host_id: "host-14"
+    #       default_gateway_addresses:
+    #       management_port_subnets:
+    node_id: null
     state: "present"
 
 '''
@@ -57,13 +91,16 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
-
+import socket
+import hashlib
+import ssl
 
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
 SUCCESS_STATES = ["partial_success", "success"]
+
 
 def get_transport_node_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -74,26 +111,29 @@ def get_transport_node_params(args=None):
             args.pop(key, None)
     return args
 
+
 def get_transport_nodes(module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
-      (rc, resp) = request(manager_url+ '/transport-nodes', headers=dict(Accept='application/json'),
-                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+      (rc, resp) = request(manager_url + '/transport-nodes', headers=dict(Accept='application/json'),
+                           url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-      module.fail_json(msg='Error accessing transport nodes. Error [%s]' % (to_native(err)))
+        module.fail_json(msg='Error accessing transport nodes. Error [%s]' % (to_native(err)))
     return resp
+
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
     try:
-      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
-                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+      (rc, resp) = request(manager_url + endpoint, headers=dict(Accept='application/json'),
+                           url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+        module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
 
     for result in resp['results']:
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result['id']
     if exit_if_not_found:
         module.fail_json(msg='No id exist with display name %s' % display_name)
+
 
 def get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     transport_nodes = get_transport_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
@@ -102,18 +142,24 @@ def get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, va
             return transport_node
     return None
 
-def wait_till_create(vm_id, module, manager_url, mgr_username, mgr_password, validate_certs):
+
+def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
+      count = 0
       while True:
-          (rc, resp) = request(manager_url+ '/transport-nodes/%s/state'% vm_id, headers=dict(Accept='application/json'),
+          (rc, resp) = request(manager_url+ '/transport-nodes/%s/state'% node_id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
           if any(resp['state'] in progress_status for progress_status in IN_PROGRESS_STATES):
               time.sleep(10)
+              count = count + 1
+              if count == 90:
+                    #Wait for max 15 minutes for host to realize
+                    module.fail_json(msg= 'Error creating transport node: %s'%(str(resp['state'])))
           elif any(resp['state'] in progress_status for progress_status in SUCCESS_STATES):
-              time.sleep(5)
-              return
+                time.sleep(5)
+                return
           else:
-              module.fail_json(msg= 'Error creating transport node: %s'%(str(resp['state'])))
+                module.fail_json(msg='Error creating transport node: %s'%(str(resp['state'])))
     except Exception as err:
       module.fail_json(msg='Error accessing transport node. Error [%s]' % (to_native(err)))
 
@@ -128,32 +174,36 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
       return
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params ):
-    for host_switch in transport_node_params['host_switch_spec']['host_switches']:
-        host_switch_profiles = host_switch.pop('host_switch_profiles', None)
+    if transport_node_params.__contains__('host_switch_spec'):
+        for host_switch in transport_node_params['host_switch_spec']['host_switches']:
+            host_switch_profiles = host_switch.pop('host_switch_profiles', None)
 
-        host_switch_profile_ids = []
-        for host_switch_profile in host_switch_profiles:
-            profile_obj = {}
-            profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                    "/host-switch-profiles", host_switch_profile['name'])
-            profile_obj['key'] = host_switch_profile['type']
-            host_switch_profile_ids.append(profile_obj)
-        host_switch['host_switch_profile_ids'] = host_switch_profile_ids
-        ip_pool_id = None
-        if host_switch.__contains__('ip_assignment_spec'):
-            ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
-            host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
-                                                                                        mgr_username, mgr_password, validate_certs,
-                                                                                        "/pools/ip-pools", ip_pool_name)
+            host_switch_profile_ids = []
+            for host_switch_profile in host_switch_profiles:
+                profile_obj = {}
+                profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                        "/host-switch-profiles", host_switch_profile['name'])
+                profile_obj['key'] = host_switch_profile['type']
+                host_switch_profile_ids.append(profile_obj)
+            host_switch['host_switch_profile_ids'] = host_switch_profile_ids
+            ip_pool_id = None
+            if host_switch.__contains__('ip_assignment_spec') and host_switch['ip_assignment_spec']['resource_type'] == 'StaticIpPoolSpec':
+                ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
+                host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
+                                                                                            mgr_username, mgr_password, validate_certs,
+                                                                                            "/pools/ip-pools", ip_pool_name)
     if transport_node_params.__contains__('transport_zone_endpoints'):
         for transport_zone_endpoint in transport_node_params['transport_zone_endpoints']:
             transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
             transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                                     mgr_username, mgr_password, validate_certs,
                                                                                     "/transport-zones", transport_zone_name)
-    transport_node_params['node_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                                    "/fabric/nodes", transport_node_params.pop('fabric_node_name', None))
+    if transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':        
+        vc_name = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vc_name', None)
+        transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['vc_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                    "/fabric/compute-managers", vc_name)
 
+    transport_node_params['display_name'] = transport_node_params.pop('display_name', None)
     return transport_node_params
 #
 # def ordered(obj):
@@ -189,18 +239,72 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     return False
 
+
+def get_api_cert_thumbprint(ip_address, module):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    wrappedSocket = ssl.wrap_socket(sock)
+    try:
+        wrappedSocket.connect((ip_address, 443))
+    except Exception as err:
+        module.fail_json(msg='Failed to get node ID from ESXi host with IP {}. Error: {}'.format(ip_address, err))
+    else:
+        der_cert_bin = wrappedSocket.getpeercert(True)
+        thumb_sha256 = hashlib.sha256(der_cert_bin).hexdigest()
+        return thumb_sha256
+    finally:
+        wrappedSocket.close()
+
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
-                        description=dict(required=False, type='str'),
-                        resource_type=dict(required=False, choices=['TransportNode']),
-                        host_switch_spec=dict(required=False, type='dict',
-                        host_switches=dict(required=True, type='list'),
-                        resource_type=dict(required=True, type='str')),
-                        fabric_node_name=dict(required=True, type='str'),
-                        host_switches=dict(required=False, type='list'),
-                        transport_zone_endpoints=dict(required=False, type='list'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                       host_switch_spec=dict(required=False, type='dict',
+                       host_switches=dict(required=True, type='list'),
+                       resource_type=dict(required=True, type='str')),
+                       node_deployment_info=dict(required=False, type='dict',
+                       discovered_node_id=dict(required=False, type='str'),
+                       deployment_config=dict(required=False, type='dict',
+                       node_user_settings=dict(required=True, type='dict',
+                       cli_username=dict(required=False, type='str'),
+                       audit_username=dict(required=False, type='str'),
+                       root_password=dict(required=False, type='str'),
+                       cli_password=dict(required=False, type='str'),
+                       audit_password=dict(required=False, type='str')),
+                       vm_deployment_config=dict(required=True, type='dict',
+                       data_network_ids=dict(required=True, type='list'),
+                       dns_servers=dict(required=False, type='list'),
+                       ntp_servers=dict(required=False, type='list'),
+                       management_network_id=dict(required=True, type='str'),
+                       enable_ssh=dict(required=False, type='boolean'),
+                       allow_ssh_root_login=dict(required=False, type='boolean'),
+                       placement_type=dict(required=True, type='str'),
+                       compute_id=dict(required=True, type='str'),
+                       search_domains=dict(required=False, type='list'),
+                       vc_id=dict(required=True, type='str'),
+                       storage_id=dict(required=True, type='str'),
+                       default_gateway_addresses=dict(required=False, type='list'),
+                       management_port_subnets=dict(required=False, type='list'),
+                       host_id=dict(required=False, type='str'),
+                       hostname=dict(required=True, type='str')),
+                       form_factor=dict(required=False, type='str')),
+                       discovered_ip_addresses=dict(required=False, type='list'),
+                       ip_addresses=dict(required=False, type='list'),
+                       fqdn=dict(required=False, type='str'),
+                       os_version=dict(required=False, type='str'),
+                       managed_by_server=dict(required=False, type='str'),
+                       host_credential=dict(required=False, type='dict',
+                       username=dict(required=False, type='str'),
+                       password=dict(required=False, type='str'),
+                       thumbprint=dict(required=False, type='str')),
+                       allocation_list=dict(required=False, type='list'),
+                       os_type=dict(required=True, type='str'),
+                       external_id=dict(required=False, type='str'),
+                       resource_type=dict(required=True, type='str'),
+                       deployment_type=dict(required=False, type='str')),
+                       maintenance_mode=dict(required=False, type='str'),
+                       transport_zone_endpoints=dict(required=False, type='list'),
+                       node_id=dict(required=False, type='str'),
+                       state=dict(reauired=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   transport_node_params = get_transport_node_params(module.params.copy())
@@ -225,9 +329,14 @@ def main():
     headers['Content-Type'] = 'application/json'
 
     if not updated:
-      # add the node
+        # add the node
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(logical_switch_params)), id='12345')
+      thumbprint = body["node_deployment_info"]["host_credential"]["thumbprint"]
+      esxi_ip_address = body["node_deployment_info"]["ip_addresses"][0]
+      if not thumbprint:
+          thumbprint = get_api_cert_thumbprint(esxi_ip_address, module)
+          body["node_deployment_info"]["host_credential"]["thumbprint"] = thumbprint
       request_data = json.dumps(body)
       try:
           if not transport_node_id:
@@ -240,14 +349,18 @@ def main():
       except Exception as err:
            module.fail_json(msg="Failed to add transport node. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
-      wait_till_create(resp['id'], module, manager_url, mgr_username, mgr_password, validate_certs)
+      wait_till_create(resp['node_id'], module, manager_url, mgr_username, mgr_password, validate_certs)
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Transport node with display name %s created." % module.params['display_name'])
+      module.exit_json(changed=True, id=resp["node_id"], body= str(resp), message="Transport node with display name %s created." % module.params['display_name'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(body)), id=transport_node_id)
-
       body['_revision'] = revision # update current revision
+      thumbprint = body["node_deployment_info"]["host_credential"]["thumbprint"]
+      esxi_ip_address = body["node_deployment_info"]["ip_addresses"][0]
+      if not thumbprint:
+          thumbprint = get_api_cert_thumbprint(esxi_ip_address, module)
+          body["node_deployment_info"]["host_credential"]["thumbprint"] = thumbprint
       request_data = json.dumps(body)
       id = transport_node_id
       try:
@@ -257,7 +370,7 @@ def main():
           module.fail_json(msg="Failed to update transport node with id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
 
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Transport node with node id %s updated." % id)
+      module.exit_json(changed=True, id=resp["node_id"], body= str(resp), message="Transport node with node id %s updated." % id)
 
   elif state == 'absent':
     # delete the array

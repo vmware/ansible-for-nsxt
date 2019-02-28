@@ -18,12 +18,31 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_controllers_facts
+short_description: Returns info for all cluster node VM auto-deployment attempts
+description: Returns request information for every attempted deployment of a cluster
+node VM.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+
 '''
 
 EXAMPLES = '''
-- nsxt_controllers_facts:
+  - name: Lists info for all cluster node VM auto-deployment attempts
+    nsxt_controllers_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,7 +53,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def main():

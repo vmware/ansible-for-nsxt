@@ -4,8 +4,8 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Create ip pool
-      nsxt_compute_collection_fabric_templates_facts:
+    - name: List transport node profiles
+      nsxt_transport_node_profiles_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"
         password: "{{password}}"

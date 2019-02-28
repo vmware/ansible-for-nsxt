@@ -18,12 +18,87 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_fabric_compute_managers
+short_description: Register compute manager with NSX
+description: Registers compute manager with NSX. Inventory service will collect
+data from the registered compute manager
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    credential:
+      asymmetric_credential:
+        desc_field: Asymmetric login credential
+        required: False
+        type: str
+      credential_key:
+        desc_field: Credential key
+        no_log: 'True'
+        required: False
+        type: str
+      credential_type:
+        desc_field: Possible values are 'UsernamePasswordLoginCredential', 'VerifiableAsymmetricLoginCredential'.
+        required: True
+        type: str
+      credential_verifier:
+        desc_field: Credential verifier
+        required: False
+        type: str
+      desc_field: Login credentials for the compute manager
+      password:
+        desc_field: Password for the user (optionally specified on PUT, unspecified on
+          GET)
+        no_log: 'True'
+        required: False
+        type: str
+      required: False
+      thumbprint:
+        desc_field: Hexadecimal SHA256 hash of the vIDM server's X.509 certificate
+        no_log: 'True'
+        required: False
+        type: str
+      type: dict
+      username:
+        desc_field: Username value of the log
+        required: False
+        type: str
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    origin_type:
+      desc_field: Compute manager type like vCenter
+      required: True
+      type: str
+    server:
+      desc_field: IP address or hostname of compute manager
+      required: True
+      type: str
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                  'present' is used to create or update resource. 
+                  'absent' is used to delete resource."
+      required: True
+    
 '''
 
 EXAMPLES = '''
-- nsxt_fabric_compute_managers:
+- name: Register compute manager with NSX
+  nsxt_fabric_compute_managers:
     hostname: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
@@ -33,7 +108,7 @@ EXAMPLES = '''
     server: "10.161.244.213"
     origin_type: vCenter
     credential:
-    credential_type: UsernamePasswordLoginCredential
+    credential_type: "UsernamePasswordLoginCredential"
     username: "administrator@vsphere.local"
     password: "Admin!23"
     thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
@@ -44,7 +119,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 import ssl
 import socket

@@ -18,12 +18,60 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_edge_clusters
+short_description: Create Edge Cluster
+description: Creates a new edge cluster.
+It only supports homogeneous members.
+The TransportNodes backed by EdgeNode are only allowed in cluster members.
+DeploymentType (VIRTUAL_MACHINE|PHYSICAL_MACHINE) of these EdgeNodes is
+recommended to be the same. EdgeCluster supports members of different
+deployment types.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    cluster_profile_bindings:
+      desc_field: Edge cluster profile bindings
+      required: False
+      type: array of ClusterProfileTypeIdEntry
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    members:
+      desc_field: 'EdgeCluster only supports homogeneous members.
+        These member should be backed by either EdgeNode or PublicCloudGatewayNode.
+        TransportNode type of these nodes should be the same.
+        DeploymentType (VIRTUAL_MACHINE|PHYSICAL_MACHINE) of these EdgeNodes is
+        recommended to be the same. EdgeCluster supports members of different
+        deployment types.'
+      required: False
+      type: array of EdgeClusterMember
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                  'present' is used to create or update resource. 
+                  'absent' is used to delete resource."
+      required: True
+    
 '''
 
 EXAMPLES = '''
-- nsxt_edge_clusters_facts:
+  - name: Create Edge Cluster
+    nsxt_edge_clusters:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -40,7 +88,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 

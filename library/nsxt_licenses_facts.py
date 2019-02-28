@@ -18,12 +18,30 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_licenses_facts
+short_description: Get all licenses
+description: Returns all licenses.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+
 '''
 
 EXAMPLES = '''
-- nsxt_licenses_facts:
+- name: Get all licenses
+  nsxt_licenses_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,7 +52,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError

@@ -1,84 +1,153 @@
-hostname: "10.192.215.6"
+hostname: "192.168.100.115"
 username: "admin"
-password: "Admin!23Admin"
+password: "VMwarensbu_1"
 validate_certs: False
+force_redeploy: False
 
-fabric_host_nodes:
-- display_name: "Host_1"
-  ip_addresses: ["10.160.113.154"]
-  os_type: "ESXI"
-  os_version: "6.5.0"
-  host_username: "root"
-  host_password: "ca$hc0w"
-  host_thumbprint: "63:84:24:EC:B4:1F:89:B1:20:F8:02:8C:B5:06:40:D2:44:8B:FC:75:6A:E1:A8:1A:E8:62:58:D8:FC:B3:6E:9F"
-# - display_name: "Host_2"
-#   ip_addresses: ["10.193.26.169"]
-#   os_type: "ESXI"
-#   os_version: "6.5.0"
-#   host_username: "root"
-#   host_password: "ca$hc0w"
-#   host_thumbprint: "CD:69:D9:2C:C1:76:2A:90:50:31:D9:E1:75:D1:FA:B5:7D:D8:8C:0A:95:86:CC:34:E0:94:3F:F5:EE:48:72:77"
+use_floating_ip: True
+service_boot_timeout: "30"
+license_key: "<license key here>"
+
+dns_server: "192.168.0.253"
+ntp_server: "192.168.0.253"
+dns_domain: "corp.local"
+gateway: "192.168.0.253"
+netmask: "255.255.0.0"
+prefix_length: "22"
+
+transport_zone_name_1: "test-transport-zone-1"
+host_switch_name_1: "test-host-switch-name-1"
+ip_pool_name_1: "test-ip-pool-1"
+uplink_profile_name_1: "test-uplink-profile-1"
+uplink_name_1: "test-uplink-1"
+device_name_1: "vmnic1"
+
+deploy_ova:
+- display_name: "nsxm-1"
+  master_node: True
+  vmname: "nsxm-1"
+  hostname: "nsxm-1"
+  ip_address: "192.168.100.1"
+  netmask: "255.255.0.0"
+- display_name: "nsxm-2"
+  master_node: False
+  vmname: "nsxm-2"
+  hostname: "nsxm-2"
+  ip_address: "192.168.100.2"
+  netmask: "255.255.0.0"
+- display_name: "nsxm-3"
+  master_node: False
+  vmname: "nsxm-3"
+  hostname: "nsxm-3"
+  ip_address: "192.168.100.3"
+  netmask: "255.255.0.0"
+
+ovftool_path: "/usr/bin"
+path_to_ova: "/root/"
+ova_file: "nsx-unified-appliance-2.4.0.0.0.11224879.ova"
+
+vcenter_prod_name: "vc-l-01a"
+vcenter_prod: "192.168.40.1"
+vcenter_prod_thumbprint: "DF:B4:7F:44:E4:1C:FA:0E:7A:85:47:9F:90:1A:B0:7B:57:81:74:C0:CF:BD:B7:9D:2D:F3:F1:AC:03:B5:5C:DE"
+datacenter: "DC1"
+datastore: "Datastore"
+cluster: "CL1"
+portgroup: "br100"
+management_network_id: "br100"
+compute_id: "vc-l-01a"
+storage_id: "Datastore"
+
+vcenter_user: "administrator@vsphere.local"
+vcenter_passwd: "VMware1!"
+
+appliance_role: "nsx-manager nsx-controller"
+appliance_password: "{{password}}"
+appliance_size: "SMALL"
+
+backup_servers:
+- display_name: "backup_server_1"
+  backup_enabled: True
+  seconds_between_backups: 8640
+  backup_server: "10.111.222.33"
+  backup_server_port: 555
+  backup_protocol_name: "sftp"
+  backup_ssh_fingerprint: "SHA256:w2NgXhG2Nm76q9PL/bXWKkLbDS31uMLYttUe9eajPaA"
+  backup_username: "TEST_USERNAME"
+  backup_password: "TEST_PASSWORD"
+  backup_directory_path: "/nsx-backups"
+  backup_passphrase: "VMwarensbu_12234"
+  backup_inventory_summary_interval: 300
+
+syslog_servers:
+- display_name: "syslog_server"
+  syslog_server: "10.0.0.11"
+  syslog_server_port: 1234
+  syslog_protocol_name: "<protocol_name>"
+  syslog_level: "<syslog_level>"
+  hostname: "{{hostname}}"
+  username: "{{username}}"
+  password: "{{password}}"
+  validate_certs: "{{validate_certs}}"
+
+transport_zones:
+- display_name: "{{transport_zone_name_1}}"
+  transport_type: "VLAN"
+  host_switch_name: "{{host_switch_name_1}}"
+  description: "transport-zone description"
 
 ip_pools:
-- display_name: IPPool-IPV4-1
+- display_name: "{{ip_pool_name_1}}"
   subnets:
   - allocation_ranges:
-    - start: "10.112.201.28"
-      end: "10.112.201.29"
-    cidr: "10.112.201.0/24"
-
-transportzones:
-- display_name: "TZ1"
-  transport_type: "OVERLAY"
-  host_switch_name: "hostswitch1"
-# - display_name: "TZ2"
-#   transport_type: "VLAN"
-#   host_switch_name: "hostswitch2"
+    - start: "10.110.80.141"
+      end: "10.110.80.150"
+    cidr: "10.110.80.0/22"
 
 uplink_profiles:
-- display_name: uplinkProfile1
+- display_name: "{{uplink_profile_name_1}}"
   teaming:
     active_list:
-    - uplink_name: "uplink-1"
+    - uplink_name: "{{uplink_name_1}}"
       uplink_type: PNIC
     policy: FAILOVER_ORDER
   transport_vlan: 0
-# - display_name: uplinkProfile2
-#   teaming:
-#     active_list:
-#     - uplink_name: "uplink-2"
-#       uplink_type: PNIC
-#     policy: FAILOVER_ORDER
-#   transport_vlan: 0
 
 transport_nodes:
-- display_name: TN1
-  host_switches:
-  - host_switch_profiles:
-    - name: uplinkProfile1
-      type: UplinkHostSwitchProfile
-    host_switch_name: hostswitch1
-    pnics:
-    - device_name: vmnic1
-      uplink_name: "uplink-1"
-    ip_assignment_spec:
-      resource_type: StaticIpPoolSpec
-      ip_pool_name: "IPPool-IPV4-1"
-  transport_zone_endpoints:
-  - transport_zone_name: "TZ1"
-  fabric_node_name: "Host_1"
-# - display_name: TN2
-#   host_switches:
-#   - host_switch_profiles:
-#     - name: uplinkProfile2
-#       type: UplinkHostSwitchProfile
-#     host_switch_name: hostswitch2
-#     pnics:
-#     - device_name: vmnic1
-#       uplink_name: "uplink-2"
-#     ip_assignment_spec:
-#       resource_type: StaticIpPoolSpec
-#       ip_pool_name: "IPPool-IPV4-1"
-#   transport_zone_endpoints:
-#   - transport_zone_name: "TZ2"
-#   fabric_node_name: "Host_2"
+- display_name: "esx-03a"
+  uplink_profile_name: "{{uplink_profile_name_1}}"
+  host_switch_name: "{{host_switch_name_1}}"
+  device_name: "{{device_name_1}}"
+  uplink_name: "{{uplink_name_1}}"
+  ip_pool_name: "{{ip_pool_name_1}}"
+  transport_zone_name: "{{transport_zone_name_1}}"
+  ip_address: "192.168.20.3"
+  os_type: "ESXI"
+  os_version: "6.7.0"
+  username: "root"
+  password: "VMware1!"
+  # thumbprint: "5AC7F0CA989ADAB46AFA443CA0C7AC91EB8C1B36571AEE4D60403C20DDACE3E7"
+  thumbprint: ""
+
+- display_name: "esx-04a"
+  uplink_profile_name: "{{uplink_profile_name_1}}"
+  host_switch_name: "{{host_switch_name_1}}"
+  device_name: "{{device_name_1}}"
+  uplink_name: "{{uplink_name_1}}"
+  ip_pool_name: "{{ip_pool_name_1}}"
+  transport_zone_name: "{{transport_zone_name_1}}"
+  ip_address: "192.168.20.4"
+  os_type: "ESXI"
+  os_version: "6.7.0"
+  username: "root"
+  password: "VMware1!"
+  # thumbprint: "2742B493AA40E285D96F6452733333A988DE0AD335593EB9AF4AFB0A95812E57"
+  thumbprint: ""
+
+transport_node_profiles:
+- display_name: "test-transport-node-profile-1"
+  uplink_profile_name: "{{uplink_profile_name_1}}"
+  host_switch_name: "{{host_switch_name_1}}"
+  device_name: "{{device_name_1}}"
+  uplink_name: "{{uplink_name_1}}"
+  ip_pool_name: "{{ip_pool_name_1}}"
+  transport_zone_name: "{{transport_zone_name_1}}"

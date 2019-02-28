@@ -17,9 +17,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+author: Ramesh Chandra
 '''
 
 EXAMPLES = '''
@@ -28,41 +27,61 @@ EXAMPLES = '''
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
-      wait_time: 50
+      service_boot_timeout: 50
 '''
 
 RETURN = '''# '''
-import json, time
+import time
 from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
+
+def get_service_boot_timeout(service_boot_timeout, current_time, polling_interval):
+    time_diff = datetime.now() - current_time
+    time.sleep(polling_interval)
+    return time_diff.seconds + service_boot_timeout + polling_interval
+
+
+def is_nsxt_manager_alive(manager_url, mgr_username, mgr_password, validate_certs, headers, module):
+    # Polling interval in seconds
+    polling_interval = 60
+    service_boot_timeout = 0
+    while service_boot_timeout <= (module.params['service_boot_timeout'] * 60):
+        try:
+            current_time = datetime.now()
+            (rc, resp) = request(manager_url + '/cluster/status', headers=dict(Accept='application/json'),
+                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=False)
+            if (rc == 200):
+                cluster_id = resp.get("cluster_id")
+                if cluster_id:
+                    return True
+                else:
+                    service_boot_timeout = get_service_boot_timeout(service_boot_timeout, current_time, polling_interval)
+        except Exception:
+            service_boot_timeout = get_service_boot_timeout(service_boot_timeout, current_time, polling_interval)
+    return False
+
+
 def main():
-  argument_spec = vmware_argument_spec()
-  argument_spec.update(wait_time=dict(required=False, type='int'))
-  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(service_boot_timeout=dict(required=True, type='int'), ip_address=dict(required=True, type='str'))
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-  mgr_hostname = module.params['hostname']
-  mgr_username = module.params['username']
-  mgr_password = module.params['password']
-  validate_certs = module.params['validate_certs']
+    mgr_ip_address = module.params['ip_address']
+    mgr_hostname = module.params['hostname'] 
+    mgr_username = module.params['username']
+    mgr_password = module.params['password']
+    validate_certs = module.params['validate_certs']
+    headers = dict(Accept='application/json')
 
-  manager_url = 'https://{}/api/v1'.format(mgr_hostname)
+    manager_url = 'https://{}/api/v1'.format(mgr_ip_address)
 
-  changed = False
-  wait_time = 10 # wait till 30 min
-  while wait_time < (module.params['wait_time'] *60):
-      try:
-        current_time = datetime.now()
-        (rc, resp) = request(manager_url+ '/cluster/nodes/deployments', headers=dict(Accept='application/json'),
-                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-        module.exit_json(changed=changed, msg= " NSX manager is UP")
-      except Exception as err:
-        time_diff = datetime.now() - current_time
-        time.sleep(10)
-        wait_time = time_diff.seconds + wait_time + 10
-  module.fail_json(changed=changed, msg= " Error accessing nsx manager. Timeed out")
+    if is_nsxt_manager_alive(manager_url, mgr_username, mgr_password, validate_certs, headers, module):
+        module.exit_json(changed=False, msg="The NSX-T manager {} is up and running".format(mgr_hostname))
+    else:
+        module.fail_json(msg="Failed to verify that NSX-T manager {} is up and running".format(mgr_hostname))
 
 if __name__ == '__main__':
-	main()
+    main()

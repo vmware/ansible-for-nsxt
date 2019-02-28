@@ -18,8 +18,131 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_logical_switches
+short_description: Create a Logical Switch
+description: Creates a new logical switch. The request must include the
+transport_zone_id, display_name, and admin_state (UP or DOWN). The
+replication_mode (MTEP or SOURCE) is required for overlay logical
+switches, but not for VLAN-based logical switches. A vlan needs to be
+provided for VLAN-based logical switches
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    address_bindings:
+      desc_field: Address bindings for the Logical switch
+      required: False
+      type: array of PacketAddressClassifier
+    admin_state:
+      desc_field: Represents Desired state of the Logical Switch
+      required: True
+      type: str
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    extra_configs:
+      desc_field: 'This property could be used for vendor specific configuration in key value
+        string pairs, the setting in extra_configs will be automatically inheritted
+        by logical ports in the logical switch.'
+      required: False
+      type: array of ExtraConfig
+    hybrid:
+      desc_field: 'If this flag is set to true, then all the logical switch ports attached
+        to this logical switch will behave in a hybrid fashion. The hybrid logical switch
+        port indicates to NSX that the VM intends to operate in underlay mode,
+        but retains the ability to forward egress traffic to the NSX overlay network.
+    
+        This flag can be enabled only for the logical switches in the overlay type transport
+        zone which has host switch mode as STANDARD and also has either CrossCloud or CloudScope tag
+        scopes.
+    
+        Only the NSX public cloud gateway (PCG) uses this flag, other host agents like
+        ESX, KVM and Edge will ignore it. This property cannot be modified once the logical switch 
+        is created.'
+      required: False
+      type: boolean
+    ip_pool_name:
+      desc_field: IP pool name
+      required: False
+      type: str
+    lswitch_id:
+      desc_field: LSwitch ID
+      required: False
+      type: str
+    mac_pool_id:
+      desc_field: Mac pool id that associated with a LogicalSwitch.
+      required: False
+      type: str
+    replication_mode:
+      desc_field: Replication mode of the Logical Switch
+      required: False
+      type: str
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                  'present' is used to create or update resource. 
+                  'absent' is used to delete resource."
+      required: True
+    switch_type:
+      desc_field: 'This readonly field indicates purpose of a LogicalSwitch. It is set
+        by manager internally and any user provided values will not be honored.
+        DEFAULT type LogicalSwitches are created for basic L2 connectivity by API users.
+        SERVICE_PLANE type LogicalSwitches are system created service plane LogicalSwitches
+        -
+        Service Insertion service.'
+      required: False
+      type: str
+    switching_profiles:
+      desc_field: Switching Profiles
+      required: False
+      type: list
+    transport_zone_name:
+      desc_field: Transport Zone Name
+      required: True
+      type: str
+    uplink_teaming_policy_name:
+      desc_field: This name has to be one of the switching uplink teaming policy names
+        listed inside the logical switch's TransportZone. If this field is not specified,
+        the logical switch will not have a teaming policy associated with it and the host
+        switch's default teaming policy will be used.
+      required: False
+      type: str
+    vlan:
+      desc_field: 'This property is dedicated to VLAN based network, to set VLAN of logical
+        network. It is mutually exclusive with ''vlan_trunk_spec''.'
+      required: False
+      type: int
+    vlan_trunk_spec:
+      desc_field: 'This property is used for VLAN trunk specification of logical switch.
+        It''s mutually exclusive with ''vlan''. Also it could be set to do guest VLAN
+        tagging in overlay network.'
+      required: False
+      type: dict
+      vlan_ranges:
+        desc_field: Trunk VLAN id ranges
+        required: True
+        type: array of TrunkVlanRange
+    vni:
+      desc_field: 'Only for OVERLAY network. A VNI will be auto-allocated from the
+        default VNI pool if not given; otherwise the given VNI has to be
+        inside the default pool and not used by any other LogicalSwitch.'
+      required: False
+      type: int
+    
 '''
 
 EXAMPLES = '''
@@ -30,9 +153,9 @@ EXAMPLES = '''
     password: "Admin!23Admin"
     validate_certs: False
     display_name: "test_lswitch"
-    replication_mode: SOURCE
-    admin_state: UP
-    transport_zone_id: "d530bdc8-af38-45ac-8c19-f58f7808041c"
+    replication_mode: "SOURCE"
+    admin_state: "UP"
+    transport_zone_name: "TZ1"
     state: "present"
 '''
 
@@ -40,7 +163,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_logical_switch_params(args=None):
@@ -119,17 +242,22 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_logical_switch.__contains__('replication_mode') and logical_switch_with_ids.__contains__('replication_mode') and \
         existing_logical_switch['replication_mode'] != logical_switch_with_ids['replication_mode']:
         return True
+    if existing_logical_switch.__contains__('hybrid') and logical_switch_with_ids.__contains__('hybrid') and \
+        existing_logical_switch['hybrid'] != logical_switch_with_ids['hybrid']:
+        return True
     return False
 
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                        switch_type=dict(required=False, type='str'),
                         replication_mode=dict(required=False, type='str'),
                         extra_configs=dict(required=False, type='list'),
                         uplink_teaming_policy_name=dict(required=False, type='str'),
                         transport_zone_name=dict(required=True, type='str'),
                         ip_pool_name=dict(required=False, type='str'),
                         vlan=dict(required=False, type='int'),
+                        hybrid=dict(required=False, type='boolean'),
                         mac_pool_id=dict(required=False, type='str'),
                         vni=dict(required=False, type='int'),
                         vlan_trunk_spec=dict(required=False, type='dict',

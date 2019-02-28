@@ -10,7 +10,7 @@ For general information about Ansible, visit the [GitHub project page][an-github
 
 [an-github]: https://github.com/ansible/ansible
 
-These modules are maintained by [VMware](https://www.vmware.com/).
+Modules in development/pscoe branch are community maintained.
 
 Documentation on the NSX platform can be found at the [NSX-T Documentation page](https://docs.vmware.com/en/VMware-NSX-T/index.html)
 
@@ -20,29 +20,39 @@ The modules in this repository are focused on enabling automation of installatio
 #### Deployment and installation modules
 
 * nsxt_deploy_ova
+* nsxt_configure_cluster
+* nsxt_join_node_to_cluster
 * nsxt_licenses
-* nsxt_manager_status
 * nsxt_licenses_facts
+* nsxt_manager_status
 * nsxt_controllers
 * nsxt_controllers_facts
+* nsxt_controller_manager_auto_deployment
+* nsxt_configure_backup_server
+* nsxt_configure_syslog_server
 * nsxt_edge_clusters
 * nsxt_edge_clusters_facts
-* nsxt_compute_managers
-* nsxt_compute_managers_facts
+* nsxt_fabric_compute_managers
+* nsxt_fabric_compute_managers_facts
 * nsxt_fabric_nodes
 * nsxt_fabric_nodes_facts
-* nsxt_compute_collection_fabric_templates
-* nsxt_compute_collection_fabric_templates_facts
 * nsxt_ip_pools
 * nsxt_ip_pools_facts
-* nsxt_uplink_profiles
-* nsxt_uplink_profiles_facts
-* nsxt_transport_zones
-* nsxt_transport_zones_facts
+* nsxt_transport_node_collections
+* nsxt_transport_node_collections_facts
+* nsxt_transport_node_profiles
+* nsxt_transport_node_profiles_facts
 * nsxt_transport_nodes
 * nsxt_transport_nodes_facts
+* nsxt_transport_zones
+* nsxt_transport_zones_facts
+* nsxt_uplink_profiles
+* nsxt_uplink_profiles_facts
+* nsxt_compute_collection_fabric_templates
+* nsxt_compute_collection_fabric_templates_facts
 * nsxt_compute_collection_transport_templates
 * nsxt_compute_collection_transport_templates_facts
+* nsxt_add_default_firewall_rule
 
 ##### Logical networking modules
 * nsxt_logical_ports
@@ -75,10 +85,11 @@ pip install --upgrade pyvmomi pyvim requests ssl
 ```
 Download and Install Ovf tool - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353)
 
-Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
+Clone repository [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/tree/development/pscoe).
 ```
-unzip ansible-for-nsxt-master.zip
-cd ansible-for-nsxt-master
+git clone https://github.com/vmware/ansible-for-nsxt.git
+cd ansible-for-nsxt
+git checkout development/pscoe
 ```
 To run a sample Ansible playbook - To create a sample test topology using deployments and install module.
 
@@ -90,7 +101,7 @@ ansible-playbook test_basic_topology.yml -vvv
 
 The following versions of NSX are supported:
 
- * NSX-T 2.2.*
+ * NSX-T 2.4
  * Ansible 2.6
 
 # Contributing

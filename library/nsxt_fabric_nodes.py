@@ -19,35 +19,274 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = ''' TODO (Not complete)
+DOCUMENTATION = '''
+---
 module: nsxt_fabric_nodes
-version_added: "2.2"
-short_description: Add/update/remove fabric (host/edge) node to nsxt manager
-description:
-- Manage the fabric nodes
-options:
-  hostname:
-    description:
-    - Deployed NSX manager hostname.
-    required: true
-  username:
-    description:
-    - The username to authenticate with the NSX manager WebServices.
-    required: true
-  password:
-    description:
-    - The password to authenticate with the NSX manager WebServices.
-    required: true
-  validate_certs:
-    description:
-    - Should https certificates be validated?
-    type: bool
-    default: 'yes'
-  state:
-    description:
-    - Desired state of module
-    required: true
+short_description: Register and Install NSX Components on a Node
+description: Creates a host node (hypervisor) or edge node (router) in the transport
+network.
+
+When you run this command for a host, NSX Manager attempts to install the
+NSX kernel modules, which are packaged as VIB, RPM, or DEB files. For the
+installation to succeed, you must provide the host login credentials and the
+host thumbprint.
+
+To get the ESXi host thumbprint, SSH to the host and run the
+<b>openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout</b>
+command.
+
+To generate host key thumbprint using SHA-256 algorithm please follow the
+steps below.
+
+Log into the host, making sure that the connection is not vulnerable to a
+man in the middle attack. Check whether a public key already exists.
+Host public key is generally located at '/etc/ssh/ssh_host_rsa_key.pub'.
+If the key is not present then generate a new key by running the following
+command and follow the instructions.
+
+<b>ssh-keygen -t rsa</b>
+
+Now generate a SHA256 hash of the key using the following command. Please
+make sure to pass the appropriate file name if the public key is stored with
+a different file name other than the default 'id_rsa.pub'.
+
+<b>awk '{print $2}' id_rsa.pub | base64 -d | sha256sum -b | sed 's/ .*$//' | xxd -r -p | base64</b>
+This api is deprecated as part of FN+TN unification. Please use Transport Node API
+to install NSX components on a node.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    action:
+      desc_field: 'PROTECT - Protect rules are defined per policy based
+        IPSec VPN session.
+        BYPASS - Bypass rules are defined per IPSec VPN
+        service and affects all policy based IPSec VPN sessions.
+        Bypass rules are prioritized over protect rules.'
+      required: False
+      type: str
+    deployment_config:
+      desc_field: 'When this configuration is specified, edge fabric node of deployment_type
+        VIRTUAL_MACHINE will be deployed and registered with MP.'
+      form_factor:
+        desc_field: Supported edge form factor.
+        required: False
+        type: str
+      node_user_settings:
+        audit_password:
+          desc_field: "Password for the node audit user. For deployment,
+                        this property is required. After deployment, this property is ignored, and
+                        the node cli must be used to change the password.
+                        The password specified must be at least 12 characters in length and must
+                        contain at least one lowercase, one uppercase, one numeric character and one
+                        special character (except quotes)."
+          required: False
+          type: str
+        audit_username:
+          desc_field: "The default username is \"audit\". To configure username, you must provide
+                        this property together with <b>audit_password</b>."
+          required: False
+          type: str
+        cli_password:
+          desc_field: "Password for the node cli user. For deployment,
+                      this property is required. After deployment, this property is ignored, and
+                      the node cli must be used to change the password.
+                      The password specified must be at least 12 characters in length and must
+                      contain at least one lowercase, one uppercase, one numeric character and one
+                      special character (except quotes)."
+          no_log: 'True'
+          required: False
+          type: str
+        cli_username:
+          desc_field: "To configure username, you must provide this property together with
+                        <b>cli_password</b>."
+          required: False
+          type: str
+        desc_field: "Username and password settings for the node.
+                      Note - these settings will be honored only during node deployment.
+                      Post deployment, CLI must be used for changing the user settings, changes to these 
+                      parameters will not have any effect."
+        required: True
+        root_password:
+          desc_field: "Password for the node root user. For deployment,
+                      this property is required. After deployment, this property is ignored, and the node cli
+                      must be used to change the password.
+                      The password specified must be at least 12 characters in length and must
+                      contain at least one lowercase, one uppercase, one numeric character and one
+                      special character (except quotes)."
+          no_log: 'True'
+          required: False
+          type: str
+        type: dict
+      required: False
+      type: dict
+      vm_deployment_config:
+        allow_ssh_root_login:
+          desc_field: 'If true, the root user will be allowed to log into the VM.
+            Allowing root SSH logins is not recommended for security reasons.'
+          required: False
+          type: boolean
+        compute_id:
+          desc_field: 'The cluster node VM will be deployed on the specified cluster or
+              resourcepool for specified VC server.'
+          required: True
+          type: str
+        data_network_ids:
+          desc_field: "List of distributed portgroup or VLAN logical identifiers to which the
+                      datapath serving vnics of edge node vm will be connected."
+          required: True
+          type: list
+        default_gateway_addresses:
+          desc_field: 'The default gateway for the VM to be deployed must be specified
+            if all the other VMs it communicates with are not in the same subnet.
+            Do not specify this field and management_port_subnets to use DHCP.
+            Note: only single IPv4 default gateway address is supported and it
+            must belong to management network.
+            IMPORTANT: VMs deployed using DHCP are currently not supported,
+            so this parameter should be specified.'
+          required: False
+          type: list
+        desc_field: 
+        dns_servers:
+          desc_field: 'List of DNS servers.
+            If DHCP is used, the default DNS servers associated with
+            the DHCP server will be used instead.
+            Required if using static IP.'
+          required: False
+          type: list
+        enable_ssh:
+          desc_field: 'If true, the SSH service will automatically be started on the VM.
+            Enabling SSH service is not recommended for security reasons.'
+          required: False
+          type: boolean
+        host_id:
+          desc_field: "The service VM will be deployed on the specified host in the specified
+                        server within the cluster if host_id is specified.
+                        Note: You must ensure that storage and specified networks are accessible
+                        by this host."
+          required: False
+          type: str
+        hostname:
+          desc_field: Desired host name/FQDN for the VM to be deployed
+          required: True
+          type: str
+        management_network_id:
+          desc_field: 'Distributed portgroup identifier to which the management vnic of
+              cluster node VM will be connected.'
+          required: True
+          type: str
+        management_port_subnets:
+          desc_field: 'IP Address and subnet configuration for the management port.
+            Do not specify this field and default_gateway_addresses to use DHCP.
+            Note: only one IPv4 address is supported for the management port.
+            IMPORTANT: VMs deployed using DHCP are currently not supported,
+            so this parameter should be specified.'
+          required: False
+          type: array of IPSubnet
+        ntp_servers:
+          desc_field: 'List of NTP servers.
+            To use hostnames, a DNS server must be defined. If not using DHCP,
+            a DNS server should be specified under dns_servers.'
+          required: False
+          type: list
+        placement_type:
+          desc_field: "Specifies the config for the platform through which to deploy the VM"
+          required: True
+          type: str
+        required: True
+        search_domains:
+          desc_field: 'List of domain names that are used to complete unqualified host
+            names.
+    
+            '
+          required: False
+          type: list
+        storage_id:
+          desc_field: Moref of the datastore in VC. If it is to be taken from 'Agent VM
+            Settings', then it should be empty.
+          required: True
+          type: str
+        type: dict
+        vc_name:
+          desc_field: Name of VC
+          required: True
+          type: str
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    external_id:
+      desc_field: ID of the Node maintained on the Node and used to recognize the Node
+      required: False
+      type: str
+    host_credential:
+      desc_field: Login credentials for the host
+      password:
+        desc_field: Password for the user (optionally specified on PUT, unspecified on
+          GET)
+        no_log: 'True'
+        required: False
+        type: str
+      required: False
+      thumbprint:
+        desc_field: Hexadecimal SHA256 hash of the vIDM server's X.509 certificate
+        no_log: 'True'
+        required: False
+        type: str
+      type: dict
+      username:
+        desc_field: Username value of the log
+        required: False
+        type: str
+    ip_addresses:
+      desc_field: 'IP Addresses of the Node, version 4 or 6. This property is mandatory
+        for all nodes except for
+    
+        automatic deployment of edge virtual machine node. For automatic deployment, the
+        ip address from
+    
+        management_port_subnets property will be considered.
+    
+        '
+      required: False
+      type: array of IPAddress
+    os_type:
+      desc_field: Hypervisor type, for example ESXi or RHEL KVM
+      required: False
+      type: str
+    os_version:
+      desc_field: Version of the hypervisor operating system
+      required: False
+      type: str
+    resource_type:
+      choices:
+      - HostNode
+      - EdgeNode
+      desc_field: Fabric node type, for example 'HostNode', 'EdgeNode' or 'PublicCloudGatewayNode'
+      required: True
+      type: str
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                    'present' is used to create or update resource. 
+                    'absent' is used to delete resource."
+      required: True
+    unprepare_host:
+      desc_field: Delete a host without uninstalling NSX components
+      required: False
+      type: str
+    
 '''
 
 EXAMPLES = '''
@@ -87,7 +326,7 @@ EXAMPLES = '''
         root_password: "Admin!23Admin"
       vm_deployment_config:
         placement_type: VsphereDeploymentConfig
-        vc_id: "67dbce0d-973e-4b7d-813d-7ae5a91754c2"
+        vc_name: "VC1"
         data_network_ids:
         - network-44
         - network-44
@@ -110,7 +349,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_fabric_params(args=None):
@@ -136,6 +375,26 @@ def get_fabric_node_from_display_name(module, manager_url, mgr_username, mgr_pas
         if fabric_node.__contains__('display_name') and fabric_node['display_name'] == display_name:
             return fabric_node
     return None
+
+def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['id']
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
+
+def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, fabric_params ):
+    if fabric_params['resource_type'] == 'EdgeNode':
+        vc_name = fabric_params['deployment_config']['vm_deployment_config'].pop('vc_name', None)
+        fabric_params['deployment_config']['vm_deployment_config']['vc_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                    "/fabric/compute-managers", vc_name)
+    return fabric_params
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, fabric_params):
     if fabric_params['resource_type'] != 'HostNode': # only host node update is allowed
@@ -202,7 +461,7 @@ def main():
                             allow_ssh_root_login=dict(required=False, type='boolean'),
                             compute_id=dict(required=True, type='str'),
                             search_domains=dict(required=False, type='list'),
-                            vc_id=dict(required=True, type='str'),
+                            vc_name=dict(required=True, type='str'),
                             storage_id=dict(required=True, type='str'),
                             default_gateway_addresses=dict(required=False, type='list'),
                             management_port_subnets=dict(required=False, type='list'),
@@ -236,7 +495,8 @@ def main():
   if state == 'present':
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, fabric_params)
+    body = update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, fabric_params)
+    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
 
     if not updated:
       # add the node

@@ -1,0 +1,238 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Deploy NSX-T Appliance
+      nsxt_deploy_ova:
+        ovftool_path: "{{ovftool_path}}"
+        folder: 'folder-os-datacenter'
+        datacenter: "{{datacenter}}"
+        datastore: "{{datastore}}"
+        portgroup: "{{portgroup}}"
+        cluster: "{{cluster}}"
+        dns_server: "{{dns_server}}"
+        dns_domain: "{{dns_domain}}"
+        ntp_server: "{{ntp_server}}"
+        gateway: "{{gateway}}"
+        admin_password: "{{password}}"
+        cli_password: "{{password}}"
+        path_to_ova: "{{path_to_ova}}"
+        ova_file: "{{ova_file}}"
+        vcenter: "{{vcenter_prod}}"
+        vcenter_user: "{{vcenter_user}}"
+        vcenter_passwd: "{{vcenter_passwd}}"
+        deployment_size: "small"
+        role: "{{appliance_role}}"
+        ip_address: "{{item.ip_address}}"
+        netmask: "{{item.netmask}}"
+        vmname: "{{item.vmname}}"
+        hostname: "{{item.hostname}}"
+        validate_certs: "{{validate_certs}}"
+        mgr_username: "{{username}}"
+        service_boot_timeout: "{{service_boot_timeout}}"
+        force_redeploy: "{{force_redeploy}}"
+        state: present
+      with_items:
+        - "{{deploy_ova}}"
+
+    - name: Check manager status
+      nsxt_manager_status:
+        hostname: "{{item.hostname}}"
+        ip_address: "{{item.ip_address}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        service_boot_timeout: "{{service_boot_timeout}}"
+      with_items:
+        - "{{deploy_ova}}"
+
+    - name: Add license
+      nsxt_licenses:
+        hostname: "{{item.ip_address}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        license_key: "{{license_key}}"
+        state: "present"
+      with_items:
+        - "{{deploy_ova}}"
+
+    - name: Configure Cluster
+      nsxt_configure_cluster:
+        hostname: "{{item.ip_address}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: "{{validate_certs}}"
+        floating_ip: "{{hostname}}"
+        use_floating_ip: "{{use_floating_ip}}"
+        master_node: "{{item.master_node}}"
+        state: present
+      with_items:
+        - "{{deploy_ova}}"
+
+    - name: Join node to cluster
+      nsxt_join_node_to_cluster:
+        hostname: "{{item.ip_address}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: "{{validate_certs}}"
+        master_node: "{{item.master_node}}"
+        vip: "{{hostname}}"
+        state: present
+      with_items:
+        - "{{deploy_ova}}"
+
+    - name: Configure Backup Server
+      nsxt_configure_backup_server:
+          backup_enabled: "{{item.backup_enabled}}"
+          seconds_between_backups: "{{item.seconds_between_backups}}"
+          backup_server: "{{item.backup_server}}"
+          backup_server_port: "{{item.backup_server_port}}"
+          backup_protocol_name: "{{item.backup_protocol_name}}"
+          backup_ssh_fingerprint: "{{item.backup_ssh_fingerprint}}"
+          backup_username: "{{item.backup_username}}"
+          backup_password: "{{item.backup_password}}"
+          backup_directory_path: "{{item.backup_directory_path}}"
+          backup_passphrase: "{{item.backup_passphrase}}"
+          backup_inventory_summary_interval: "{{item.backup_inventory_summary_interval}}"
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          backup_state: absent
+      with_items:
+        - "{{backup_servers}}"
+
+    - name: Configure Syslog Server
+      nsxt_configure_syslog_server:
+          syslog_server: "{{syslog_server}}"
+          syslog_server_port: "{{syslog_server_port}}"
+          syslog_protocol_name: "{{syslog_protocol_name}}"
+          syslog_level: "{{syslog_level}}"
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          syslog_state: absent
+      with_items:
+        - "{{syslog_servers}}"
+
+    - name: Add Default Firewall Rule
+      nsxt_add_default_firewall_rule:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: "{{validate_certs}}"
+        state: present
+
+    - name: Create transport zones
+      nsxt_transport_zones:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: "{{validate_certs}}"
+        resource_type: "TransportZone"
+        display_name: "{{item.display_name}}"
+        description: "NSX configured Test Transport Zone"
+        transport_type: "{{item.transport_type}}"
+        host_switch_name: "{{item.host_switch_name}}"
+        state: present
+      with_items:
+        - "{{transport_zones}}"
+
+    - name: Create ip pools
+      nsxt_ip_pools:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "{{item.display_name}}"
+        subnets: "{{item.subnets}}"
+        state: present
+      with_items:
+        - "{{ip_pools}}"
+
+    - name: Create uplink profile
+      nsxt_uplink_profiles:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: UplinkHostSwitchProfile
+        display_name: "{{item.display_name}}"
+        mtu: 1600
+        teaming: "{{item.teaming}}"
+        transport_vlan: "{{item.transport_vlan}}"
+        state: present
+      with_items:
+        - "{{uplink_profiles}}"
+
+    - name: Create transport nodes
+      nsxt_transport_nodes:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        # resource_type: "TransportNode"
+        display_name: "{{item.display_name}}"
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches:
+          - host_switch_profiles:
+            - name: "{{item.uplink_profile_name}}"
+              type: UplinkHostSwitchProfile
+            host_switch_name: "{{item.host_switch_name}}"
+            pnics:
+            - device_name: "{{item.device_name}}"
+              uplink_name: "{{item.uplink_name}}"
+            ip_assignment_spec:
+              resource_type: StaticIpPoolSpec
+              ip_pool_name: "{{item.ip_pool_name}}"
+        transport_zone_endpoints:
+        - transport_zone_name: "{{item.transport_zone_name}}"
+        node_deployment_info:
+          resource_type: "HostNode"
+          display_name: "{{item.display_name}}"
+          ip_addresses:
+          - "{{item.ip_address}}"
+          os_type: "{{item.os_type}}"
+          os_version: "{{item.os_version}}"
+          host_credential:
+            username: "{{item.username}}"
+            password: "{{item.password}}"
+            thumbprint: "{{item.thumbprint}}"
+        state: present
+      with_items:
+        - "{{transport_nodes}}"
+
+    - name: Create transport node profile
+      nsxt_transport_node_profiles:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: TransportNodeProfile
+        display_name: "{{item.display_name}}"
+        description: NSX configured Test Transport Node Profile
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches:
+          - host_switch_profiles:
+            - name: "{{item.uplink_profile_name}}"
+              type: UplinkHostSwitchProfile
+            host_switch_name: "{{item.host_switch_name}}"
+            pnics:
+            - device_name: "{{item.device_name}}"
+              uplink_name: "{{item.uplink_name}}"
+            ip_assignment_spec:
+              resource_type: StaticIpPoolSpec
+              ip_pool_name: "{{item.ip_pool_name}}"
+        transport_zone_endpoints:
+        - transport_zone_name: "{{item.transport_zone_name}}"
+        state: present
+      with_items:
+        - "{{transport_node_profiles}}"
+

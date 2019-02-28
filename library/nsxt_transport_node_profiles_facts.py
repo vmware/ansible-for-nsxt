@@ -20,12 +20,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_ip_pools_facts
-short_description: List IP Pools
-description: Returns information about the configured IP address pools. Information
-includes the display name and description of the pool and the details of
-each of the subnets in the pool, including the DNS servers, allocation
-ranges, gateway, and CIDR subnet address.
+module: nsxt_transport_node_profiles_facts
+short_description: List Transport Nodes Profiles
+description: Returns information about all transport node profiles.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -40,15 +37,16 @@ options:
         description: The password to authenticate with the NSX manager.
         required: True
 
+
 '''
 
 EXAMPLES = '''
-- name: List IP Pools
-  nsxt_ip_pools_facts:
-    hostname: "10.192.167.137"
-    username: "admin"
-    password: "Admin!23Admin"
-    validate_certs: False
+- name: List Transport Node Profiles
+  nsxt_transport_node_profiles_facts:
+      hostname: "10.192.167.137"
+      username: "admin"
+      password: "Admin!23Admin"
+      validate_certs: False
 '''
 
 RETURN = '''# '''
@@ -56,9 +54,7 @@ RETURN = '''# '''
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
-from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 def main():
   argument_spec = vmware_argument_spec()
@@ -74,10 +70,10 @@ def main():
 
   changed = False
   try:
-    (rc, resp) = request(manager_url+ '/pools/ip-pools', headers=dict(Accept='application/json'),
+    (rc, resp) = request(manager_url+ '/transport-node-profiles', headers=dict(Accept='application/json'),
                     url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
   except Exception as err:
-    module.fail_json(msg='Error accessing list of ip pools. Error [%s]' % (to_native(err)))
+    module.fail_json(msg='Error accessing transport node profiles. Error [%s]' % (to_native(err)))
 
   module.exit_json(changed=changed, **resp)
 if __name__ == '__main__':

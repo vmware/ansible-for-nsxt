@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+author: Ramesh Chandra
 '''
 
 EXAMPLES = '''
@@ -28,6 +28,16 @@ EXAMPLES = '''
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
+      display_name: "uplinkProfile1",
+      mtu: 1600,
+      resource_type: "UplinkHostSwitchProfile",
+      teaming:
+        active_list:
+        - uplink_name: "uplink-1"
+          uplink_type: PNIC
+        policy: FAILOVER_ORDER
+      transport_vlan: 0,
+      state: "present",
 '''
 
 RETURN = '''# '''
@@ -35,7 +45,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_profile_params(args=None):
@@ -77,14 +87,20 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                        transport_vlan=dict(required=False, type='int'),
+                        enabled=dict(required=False, type='boolean'),
+                        host_infra_traffic_res=dict(required=False, type='list'),
+                        overlay_encap=dict(required=False, type='str'),
+                        named_teamings=dict(required=False, type='list'),
                         mtu=dict(required=False, type='int'),
+                        required_capabilities=dict(required=False, type='list'),
+                        send_enabled=dict(required=False, type='boolean'),
+                        extra_configs=dict(required=False, type='list'),
                         teaming=dict(required=True, type='dict',
-                        name=dict(required=True, type='str'),
                         policy=dict(required=True, type='str'),
                         standby_list=dict(required=False, type='list'),
+                        name=dict(required=True, type='str'),
                         active_list=dict(required=True, type='list')),
-                        transport_vlan=dict(required=False, type='int'),
-                        named_teamings=dict(required=False, type='list'),
                         lags=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str', choices=['UplinkHostSwitchProfile']),
                         state=dict(reauired=True, choices=['present', 'absent']))

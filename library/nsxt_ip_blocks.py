@@ -17,11 +17,54 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_ip_blocks
+short_description: Create a new IP address block.
+description: Creates a new IPv4 address block using the specified cidr. cidr is a required
+parameter. display_name & description are optional parameters
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    cidr:
+      desc_field: Represents network address and the prefix length which will be associated
+        with a layer-2 broadcast domain
+      required: True
+      type: str
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                  'present' is used to create or update resource. 
+                  'absent' is used to delete resource."
+      required: True
+    
 '''
 
 EXAMPLES = '''
+- name: Create a new IP address block
+  nsxt_ip_blocks:
+    hostname: "10.192.167.137"
+    username: "admin"
+    password: "Admin!23Admin"
+    display_name: "IPBlock-Tenant-1",
+    description: "IPBlock-Tenant-1 Description",
+    cidr: "192.168.0.0/16"
 '''
 
 RETURN = '''# '''
@@ -29,7 +72,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_ip_block_params(args=None):

@@ -18,12 +18,36 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_logical_router_ports_facts
+short_description: List Logical Router Ports
+description: Returns information about all logical router ports. Information includes the
+resource_type (LogicalRouterUpLinkPort, LogicalRouterDownLinkPort,
+LogicalRouterLinkPort, LogicalRouterLoopbackPort, LogicalRouterCentralizedServicePort);
+logical_router_id (the router to which each logical router port is assigned);
+and any service_bindings (such as DHCP relay service).
+The GET request can include a query parameter (logical_router_id
+or logical_switch_id).
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+
 '''
 
 EXAMPLES = '''
-- nsxt_logical_router_ports_facts:
+- name: List Logical Router Ports
+  nsxt_logical_router_ports_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,7 +58,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def main():

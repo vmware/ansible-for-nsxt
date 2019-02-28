@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+author: Ramesh Chandra
 '''
 
 EXAMPLES = '''
@@ -42,7 +42,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_transport_zone_params(args=None):
@@ -84,10 +84,12 @@ def main():
   argument_spec.update(display_name=dict(required=True, type='str'),
                         transport_type=dict(required=True, type='str'),
                         host_switch_mode=dict(required=False, type='str'),
+                        host_switch_id=dict(required=False, type='str'),
                         host_switch_name=dict(required=False, type='str'),
                         nested_nsx=dict(required=False, type='boolean'),
                         uplink_teaming_policy_names=dict(required=False, type='list'),
                         transport_zone_profile_ids=dict(required=False, type='list'),
+                        is_default=dict(required=False, type='boolean'),
                         resource_type=dict(required=False),
                         description=dict(required=False),
                         state=dict(reauired=True, choices=['present', 'absent']))

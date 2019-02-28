@@ -18,26 +18,147 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_logical_ports
+short_description: Create a Logical Port
+description: Creates a new logical switch port. The required parameters are the
+associated logical_switch_id and admin_state (UP or DOWN). Optional
+parameters are the attachment and switching_profile_ids. If you don't
+specify switching_profile_ids, default switching profiles are assigned to
+the port. If you don't specify an attachment, the switch port remains
+empty. To configure an attachment, you must specify an id, and
+optionally you can specify an attachment_type (VIF or LOGICALROUTER).
+The attachment_type is VIF by default.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
-'''
-
-import json, time
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
-from ansible.module_utils._text import to_native
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: True
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: True
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: True
+    address_bindings:
+      desc_field: 'Address bindings for logical port'
+      required: False
+      type: array of PacketAddressClassifier
+    admin_state:
+      desc_field: Represents Desired state of the logical port
+      required: True
+      type: str
+    attachment:
+      attachment_type:
+        desc_field: Indicates the type of logical port attachment. By default it is Virtual
+          Machine interface (VIF)
+        required: False
+        type: str
+      context:
+        allocate_addresses:
+          desc_field: "A flag to indicate whether to allocate addresses from allocation
+                      pools bound to the parent logical switch."
+          required: False
+          type: str
+        app_id:
+          desc_field: "An application ID used to identify / look up a child VIF
+                      behind a parent VIF. Only effective when vif_type is CHILD."
+          required: False
+          type: str
+        desc_field: Attachment Context
+        parent_vif_id:
+          desc_field: VIF ID of the parent VIF if vif_type is CHILD
+          required: False
+          type: str
+        required: False
+        resource_type:
+          desc_field: "The type of this resource"
+          required: True
+          type: str
+        traffic_tag:
+          desc_field: "Current we use VLAN id as the traffic tag.
+                      Only effective when vif_type is CHILD.
+                      Each logical port inside a container must have a
+                      unique traffic tag. If the traffic_tag is not
+                      unique, no error is generated, but traffic will
+                      not be delivered to any port with a non-unique tag."
+          required: False
+          type: int
+        transport_node_name:
+          desc_field: name of the transport node that observed a traceflow packet
+          required: False
+          type: str
+        tunnel_id:
+          desc_field: Tunnel Id to uniquely identify the extension.
+          required: True
+          type: int
+        type: dict
+        vif_type:
+          desc_field: Type of the VIF attached to logical port
+          required: True
+          type: str
+      desc_field: Logical port attachment
+      id:
+        desc_field: unique id
+        required: True
+        type: str
+      required: False
+      type: dict
+    display_name:
+      desc_field: Display name
+      required: True
+      type: str
+    extra_configs:
+      desc_field: 'This property could be used for vendor specific configuration in key
+        value
+    
+        string pairs. Logical port setting will override logical switch setting if
+    
+        the same key was set on both logical switch and logical port.
+    
+        '
+      required: False
+      type: array of ExtraConfig
+    ignore_address_bindings:
+      desc_field: 'IP Discovery module uses various mechanisms to discover address
+        bindings being used on each port. If a user would like to ignore
+        any specific discovered address bindings or prevent the discovery
+        of a particular set of discovered bindings, then those address
+        bindings can be provided here. Currently IP range in CIDR format
+        is not supported.'
+      required: False
+      type: array of PacketAddressClassifier
+    init_state:
+      desc_field: 'Set initial state when a new logical port is created. ''UNBLOCKED_VLAN''
+        means new port will be unblocked on traffic in creation, also VLAN will
+        be set with corresponding logical switch setting.'
+      required: False
+      type: str
+    logical_switch_name:
+      desc_field: Name of logical Switch
+      required: True
+      type: str
+    state:
+      choices:
+      - present
+      - absent
+      desc_field: "State can be either 'present' or 'absent'. 
+                  'present' is used to create or update resource. 
+                  'absent' is used to delete resource."
+      required: True
+    switching_profiles:
+      desc_field: Switching Profiles
+      required: False
+      type: list
+    
 '''
 
 EXAMPLES = '''
-- nsxt_logical_ports:
+- name: Create a Logical Port
+  nsxt_logical_ports:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -50,6 +171,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''# '''
+
+import json, time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils._text import to_native
+
 
 def get_logical_port_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -76,6 +203,21 @@ def get_logical_port_from_display_name(module, manager_url, mgr_username, mgr_pa
                 return logical_port
     return None
 
+def get_transport_nodes(module, manager_url, mgr_username, mgr_password, validate_certs):
+    try:
+      (rc, resp) = request(manager_url+ '/transport-nodes', headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing transport nodes. Error [%s]' % (to_native(err)))
+    return resp
+
+def get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
+    transport_nodes = get_transport_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
+    for transport_node in transport_nodes['results']:
+        if transport_node.__contains__('display_name') and transport_node['display_name'] == display_name:
+            return transport_node
+    return None
+
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name):
     try:
       (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
@@ -86,7 +228,7 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
     for result in resp['results']:
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result['id']
-    module.fail_json(msg='No id existe with display name %s' % display_name)
+    module.fail_json(msg='No id exists with display name %s' % display_name)
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_port_params ):
     logical_port_params['logical_switch_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
@@ -101,6 +243,11 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
             profile_obj['key'] = host_switch_profile['type']
             host_switch_profile_ids.append(profile_obj)
     logical_port_params['switching_profile_ids'] = host_switch_profile_ids
+
+    if logical_port_params.__contains__('attachment') and logical_port_params['attachment'].__contains__('context') and \
+        logical_port_params['attachment']['context'].__contains__('transport_node_name'):
+        logical_port_params['attachment']['context']['transport_node_uuid'] = get_id_from_display_name(module, manager_url, mgr_username, mgr_password,
+                validate_certs, '/transport-nodes', logical_port_params['attachment']['context']['transport_node_name'])
     return logical_port_params
 
 # def ordered(obj):
@@ -142,11 +289,13 @@ def main():
                         traffic_tag=dict(required=False, type='int'),
                         app_id=dict(required=False, type='str'),
                         allocate_addresses=dict(required=False, type='str'),
-                        resource_type=dict(required=True, type='str')),
+                        resource_type=dict(required=True, type='str'),
+                        transport_node_name=dict(required=False, type='str')),
                         id=dict(required=True, type='str')),
                         admin_state=dict(required=True, type='str'),
                         extra_configs=dict(required=False, type='list'),
                         address_bindings=dict(required=False, type='list'),
+                        ignore_address_bindings=dict(required=False, type='list'),
                         state=dict(reauired=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

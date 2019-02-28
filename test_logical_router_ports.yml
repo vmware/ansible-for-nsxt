@@ -10,12 +10,12 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        display_name: lrouterport-103
-        resource_type: LogicalRouterDownLinkPort
-        logical_router_id: 2765fd1c-cce0-4a14-94c1-4a8207d0eb79
+        display_name: "lrouterport-103"
+        resource_type: "LogicalRouterDownLinkPort"
+        logical_router_name: "tier-0"
         linked_logical_switch_port_id:
-          target_type: LogicalPort
-          target_id: 33954866-18eb-453d-aa03-5c64f8f3c450
+          target_type: "LogicalPort"
+          target_id: "fa535fbd-c01f-4536-86e4-36ee3572b6f3"
         subnets:
         - ip_addresses:
           - 192.168.3.1
