@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Get compute collection fabric tempalte
+    - name: Get compute collection transport node template
       nsxt_compute_collection_transport_templates_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"

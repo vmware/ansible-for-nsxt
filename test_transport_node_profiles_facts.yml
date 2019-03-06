@@ -4,8 +4,8 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: List Transport Zones
-      nsxt_transport_zones_facts:
+    - name: List transport node profiles
+      nsxt_transport_node_profiles_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"
         password: "{{password}}"

@@ -18,12 +18,162 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_logical_routers
+short_description: Create a Logical Router
+description: Creates a logical router. The required parameters are router_type (TIER0 or
+             TIER1) and edge_cluster_id (TIER0 only). Optional parameters include
+             internal and external transit network addresses.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    advanced_config:
+        description: Contains config properties for tier0 routers
+        external_transit_networks:
+            description: CIDR block defining tier0 to tier1 links
+            required: false
+            type: list
+        ha_vip_configs:
+            description: This configuration can be defined only for Active-Standby LogicalRouter
+                          to provide redundancy. For mulitple uplink ports, multiple HaVipConfigs 
+                          must be defined and each config will pair exactly two uplink ports. 
+                          The VIP will move and will always be owned by the Active node. 
+                          Note - when HaVipConfig[s] are defined, configuring dynamic-routing is 
+                          disallowed.
+            required: false
+            type: array of HaVipConfig
+        internal_routing_network:
+            description: Internal Routing Name
+            required: false
+            type: str
+        internal_transit_networks:
+            description: CIDR block defining service router to distributed router links
+            required: false
+            type: list
+        required: false
+        transport_zone_name:
+            description: Name of transport zone
+            required: false
+            type: str
+        type: dict
+    allocation_profile:
+        allocation_pool:
+            allocation_pool_type:
+                description: Types of logical router allocation pool based on services
+                required: true
+                type: str
+            allocation_size:
+                description: "To address varied customer performance and scalability 
+                              requirements, different sizes for load balancer service are 
+                              supported: SMALL, MEDIUM and LARGE, each with its own set of 
+                              resource and performance. Specify size of load balancer service
+                              which you will bind to TIER1 router."
+                required: true
+                type: str
+            description: "Logical router allocation can be tracked for specific services and
+                          services may have their own hard limits and allocation sizes. For
+                          example load balancer pool should be specified if load balancer
+                          service will be attached to logical router."
+            required: false
+            type: dict
+        description: 'Configurations options to auto allocate edge cluster members for
+                      logical router. Auto allocation is supported only for TIER1 and pick
+                      least utilized member post current assignment for next allocation.'
+        enable_standby_relocation:
+            description: 'Flag to enable the auto-relocation of standby service router running
+                          on edge cluster and node associated with the logical router. Only
+                          manually placed service contexts for tier1 logical routers are
+                          considered for the relocation.'
+            required: false
+            type: boolean
+        required: false
+        type: dict
+    description:
+        description: Description of the pre/post-upgrade check
+        required: false
+        type: str
+    display_name:
+        description: Display name
+        required: true
+        type: str
+    edge_cluster_member_indices:
+        description: 'For stateful services, the logical router should be associated with
+                      edge cluster. For TIER 1 logical router, for manual placement of
+                      service router within the cluster, edge cluster member indices needs
+                      to be provided else same will be auto-allocated. You can provide
+                      maximum two indices for HA ACTIVE_STANDBY. For TIER0 logical router
+                      this property is no use and placement is derived from logical router
+                      uplink or loopback port.'
+        required: false
+        type: list
+    edge_cluster_name:
+        description: Name of edge cluster
+        required: false
+        type: str
+    failover_mode:
+        description: 'Determines the behavior when a logical router instance restarts after
+                      a failure. If set to PREEMPTIVE, the preferred node will take over,
+                      even if it causes another failure. If set to NON_PREEMPTIVE, then the
+                      instance that restarted will remain secondary.
+                      This property must not be populated unless the high_availability_mode 
+                      property is set to ACTIVE_STANDBY.
+                      If high_availability_mode property is set to ACTIVE_STANDBY and this 
+                      property is not specified then default will be NON_PREEMPTIVE.'
+        required: false
+        type: str
+    high_availability_mode:
+        description: High availability mode
+        required: false
+        type: str
+    preferred_edge_cluster_member_index:
+        description: Used for tier0 routers only
+        required: false
+        type: int
+    resource_type:
+        choices:
+        - LogicalRouter
+        description: "A Policy Based VPN requires to define protect rules that match local
+                     and peer subnets. IPSec security associations is negotiated for each pair
+                     of local and peer subnet.
+                     A Route Based VPN is more flexible, more powerful
+                     and recommended over policy based VPN. IP Tunnel port is created and all
+                     traffic routed via tunnel port is protected. Routes can be configured 
+                     statically or can be learned through BGP. A route based VPN is must for 
+                     establishing redundant VPN session to remote site."
+        required: false
+        type: str
+    router_type:
+        description: Type of Logical Router
+        required: true
+        type: str
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'. 
+                      'present' is used to create or update resource. 
+                      'absent' is used to delete resource."
+        required: true
+    
 '''
 
 EXAMPLES = '''
-- nsxt_logical_routers:
+- name: Create a Logical Router
+  nsxt_logical_routers:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,13 +184,14 @@ EXAMPLES = '''
       edge_cluster_name: edge-cluster-1
       router_type: TIER0
       high_availability_mode: ACTIVE_ACTIVE
+      state: present
 '''
 
 RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_logical_router_params(args=None):
@@ -101,8 +252,8 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         existing_logical_router['edge_cluster_id'] != logical_router_with_ids['edge_cluster_id']:
         return True
     if existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__('advanced_config'):
-        if existing_logical_router['advanced_config'].__contains__('internal_transit_network') and logical_router_with_ids['advanced_config'].__contains__('internal_transit_network') and \
-            existing_logical_router['advanced_config']['internal_transit_network'] != logical_router_with_ids['advanced_config']['internal_transit_network']:
+        if existing_logical_router['advanced_config'].__contains__('internal_transit_networks') and logical_router_with_ids['advanced_config'].__contains__('internal_transit_networks') and \
+            existing_logical_router['advanced_config']['internal_transit_networks'] != logical_router_with_ids['advanced_config']['internal_transit_networks']:
             return True
         if existing_logical_router['advanced_config'].__contains__('external_transit_networks') and logical_router_with_ids['advanced_config'].__contains__('external_transit_networks') and \
             existing_logical_router['advanced_config']['external_transit_networks'] != logical_router_with_ids['advanced_config']['external_transit_networks']:
@@ -117,10 +268,17 @@ def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
                         description=dict(required=False, type='str'),
+                        edge_cluster_member_indices=dict(required=False, type='list'),
+                        allocation_profile=dict(required=False, type='dict',
+                        allocation_pool=dict(required=False, type='dict',
+                        allocation_size=dict(required=True, type='str'),
+                        allocation_pool_type=dict(required=True, type='str')),
+                        enable_standby_relocation=dict(required=False, type='boolean')),
                         failover_mode=dict(required=False, type='str'),
                         advanced_config=dict(required=False, type='dict',
-                            internal_transit_network=dict(required=False, type='str'),
                             transport_zone_name=dict(required=False, type='str'),
+                            internal_transit_networks=dict(required=False, type='list'),
+                            internal_routing_network=dict(required=False, type='str'),
                             ha_vip_configs=dict(required=False, type='list'),
                             external_transit_networks=dict(required=False, type='list')),
                         router_type=dict(required=True, type='str'),
@@ -128,7 +286,7 @@ def main():
                         high_availability_mode=dict(required=False, type='str'),
                         edge_cluster_name=dict(required=False, type='str'),
                         resource_type=dict(required=False, type='str', choices=['LogicalRouter']),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   logical_router_params = get_logical_router_params(module.params.copy())

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,16 +18,145 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_uplink_profiles
+short_description: Create a Hostswitch Profile
+description: Creates a hostswitch profile. The resource_type is required. For uplink
+              profiles, the teaming and policy parameters are required. By default, the
+              mtu is 1600 and the transport_vlan is 0. The supported MTU range is 1280
+              through 9000.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    display_name:
+        description: Display name
+        required: true
+        type: str
+    enabled:
+        description: 'The enabled property specifies the status of NIOC feature.
+                      When enabled is set to true, NIOC feature is turned on and
+                      the bandwidth allocations specified for the traffic resources
+                      are enforced. When enabled is set to false, NIOC feature
+                      is turned off and no bandwidth allocation is guaranteed.
+                      By default, enabled will be set to true.'
+        required: false
+        type: boolean
+    extra_configs:
+        description: list of extra configs
+        required: false
+        type: array of ExtraConfig
+    host_infra_traffic_res:
+        description: 'host_infra_traffic_res specifies bandwidth allocation for
+                      various traffic resources.'
+        required: false
+        type: array of ResourceAllocation
+    lags:
+        description: list of LACP group
+        required: false
+        type: array of Lag
+    mtu:
+        description: Maximum Transmission Unit used for uplinks
+        required: false
+        type: int
+    named_teamings:
+        description: List of named uplink teaming policies that can be used by logical switches
+        required: false
+        type: array of NamedTeamingPolicy
+    overlay_encap:
+        description: The protocol used to encapsulate overlay traffic
+        required: false
+        type: str
+    required_capabilities:
+        description: None
+        required: false
+        type: list
+    resource_type:
+        choices:
+        - UplinkHostSwitchProfile
+        description: Supported HostSwitch profiles.
+        required: true
+        type: str
+    send_enabled:
+        description: Enabled or disabled sending LLDP packets
+        required: false
+        type: boolean
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'. 
+                    'present' is used to create or update resource. 
+                    'absent' is used to delete resource."
+        required: true
+    teaming:
+        active_list:
+            description: List of Uplinks used in active list
+            required: true
+            type: array of Uplink
+        description: Default TeamingPolicy associated with this UplinkProfile
+        name:
+            description: An uplink teaming policy of a given name defined in UplinkHostSwitchProfile.
+                         The names of all NamedTeamingPolicies in an UplinkHostSwitchProfile 
+                         must be different, but a name can be shared by different
+                         UplinkHostSwitchProfiles. Different TransportNodes can use different 
+                         NamedTeamingPolicies having the same name in different 
+                         UplinkHostSwitchProfiles to realize an uplink teaming policy on a
+                         logical switch. An uplink teaming policy on a logical switch can be any
+                         policy defined by a user; it does not have to be a single type of FAILOVER
+                         or LOADBALANCE. It can be a combination of types, for instance, a user can 
+                         define a policy with name "MyHybridTeamingPolicy" as "FAILOVER on all ESX 
+                         TransportNodes and LOADBALANCE on all KVM TransportNodes". The name is the 
+                         key of the teaming policy and can not be changed once assigned.
+            required: true
+            type: str
+        policy:
+            description: Teaming policy
+            required: true
+            type: str
+        required: true
+        standby_list:
+            description: List of Uplinks used in standby list
+            required: false
+            type: array of Uplink
+        type: dict
+    transport_vlan:
+        description: VLAN used for tagging Overlay traffic of associated HostSwitch
+        required: false
+        type: int
+    
 '''
 
 EXAMPLES = '''
-- nsxt_uplink_profiles:
+- name: Create a Hostswitch Profile
+  nsxt_uplink_profiles:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
+      display_name: "uplinkProfile1",
+      mtu: 1600,
+      resource_type: "UplinkHostSwitchProfile",
+      teaming:
+        active_list:
+        - uplink_name: "uplink-1"
+          uplink_type: PNIC
+        policy: FAILOVER_ORDER
+      transport_vlan: 0,
+      state: "present",
 '''
 
 RETURN = '''# '''
@@ -35,7 +164,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_profile_params(args=None):
@@ -77,17 +206,23 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                        transport_vlan=dict(required=False, type='int'),
+                        enabled=dict(required=False, type='boolean'),
+                        host_infra_traffic_res=dict(required=False, type='list'),
+                        overlay_encap=dict(required=False, type='str'),
+                        named_teamings=dict(required=False, type='list'),
                         mtu=dict(required=False, type='int'),
+                        required_capabilities=dict(required=False, type='list'),
+                        send_enabled=dict(required=False, type='boolean'),
+                        extra_configs=dict(required=False, type='list'),
                         teaming=dict(required=True, type='dict',
-                        name=dict(required=True, type='str'),
                         policy=dict(required=True, type='str'),
                         standby_list=dict(required=False, type='list'),
+                        name=dict(required=True, type='str'),
                         active_list=dict(required=True, type='list')),
-                        transport_vlan=dict(required=False, type='int'),
-                        named_teamings=dict(required=False, type='list'),
                         lags=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str', choices=['UplinkHostSwitchProfile']),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   profile_params = get_profile_params(module.params.copy())

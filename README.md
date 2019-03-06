@@ -23,12 +23,10 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_licenses
 * nsxt_manager_status
 * nsxt_licenses_facts
-* nsxt_controllers
-* nsxt_controllers_facts
 * nsxt_edge_clusters
 * nsxt_edge_clusters_facts
-* nsxt_compute_managers
-* nsxt_compute_managers_facts
+* nsxt_fabric_compute_managers
+* nsxt_fabric_compute_managers_facts
 * nsxt_fabric_nodes
 * nsxt_fabric_nodes_facts
 * nsxt_compute_collection_fabric_templates
@@ -41,16 +39,21 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_transport_zones_facts
 * nsxt_transport_nodes
 * nsxt_transport_nodes_facts
+* nsxt_transport_node_collections
+* nsxt_transport_node_collections_facts
+* nsxt_transport_node_profiles
+* nsxt_transport_node_profiles_facts
 * nsxt_compute_collection_transport_templates
 * nsxt_compute_collection_transport_templates_facts
+* nsxt_controller_manager_auto_deployment
 
 ##### Logical networking modules
 * nsxt_logical_ports
 * nsxt_logical_ports_facts
 * nsxt_logical_routers
 * nsxt_logical_routers_facts
-* nsxt_logical_routers_ports
-* nsxt_logical_routers_ports_facts
+* nsxt_logical_router_ports
+* nsxt_logical_router_ports_facts
 * nsxt_logical_router_static_routes
 * nsxt_logical_switches
 * nsxt_logical_switches_facts
@@ -60,7 +63,7 @@ The modules in this repository are focused on enabling automation of installatio
 
 # Prerequisites
 We assume that ansible is already installed. 
-These modules support ansible version 2.6 and onwards. 
+These modules support ansible version 2.7 and onwards. 
 
 * PyVmOmi - Python library for vCenter api.
 
@@ -90,8 +93,8 @@ ansible-playbook test_basic_topology.yml -vvv
 
 The following versions of NSX are supported:
 
- * NSX-T 2.2.*
- * Ansible 2.6
+ * NSX-T 2.4
+ * Ansible 2.7
 
 # Contributing
 

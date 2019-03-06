@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Create ip pool
+    - name: List compute collection fabric template
       nsxt_compute_collection_fabric_templates_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"

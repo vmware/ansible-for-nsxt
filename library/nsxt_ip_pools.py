@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -17,8 +17,51 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_ip_pools
+short_description: 'Create an IP Pool'
+description: "Creates a new IPv4 or IPv6 address pool. Required parameters are
+              allocation_ranges and cidr. Optional parameters are display_name,
+              description, dns_nameservers, dns_suffix, and gateway_ip."
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    display_name:
+        description: 'Display name'
+        required: true
+        type: str
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true
+    subnets:
+        description: "Subnets can be IPv4 or IPv6 and they should not overlap. The maximum
+                      number will not exceed 5 subnets."
+        required: false
+        type: 'array of IpPoolSubnet'
+    tags:
+        description: 'Opaque identifiers meaningful to the API user'
+        required: false
+        type: str
+
+    
 '''
 
 EXAMPLES = '''
@@ -42,7 +85,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_ip_pool_params(args=None):
@@ -83,7 +126,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return False
     if  existing_ip_pool.__contains__('subnets') and ip_pool_params.__contains__('subnets') and existing_ip_pool['subnets'] != ip_pool_params['subnets']:
         return True
-
     return False
 
 def main():
@@ -91,7 +133,7 @@ def main():
   argument_spec.update(display_name=dict(required=True, type='str'),
                         subnets=dict(required=False, type='list'),
                         tags=dict(required=False, type='str'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   ip_pool_params = get_ip_pool_params(module.params.copy())

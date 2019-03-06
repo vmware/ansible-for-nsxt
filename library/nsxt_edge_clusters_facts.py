@@ -18,23 +18,46 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_edge_clusters_facts
+short_description: List Edge Clusters
+description: Returns information about the configured edge clusters, which enable you to
+             group together transport nodes of the type EdgeNode and apply fabric
+             profiles to all members of the edge cluster. Each edge node can participate
+             in only one edge cluster.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
 '''
 
 EXAMPLES = '''
-- nsxt_edge_clusters_facts:
-      hostname: "10.192.167.137"
-      username: "admin"
-      password: "Admin!23Admin"
-      validate_certs: False
+- name: List Edge Clusters
+  nsxt_edge_clusters_facts:
+    hostname: "10.192.167.137"
+    username: "admin"
+    password: "Admin!23Admin"
+    validate_certs: False
 '''
 
 RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def main():

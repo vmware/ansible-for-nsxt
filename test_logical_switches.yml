@@ -10,8 +10,8 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        display_name: "test_lswitch"
+        display_name: "ls1"
         replication_mode: SOURCE
         admin_state: UP
-        transport_zone_id: "d530bdc8-af38-45ac-8c19-f58f7808041c"
+        transport_zone_name: "TZ1"
         state: "present"

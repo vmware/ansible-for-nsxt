@@ -17,11 +17,55 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_ip_blocks
+short_description: 'Create a new IP address block.'
+description: "Creates a new IPv4 address block using the specified cidr. cidr is a
+              required parameter. display_name & description are optional parameters"
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    cidr:
+        description: "Represents network address and the prefix length which will be                 associated\nwith a layer-2 broadcast domain"
+        required: true
+        type: str
+    display_name:
+        description: 'Display name'
+        required: true
+        type: str
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true
+    
 '''
 
 EXAMPLES = '''
+- name: Create a new IP address block
+  nsxt_ip_blocks:
+    hostname: "10.192.167.137"
+    username: "admin"
+    password: "Admin!23Admin"
+    display_name: "IPBlock-Tenant-1",
+    description: "IPBlock-Tenant-1 Description",
+    cidr: "192.168.0.0/16"
 '''
 
 RETURN = '''# '''
@@ -29,7 +73,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_ip_block_params(args=None):
@@ -68,7 +112,7 @@ def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
                         cidr=dict(required=True, type='str'),
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   ip_block_params = get_ip_block_params(module.params.copy())

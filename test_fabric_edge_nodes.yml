@@ -14,7 +14,6 @@
         display_name: "EdegeNode1"
         #node_id: "58c42d2c-d9bb-4d88-9d9c-3d032ad455e2"
         ip_addresses:
-          - 10.112.201.26
         deployment_config:
           form_factor: "SMALL"
           node_user_settings:
@@ -22,7 +21,7 @@
             root_password: "Admin!23Admin"
           vm_deployment_config:
             placement_type: VsphereDeploymentConfig
-            vc_id: "1de65058-fa28-42fa-8f69-a1bb7b4516fa"
+            vc_name: "VC1"
             data_network_ids:
             - network-16
             - network-16
@@ -30,7 +29,7 @@
             management_network_id: "network-16"
             hostname: "EdgeVM1"
             compute_id: "domain-c8"
-            storage_id: "datastore-12"
+            storage_id: "datastore-13"
             default_gateway_addresses:
             - 10.112.203.253
             management_port_subnets:

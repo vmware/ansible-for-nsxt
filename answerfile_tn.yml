@@ -1,0 +1,62 @@
+hostname: "10.161.157.200"
+username: "admin"
+password: "Admin!23Admin"
+validate_certs: False
+
+ip_pools:
+- display_name: IPPool-IPV4-1
+  subnets:
+  - allocation_ranges:
+    - start: "10.112.201.28"
+      end: "10.112.201.35"
+    cidr: "10.112.201.0/24"
+
+transportzones:
+- display_name: "TZ1"
+  transport_type: "OVERLAY"
+  host_switch_name: "hostswitch1"
+
+uplink_profiles:
+- display_name: uplinkProfile1
+  teaming:
+    active_list:
+    - uplink_name: "uplink-1"
+      uplink_type: PNIC
+    policy: FAILOVER_ORDER
+  transport_vlan: 0
+
+transport_nodes:
+- display_name: TN1
+  host_switches:
+  - host_switch_profiles:
+    - name: uplinkProfile1
+      type: UplinkHostSwitchProfile
+    host_switch_name: hostswitch1
+    # pnics:
+    # - device_name: "vmnic1"
+    #   uplink_name: "uplink-1"
+    ip_assignment_spec:
+      resource_type: StaticIpPoolSpec
+      ip_pool_name: "IPPool-IPV4-1"
+  transport_zone_endpoints:
+  - transport_zone_name: "TZ1"
+  node_deployment_info:
+    # Host node deployment info ESXI
+    # resource_type: "HostNode"
+    # display_name: "Host_1"
+    # ip_addresses: ["10.161.136.35"]
+    # os_type: "ESXI"
+    # os_version: "6.5.0"
+    # host_credential:
+    #   username: "root"
+    #   password: "ca$hc0w"
+    #   thumbprint: "aba87c8b3a042435e0f3d60784c1fbc6f1aba5ce71f6efb2601fd26fb5453bb0"
+    resource_type: "HostNode"
+    display_name: "Host_3"
+    ip_addresses: ["10.192.44.93"]
+    os_type: "UBUNTUKVM"
+    os_version: "16.04"
+    host_credential:
+      username: "root"
+      password: "ca$hc0w"
+      thumbprint: "3fS+Ik4O0GOMuQ8Chbxfn7KBLjmLhhnEHPKDXnt/AFQ="

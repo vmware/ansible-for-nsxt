@@ -18,25 +18,102 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_fabric_compute_managers
+short_description: 'Register compute manager with NSX'
+description: "Registers compute manager with NSX. Inventory service will collect
+              data from the registered compute manager"
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    credential:
+        asymmetric_credential:
+            description: 'Asymmetric login credential'
+            required: false
+            type: str
+        credential_key:
+            description: 'Credential key'
+            no_log: 'True'
+            required: false
+            type: str
+        credential_type:
+            description: 'Possible values are UsernamePasswordLoginCredential, VerifiableAsymmetricLoginCredential.'
+            required: true
+            type: str
+        credential_verifier:
+            description: 'Credential verifier'
+            required: false
+            type: str
+        description: 'Login credentials for the compute manager'
+        password:
+            description: "Password for the user (optionally specified on PUT, unspecified on
+                          GET)"
+            no_log: 'True'
+            required: false
+            type: str
+        required: false
+        thumbprint:
+            description: 'Hexadecimal SHA256 hash of the vIDM server''s X.509 certificate'
+            no_log: 'True'
+            required: false
+            type: str
+        type: dict
+        username:
+            description: 'Username value of the log'
+            required: false
+            type: str
+    display_name:
+        description: 'Display name'
+        required: true
+        type: str
+    origin_type:
+        description: 'Compute manager type like vCenter'
+        required: true
+        type: str
+    server:
+        description: 'IP address or hostname of compute manager'
+        required: true
+        type: str
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true
+
+    
 '''
 
 EXAMPLES = '''
-- nsxt_fabric_compute_managers:
+- name: Register compute manager with NSX
+  nsxt_fabric_compute_managers:
     hostname: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    #compute_manager_id: "25d314b6-97f2-48e2-87b5-f9ce04caf5f8"
     display_name: "vCenter"
     server: "10.161.244.213"
     origin_type: vCenter
     credential:
-    credential_type: UsernamePasswordLoginCredential
-    username: "administrator@vsphere.local"
-    password: "Admin!23"
-    thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
+      credential_type: "UsernamePasswordLoginCredential"
+      username: "administrator@vsphere.local"
+      password: "Admin!23"
+      thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
     state: present
 '''
 
@@ -44,7 +121,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 import ssl
 import socket
@@ -144,7 +221,7 @@ def main():
                     credential_type=dict(required=True, type='str')),
                     origin_type=dict(required=True, type='str'),
                     server=dict(required=True, type='str'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   fabric_compute_manager_params = get_fabric_compute_manager_params(module.params.copy())

@@ -11,4 +11,4 @@
         password: "{{password}}"
         validate_certs: False
         license_key: "00000-00000-00000-00000-00000"
-        state: "absent"
+        state: "present"

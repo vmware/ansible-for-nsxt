@@ -18,12 +18,39 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_transport_nodes_facts
+short_description: List Transport Nodes
+description: Returns information about all transport nodes along with underlying host or
+              edge details. A transport node is a host or edge that contains hostswitches.
+              A hostswitch can have virtual machines connected to them.
+
+              Because each transport node has hostswitches, transport nodes can also have
+              virtual tunnel endpoints, which means that they can be part of the overlay.
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+
+
 '''
 
 EXAMPLES = '''
-- nsxt_transport_nodes_facts:
+- name: List Transport Nodes
+  nsxt_transport_nodes_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,7 +61,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def main():

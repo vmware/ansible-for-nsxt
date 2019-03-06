@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,8 +18,43 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_licenses
+short_description: 'Add a new license key'
+description: "This will add a license key to the system.
+              The API supports adding only one license key for each license edition
+              type - Standard, Advanced or Enterprise. If a new license key is tried
+              to add for an edition for which the license key already exists,
+              then this API will return an error."
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    license_key:
+        description: 'license key'
+        no_log: 'True'
+        required: true
+        type: str
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true   
 '''
 
 EXAMPLES = '''
@@ -37,7 +72,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_license_params(args=None):
@@ -61,7 +96,7 @@ def check_license_exist(module, manager_url, mgr_username, mgr_password, validat
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(license_key=dict(required=True, type='str', no_log=True),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   license_params = get_license_params(module.params.copy())
@@ -81,7 +116,7 @@ def main():
     # add the license
     if check_license_exist(module, manager_url, mgr_username, mgr_password, validate_certs):
         module.exit_json(changed=False, message="license with license key %s already exist."% module.params['license_key'])
-   if module.check_mode:
+    if module.check_mode:
        module.exit_json(changed=True, debug_out=str(request_data), id=module.params['license_key'])
     try:
         (rc, resp) = request(manager_url+ '/licenses', data=request_data, headers=headers, method='POST',
@@ -98,13 +133,13 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True, debug_out=str(request_data), id=id)
     try:
-       (rc, resp) = request(manager_url+ '/licenses?action=delete', data=request_data, headers=headers, method='POST',
+       (rc, resp) = request(manager_url+ '/licenses/' + id, method='DELETE',
                             url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
       module.fail_json(msg="Failed to delete license with id %s. Error[%s]." % (id, to_native(err)))
 
     time.sleep(5)
-    module.exit_json(changed=True, object_name=license_key, message="license with license key %s deleted." % id)
+    module.exit_json(changed=True, object_name=id, message="license with license key %s deleted." % id)
 
 
 if __name__ == '__main__':

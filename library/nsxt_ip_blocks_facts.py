@@ -12,7 +12,7 @@
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError
@@ -26,16 +26,38 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_ip_blocks_facts
+short_description: Returns list of configured IP address blocks.
+description: Returns information about configured IP address blocks. Information includes
+             the id, display name, description & CIDR of IP address blocks
+
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+
 '''
 
 EXAMPLES = '''
-- nsxt_ip_block_facts:
-      hostname: "10.192.167.137"
-      username: "admin"
-      password: "Admin!23Admin"
-      validate_certs: False
+- name: Lists all configured IP address blocks
+  nsxt_ip_block_facts:
+    hostname: "10.192.167.137"
+    username: "admin"
+    password: "Admin!23Admin"
+    validate_certs: False
 '''
 
 RETURN = '''# '''

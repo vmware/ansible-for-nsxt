@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,12 +18,32 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_transport_node_collections_facts
+short_description: List Transport Node collections
+description: Returns all Transport Node collections
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+
 '''
 
 EXAMPLES = '''
-- nsxt_controllers_facts:
+- name: List Transport Node collections
+  nsxt_fabric_compute_managers_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,25 +54,30 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 def main():
   argument_spec = vmware_argument_spec()
+
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
   mgr_hostname = module.params['hostname']
   mgr_username = module.params['username']
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
+
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
   changed = False
   try:
-    (rc, resp) = request(manager_url+ '/cluster/nodes/deployments', headers=dict(Accept='application/json'),
+    (rc, resp) = request(manager_url+ '/transport-node-collections', headers=dict(Accept='application/json'),
                     url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
   except Exception as err:
-    module.fail_json(msg='Error accessing controllers. Error [%s]' % (to_native(err)))
+    module.fail_json(msg='Error accessing transport-node-collections. Error [%s]' % (to_native(err)))
+
   module.exit_json(changed=changed, **resp)
 if __name__ == '__main__':
 	main()

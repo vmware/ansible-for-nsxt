@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Check mnager status
+    - name: Check manager status
       nsxt_manager_status:
         hostname: "{{hostname}}"
         username: "{{username}}"

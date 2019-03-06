@@ -18,44 +18,103 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_compute_collection_transport_templates
+short_description: 'Create transport node template for compute collection.'
+description: 'If automated transport node creation is configured on compute collection,
+              this template will serve as the default setting for transport node creation.'
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    compute_collections:
+        description: 'Associated compute collections'
+        required: false
+        type: list
+    display_name:
+        description: 'Display name'
+        required: false
+        type: str
+    host_switch_spec:
+        description: "Property 'host_switch_spec' can be used to create either standard host
+                      switch or preconfigured host switch."
+        host_switches:
+            description: 'Transport Node host switches'
+            required: true
+            type: 'array of HostSwitch'
+        required: false
+        resource_type:
+            description: 'Selects the type of the transport zone profile'
+            required: true
+            type: str
+        type: dict
+    network_migration_spec_ids:
+        description: "Property 'network_migration_spec_ids' should only be used for compute
+                      collections which are clusters in VMware vCenter. Currently only 
+                      HostProfileNetworkMigrationSpec type is supported. This specification 
+                      will only apply to Stateless ESX hosts which are under this vCenter cluster."
+        required: false
+        type: 'array of NetworkMigrationSpecTypeIdEntry'
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true
+    transport_zone_endpoints:
+        description: 'Transport zone endpoints'
+        required: false
+        type: 'array of TransportZoneEndPoint'    
 '''
 
 EXAMPLES = '''
-  - name: Create compute collection transport tempalte
+  - name: Create compute collection transport template
     nsxt_compute_collection_transport_templates:
-    hostname: "{{hostname}}"
-    username: "{{username}}"
-    password: "{{password}}"
-    validate_certs: False
-    display_name: CCTT2
-    compute_collections:
-    - compute_manager_name: VC2
-      cluster_name: "ControlCluster1-$$"
-    host_switch_spec:
-        resource_type: StandardHostSwitchSpec
-        host_switches:
-        - host_switch_profiles:
-          - name: uplinkProfile1
-            type: UplinkHostSwitchProfile
-          host_switch_name: hostswitch1
-          pnics:
-          - device_name: vmnic1
-            uplink_name: "uplink-1"
-          ip_assignment_spec:
-            resource_type: StaticIpPoolSpec
-            ip_pool_name: "IPPool-IPV4-1"
-    transport_zone_endpoints:
-    - transport_zone_name: "TZ1"
-    state: present
+      hostname: "{{hostname}}"
+      username: "{{username}}"
+      password: "{{password}}"
+      validate_certs: False
+      display_name: CCTT2
+      compute_collections:
+      - compute_manager_name: VC2
+        cluster_name: "ControlCluster1-$$"
+      host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches:
+          - host_switch_profiles:
+            - name: uplinkProfile1
+              type: UplinkHostSwitchProfile
+            host_switch_name: hostswitch1
+            pnics:
+            - device_name: vmnic1
+              uplink_name: "uplink-1"
+            ip_assignment_spec:
+              resource_type: StaticIpPoolSpec
+              ip_pool_name: "IPPool-IPV4-1"
+      transport_zone_endpoints:
+      - transport_zone_name: "TZ1"
+      state: present
 '''
 
 RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 import ssl
 import socket
@@ -157,20 +216,6 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         transport_template_params['compute_collection_ids'] = compute_collection_ids
     return transport_template_params
 
-def id_exist_in_list_dict_obj(key, list_obj1, list_obj2):
-    all_id_presents = False
-    if len(list_obj1) != len(list_obj2):
-        return all_id_presents
-    for dict_obj1 in list_obj1:
-        if dict_obj1.__contains__(key):
-            for dict_obj2 in list_obj2:
-                if dict_obj2.__contains__(key) and dict_obj1[key] == dict_obj2[key]:
-                    all_id_presents = True
-                    continue
-            if not all_id_presents:
-                return False
-    return True
-
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_transport_templates_ids):
     existing_transport_node = get_compute_collection_transport_templates_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, compute_collection_transport_templates_ids['display_name'])
     if existing_transport_node is None:
@@ -190,11 +235,9 @@ def main():
                     host_switches=dict(required=True, type='list'),
                     resource_type=dict(required=True, type='str')),
                     transport_zone_endpoints=dict(required=False, type='list'),
-                    network_migration_spec_id=dict(required=False, type='dict',
-                    value=dict(required=True, type='str'),
-                    key=dict(required=False, type='str')),
+                    network_migration_spec_ids=dict(required=False, type='list'),
                     compute_collections=dict(required=False, type='list'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['state', 'present', ['compute_collections']]])

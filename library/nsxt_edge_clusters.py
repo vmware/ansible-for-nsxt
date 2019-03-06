@@ -18,16 +18,68 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_edge_clusters
+short_description: 'Create Edge Cluster'
+description: "Creates a new edge cluster.
+              It only supports homogeneous members.
+              The TransportNodes backed by EdgeNode are only allowed in cluster members.
+              DeploymentType (VIRTUAL_MACHINE|PHYSICAL_MACHINE) of these EdgeNodes is
+              recommended to be the same. EdgeCluster supports members of different
+              deployment types."
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    cluster_profile_bindings:
+        description: 'Edge cluster profile bindings'
+        required: false
+        type: 'array of ClusterProfileTypeIdEntry'
+    display_name:
+        description: 'Display name'
+        required: true
+        type: str
+    members:
+        description: "EdgeCluster only supports homogeneous members.
+        These member should be backed by either EdgeNode or PublicCloudGatewayNode.
+        TransportNode type of these nodes should be the same.
+        DeploymentType (VIRTUAL_MACHINE|PHYSICAL_MACHINE) of these EdgeNodes is
+        recommended to be the same. EdgeCluster supports members of different
+        deployment types."
+        required: false
+        type: 'array of EdgeClusterMember'
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true
+
+    
 '''
 
 EXAMPLES = '''
-- nsxt_edge_clusters_facts:
+  - name: Create Edge Cluster
+    nsxt_edge_clusters:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
+      display_name: edge-cluster-1
       cluster_profile_bindings:
         - profile_id: "ee7e2008-3626-4373-9ba4-521887840984"
           resource_type: EdgeHighAvailabilityProfile
@@ -40,7 +92,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 
@@ -110,7 +162,7 @@ def main():
   argument_spec.update(display_name=dict(required=True, type='str'),
                         cluster_profile_bindings=dict(required=False, type='list'),
                         members=dict(required=False, type='list'), # tranpost_node_name
-                        state=dict(reauired=True, choices=['present', 'absent']))
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   edge_cluster_params = get_edge_cluster_params(module.params.copy())

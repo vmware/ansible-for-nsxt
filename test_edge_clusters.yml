@@ -14,4 +14,6 @@
         cluster_profile_bindings:
         - profile_id: 91bcaa06-47a1-11e4-8316-17ffc770799b
           resource_type: EdgeHighAvailabilityProfile
+        members:
+        - transport_node_name: "TN_1"
         state: present

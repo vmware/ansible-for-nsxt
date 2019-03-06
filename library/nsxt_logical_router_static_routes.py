@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,24 +18,66 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Mahendra Bhagat
+DOCUMENTATION = '''
+---
+module: nsxt_logical_router_static_routes
+short_description: Add Static Routes on a Logical Router
+description: Add Static Routes on a Logical Router
+version_added: "2.7"
+author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    id:
+        description: unique id
+        required: false
+        type: str
+    logical_router_name:
+        description: Name of the logical router
+        required: false
+        type: str
+    network:
+        description: destination in cidr
+        required: true
+        type: str
+    next_hops:
+        description: Next Hops
+        required: true
+        type: array of StaticRouteNextHop
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'. 
+                      'present' is used to create or update resource. 
+                      'absent' is used to delete resource."
+        required: true
+    
 '''
 
 EXAMPLES = '''
-tasks:
-    - name: Create logical router logical switch
+    - name: Add Static Routes on a Logical Router
       nsxt_logical_router_static_routes:
         hostname: "{{hostname}}"
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        logical_router_id: "175a24f1-e683-42bb-853a-3a9b90c283c3"
+        logical_router_name: "tier-0"
         next_hops:
         - administrative_distance: '2'
           ip_address: 192.168.200.253
         network: 192.168.200.0/24
-        state: "absent"
+        state: "present"
 
 
 '''
@@ -49,7 +91,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def get_body_object(body):
@@ -69,6 +111,23 @@ def get_logical_router_static_route_params(args=None):
             args.pop(key, None)
     return args
 
+def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['id']
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
+
+def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params ):
+    logical_router_static_route_params['logical_router_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                '/logical-routers', logical_router_static_route_params.pop('logical_router_name', None))
+    return logical_router_static_route_params
 
 def get_logical_router_static_routes(module, manager_url, mgr_username, mgr_password, validate_certs,logical_router_id):
     try:
@@ -89,10 +148,10 @@ def get_lr_static_route_from_network(module, manager_url, mgr_username, mgr_pass
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(next_hops=dict(required=True, type='list'),
-                logical_router_id=dict(required=False, type='str'),
+                logical_router_name=dict(required=False, type='str'),
                 network=dict(required=True, type='str'),
                 id=dict(required=False, type= 'str'),
-                state=dict(reauired=True, choices=['present', 'absent']))
+                state=dict(required=True, choices=['present', 'absent']))
 
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -104,7 +163,8 @@ def main():
   validate_certs = module.params['validate_certs']
   network = module.params['network']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
-  logical_router_id = module.params["logical_router_id"]
+  update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params)
+  logical_router_id = logical_router_static_route_params["logical_router_id"]
   logical_router_static_route_id = module.params["id"]
 
 
@@ -138,9 +198,9 @@ def main():
       module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Logical router static route  with network %s created." % module.params['network'])
     else:
       if module.check_mode:
-          module.exit_json(changed=True, debug_out=str(json.dumps(logical_router_port_params)), id=logical_router_port_id)
-      logical_router_port_params['_revision'] = revision # update current revision
-      request_data = json.dumps(logical_router_port_params)
+          module.exit_json(changed=True, debug_out=str(json.dumps(logical_router_static_route_params)), id=logical_router_port_id)
+      logical_router_static_route_params['_revision'] = revision # update current revision
+      request_data = json.dumps(logical_router_static_route_params)
       id = logical_router_port_id
       try:
           (rc, resp) = request(manager_url+ '/logical-routers/%s/routing/static-routes/%s' % (logical_router_id,id), data=request_data, headers=headers, method='PUT',
@@ -155,7 +215,7 @@ def main():
     if logical_router_static_route_id is None:
         module.exit_json(changed=False, msg='No logical router static route exist with network %s' % network)
     if module.check_mode:
-        module.exit_json(changed=True, debug_out=str(json.dumps(logical_router_port_params)), id=logical_router_static_route_id)
+        module.exit_json(changed=True, debug_out=str(json.dumps(logical_router_static_route_params)), id=logical_router_static_route_id)
     try:
         (rc, resp) = request(manager_url + "/logical-routers/%s/routing/static-routes/%s" % (logical_router_id,logical_router_static_route_id), method='DELETE',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)

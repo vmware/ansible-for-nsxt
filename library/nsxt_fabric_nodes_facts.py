@@ -18,12 +18,34 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_fabric_nodes_facts
+short_description: Return the List of Nodes
+description: Returns information about all fabric nodes (hosts and edges).
+             This api is deprecated as part of FN+TN unification. Please use GET Transport Node
+             API to list all fabric nodes.
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+
 '''
 
 EXAMPLES = '''
-- nsxt_fabric_nodes_facts:
+- name: Lists all fabric nodes
+  nsxt_fabric_nodes_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -34,7 +56,7 @@ RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
 def main():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -20,16 +20,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_logical_router_ports_facts
-short_description: List Logical Router Ports
-description: Returns information about all logical router ports. Information includes the
-              resource_type (LogicalRouterUpLinkPort, LogicalRouterDownLinkPort,
-              LogicalRouterLinkPort, LogicalRouterLoopbackPort, 
-              LogicalRouterCentralizedServicePort);
-              logical_router_id (the router to which each logical router port is assigned);
-              and any service_bindings (such as DHCP relay service).
-              The GET request can include a query parameter (logical_router_id
-              or logical_switch_id).
+module: nsxt_transport_node_profiles_facts
+short_description: List Transport Nodes Profiles
+description: Returns information about all transport node profiles.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -47,11 +40,12 @@ options:
         required: true
         type: str
 
+
 '''
 
 EXAMPLES = '''
-- name: List Logical Router Ports
-  nsxt_logical_router_ports_facts:
+- name: List Transport Node Profiles
+  nsxt_transport_node_profiles_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -79,10 +73,10 @@ def main():
 
   changed = False
   try:
-    (rc, resp) = request(manager_url+ '/logical-router-ports', headers=dict(Accept='application/json'),
+    (rc, resp) = request(manager_url+ '/transport-node-profiles', headers=dict(Accept='application/json'),
                     url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
   except Exception as err:
-    module.fail_json(msg='Error accessing list of logical ports. Error [%s]' % (to_native(err)))
+    module.fail_json(msg='Error accessing transport node profiles. Error [%s]' % (to_native(err)))
 
   module.exit_json(changed=changed, **resp)
 if __name__ == '__main__':

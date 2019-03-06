@@ -1,0 +1,52 @@
+hostname: "10.161.157.200"
+username: "admin"
+password: "Admin!23Admin"
+validate_certs: False
+
+ip_pools:
+- display_name: IPPool-IPV4-1
+  subnets:
+  - allocation_ranges:
+    - start: "10.112.201.28"
+      end: "10.112.201.35"
+    cidr: "10.112.201.0/24"
+
+transportzones:
+- display_name: "TZ1"
+  transport_type: "OVERLAY"
+  host_switch_name: "hostswitch1"
+
+uplink_profiles:
+- display_name: uplinkProfile1
+  teaming:
+    active_list:
+    - uplink_name: "uplink-1"
+      uplink_type: PNIC
+    policy: FAILOVER_ORDER
+  transport_vlan: 0
+
+transport_node_profiles:
+- display_name: TNP1
+  host_switches:
+  - host_switch_profiles:
+    - name: uplinkProfile1
+      type: UplinkHostSwitchProfile
+    host_switch_name: hostswitch1
+    pnics:
+    - device_name: vmnic1
+      uplink_name: "uplink-1"
+    ip_assignment_spec:
+      resource_type: StaticIpPoolSpec
+      ip_pool_name: "IPPool-IPV4-1"
+  transport_zone_endpoints:
+  - transport_zone_name: "TZ1"
+
+
+compute_managers:
+- display_name: "VC1"
+  server: "10.161.129.87"
+  origin_type: vCenter
+  credential_type: UsernamePasswordLoginCredential
+  username: "administrator@vsphere.local"
+  password: "Admin!23"
+  thumbprint: "46:1E:31:DD:0B:37:4C:F0:91:5B:49:A1:A1:94:B5:DF:82:93:90:52:D9:68:0F:86:C8:CA:6C:34:CB:82:D7:D5"

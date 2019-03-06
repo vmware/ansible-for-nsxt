@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: List fabric node
+    - name: List uplink profiles
       nsxt_uplink_profiles_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"

@@ -28,7 +28,7 @@
         vcenter_user: "administrator@vsphere.local"
         vcenter_passwd: "Admin!23"
         deployment_size: "small"
-        role: "nsx-manager"
+        role: "nsx-manager nsx-controller"
 
     - name: Check manager status
       nsxt_manager_status:

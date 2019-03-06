@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Create logical router
+    - name: List Logical Routers
       nsxt_logical_routers_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"

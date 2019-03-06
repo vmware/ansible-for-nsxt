@@ -18,23 +18,43 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_compute_collection_fabric_templates_facts
+short_description: 'Get compute collection fabric templates'
+description: 'Returns compute collection fabric templates'
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+
 '''
 
 EXAMPLES = '''
-- nsxt_fabric_compute_managers_facts:
-      hostname: "10.192.167.137"
-      username: "admin"
-      password: "Admin!23Admin"
-      validate_certs: False
+    - name: List compute collection fabric template
+      nsxt_fabric_compute_managers_facts:
+        hostname: "10.192.167.137"
+        username: "admin"
+        password: "Admin!23Admin"
+        validate_certs: False
 '''
 
 RETURN = '''# '''
 
 import json
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError

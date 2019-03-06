@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: List logical ports
+    - name: List logical router ports
       nsxt_logical_router_ports_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"

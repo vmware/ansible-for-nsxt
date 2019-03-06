@@ -18,28 +18,76 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
-author: Rahul Raghuvanshi
+DOCUMENTATION = '''
+---
+module: nsxt_compute_collection_fabric_templates
+short_description: 'Create a compute collection fabric template'
+description: 'Fabric templates are fabric configurations applied at the compute collection 
+              level. This configurations is used to decide what automated operations should 
+              be a run when a host membership changes.'
+version_added: '2.7'
+author: 'Rahul Raghuvanshi'
+options:
+    hostname:
+        description: 'Deployed NSX manager hostname.'
+        required: true
+        type: str
+    username:
+        description: 'The username to authenticate with the NSX manager.'
+        required: true
+        type: str
+    password:
+        description: 'The password to authenticate with the NSX manager.'
+        required: true
+        type: str
+    auto_install_nsx:
+        description: "Indicates whether NSX components should be automcatically installed.
+                      When 'true' NSX components will be automatically installed on the new 
+                      host added to compute collection."
+        required: false
+        type: bool
+    cluster_name:
+        description: 'Cluster Name'
+        required: false
+        type: str
+    compute_manager_name:
+        description: 'Cluster Manager's Name'
+        required: false
+        type: str
+    display_name:
+        description: 'Display name'
+        required: true
+        type: str
+    state:
+        choices:
+            - present
+            - absent
+        description: "State can be either 'present' or 'absent'.
+                      'present' is used to create or update resource.
+                      'absent' is used to delete resource."
+        required: true
+
 '''
 
 EXAMPLES = '''
-- name: Create compute collection fabric tempalte
-    nsxt_compute_collection_fabric_templates:
-    hostname: "{{hostname}}"
-    username: "{{username}}"
-    password: "{{password}}"
-    validate_certs: False
-    display_name: CC_fabric_template
-    compute_collection_id: "7a83e20a-0108-47ca-93a0-5bd1c44126e0:domain-c8"
-    auto_install_nsx: True
-    state: present
+  - name: Create compute collection fabric template
+      nsxt_compute_collection_fabric_templates:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: CC_fabric_template
+        cluster_name: "cl1"
+        compute_manager_name: VC1
+        auto_install_nsx: True
+        state: present
 '''
 
 RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 import ssl
 import socket
@@ -129,7 +177,7 @@ def main():
                     compute_manager_name=dict(required=False, type='str'),
                     cluster_name=dict(required=False, type='str'),
                     auto_install_nsx=dict(required=False, type='bool'),
-                    state=dict(reauired=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                          required_if=[['state', 'present', ['compute_manager_name', 'cluster_name', 'auto_install_nsx']]])

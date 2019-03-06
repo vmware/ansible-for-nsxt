@@ -4,7 +4,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: List fabric node
+    - name: List All Logical Switches
       nsxt_logical_switches_facts:
         hostname: "{{hostname}}"
         username: "{{username}}"

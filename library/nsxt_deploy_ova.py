@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -18,8 +18,142 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''TODO
+DOCUMENTATION = '''
+---
+module: nsxt_deploy_ova
+short_description: Deploys NSXT Manager
+description: Deploys NSXT Manager
+version_added: "2.7"
 author: Rahul Raghuvanshi
+options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    ovftool_path:
+        description: Path of ovf tool
+        type: 'str',
+    folder:
+        description:  vCenter folder
+        required: false
+        type: 'str'
+    datacenter:
+        description: Datacenter name
+        required: true 
+        type: 'str'
+    datastore:
+        description: Data Store
+        required: true
+        type: 'str'
+    portgroup:
+        description: Port group
+        required: true
+        type: 'str'
+    portgroup_ext:
+        description: External Portgroup
+        type: 'str'
+    portgroup_transport:
+        description: Transport Port Group
+        type: 'str'
+    cluster:
+        description: vCenter Cluster
+        required: true
+        type: 'str'
+    vmname:
+        description: Name of VM
+        required: true
+        type: 'str'
+    hostname:
+        description: Name of host
+        required: true 
+        type: 'str'
+    dns_server:
+        description: DNS server address
+        required: true
+        type: 'str'
+    ntp_server:
+        description: NTP Server Address
+        required: true
+        type: 'str'
+    dns_domain:
+        description: DNS Domain name
+        required: true
+        type: 'str'
+    gateway:
+        description: Gateway Address
+        required: true
+        type: 'str'
+    ip_address:
+        description: IP Address
+        required: true
+        type: 'str'
+    netmask:
+        description: Netmask
+        required: true
+        type: 'str'
+    admin_password:
+        description: Admin Password
+        required: true
+        type: 'str'
+        no_log: true
+    cli_password:
+        description: CLI Password
+        required: true
+        type: 'str'
+        no_log: true
+    ssh_enabled:
+        description: If ssh is enabled
+        default: false
+    allow_ssh_root_login:
+        description: If SSH root login is allowed
+        default: false
+    deployment_size:
+        description: Size of the deployment
+        default: 'medium'
+        type: 'str'
+    path_to_ova:
+        description: Path to OVA file
+        required: true
+        type: 'str'
+    ova_file:
+        description: OVA File name
+        required: true
+        type: 'str'
+    disk_mode:
+        description: Disk mode to used. Thin or thick.
+        default: 'thin'
+    vcenter:
+        description: vCenter name
+        required: true
+        type: 'str'
+    vcenter_user:
+        description: vCenter username
+        required: true
+        type: 'str'
+    vcenter_passwd:
+        description: vCenter password
+        required: true
+        type: 'str'
+        no_log: true
+    extra_para:
+        description: Extra Parameters
+        required: false
+        type: 'str'
+    role:
+        description: Roles
+        required: true
+        type: 'str'
+requirements:
+    - PyVmOmi - Python library for vCenter api.
+    - OVF Tools - Ovftool is used for ovf deployment.
 '''
 
 EXAMPLES = '''
@@ -46,7 +180,7 @@ EXAMPLES = '''
     vcenter_user: "administrator@vsphere.local"
     vcenter_passwd: "Admin!23"
     deployment_size: "small"
-    role: "nsx-manager"
+    role: "nsx-manager nsx-controller"
 '''
 
 RETURN = '''# '''

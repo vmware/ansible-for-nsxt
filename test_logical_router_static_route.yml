@@ -4,15 +4,15 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Create logical router logical switch
+    - name: Add Static Routes on a Logical Router
       nsxt_logical_router_static_routes:
         hostname: "{{hostname}}"
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        logical_router_id: "175a24f1-e683-42bb-853a-3a9b90c283c3"
+        logical_router_name: "tier-0"
         next_hops:
         - administrative_distance: '2'
           ip_address: 192.168.200.254
         network: 192.168.200.0/24
-        state: "delete"
+        state: "present"

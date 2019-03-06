@@ -20,6 +20,6 @@
             username: "{{item.host_username}}"
             password: "{{item.host_password}}"
             thumbprint: "{{item.host_thumbprint}}"
-        state: "absent"
+        state: "present"
       with_items:
         - "{{fabric_host_nodes}}"
