@@ -399,9 +399,7 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    resource_type: "TransportNode"
     display_name: "NSX Configured TN"
-    description: "NSX configured Test Transport Node"
     host_switch_spec:
       resource_type: "StandardHostSwitchSpec"
       host_switches:
