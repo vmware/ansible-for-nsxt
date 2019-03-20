@@ -1,0 +1,179 @@
+hostname: "192.168.100.115"
+username: "admin"
+password: "VMwarensbu_1"
+validate_certs: False
+force_redeploy: False
+
+############  CREATE TOPOLOGY SETTING  ############
+
+use_floating_ip: True
+service_boot_timeout: "30"
+license_key: "<license key here>"
+
+dns_server: "192.168.0.253"
+ntp_server: "192.168.0.253"
+dns_domain: "corp.local"
+gateway: "192.168.0.253"
+netmask: "255.255.0.0"
+prefix_length: "22"
+
+transport_zone_name_1: "test-transport-zone-1"
+host_switch_name_1: "test-host-switch-name-1"
+ip_pool_name_1: "test-ip-pool-1"
+uplink_profile_name_1: "test-uplink-profile-1"
+uplink_name_1: "test-uplink-1"
+device_name_1: "vmnic1"
+
+deploy_ova:
+- display_name: "nsxm-1"
+  master_node: True
+  vmname: "nsxm-1"
+  hostname: "nsxm-1"
+  ip_address: "192.168.100.1"
+  netmask: "255.255.0.0"
+- display_name: "nsxm-2"
+  master_node: False
+  vmname: "nsxm-2"
+  hostname: "nsxm-2"
+  ip_address: "192.168.100.2"
+  netmask: "255.255.0.0"
+- display_name: "nsxm-3"
+  master_node: False
+  vmname: "nsxm-3"
+  hostname: "nsxm-3"
+  ip_address: "192.168.100.3"
+  netmask: "255.255.0.0"
+
+ovftool_path: "/usr/bin"
+path_to_ova: "/root/"
+ova_file: "nsx-unified-appliance-2.4.0.0.0.11224879.ova"
+
+vcenter_prod_name: "vc-l-01a"
+vcenter_prod: "192.168.40.1"
+vcenter_prod_thumbprint: "DF:B4:7F:44:E4:1C:FA:0E:7A:85:47:9F:90:1A:B0:7B:57:81:74:C0:CF:BD:B7:9D:2D:F3:F1:AC:03:B5:5C:DE"
+datacenter: "DC1"
+datastore: "Datastore"
+cluster: "CL1"
+portgroup: "br100"
+management_network_id: "br100"
+compute_id: "vc-l-01a"
+storage_id: "Datastore"
+
+vcenter_user: "administrator@vsphere.local"
+vcenter_passwd: "VMware1!"
+
+appliance_role: "nsx-manager nsx-controller"
+appliance_password: "{{password}}"
+appliance_size: "SMALL"
+
+backup_servers:
+- display_name: "backup_server_1"
+  backup_enabled: True
+  seconds_between_backups: 8640
+  backup_server: "10.111.222.33"
+  backup_server_port: 555
+  backup_protocol_name: "sftp"
+  backup_ssh_fingerprint: "SHA256:w2NgXhG2Nm76q9PL/bXWKkLbDS31uMLYttUe9eajPaA"
+  backup_username: "TEST_USERNAME"
+  backup_password: "TEST_PASSWORD"
+  backup_directory_path: "/nsx-backups"
+  backup_passphrase: "VMwarensbu_12234"
+  backup_inventory_summary_interval: 300
+
+# syslog_servers:
+# - display_name: "syslog_server"
+#   syslog_server: "10.0.0.11"
+#   syslog_server_port: 1234
+#   syslog_protocol_name: "<protocol_name>"
+#   syslog_level: "<syslog_level>"
+#   hostname: "{{hostname}}"
+#   username: "{{username}}"
+#   password: "{{password}}"
+#   validate_certs: "{{validate_certs}}"
+
+transport_zones:
+- display_name: "{{transport_zone_name_1}}"
+  transport_type: "VLAN"
+  host_switch_name: "{{host_switch_name_1}}"
+  description: "transport-zone description"
+
+ip_pools:
+- display_name: "{{ip_pool_name_1}}"
+  subnets:
+  - allocation_ranges:
+    - start: "10.110.80.141"
+      end: "10.110.80.150"
+    cidr: "10.110.80.0/22"
+
+uplink_profiles:
+- display_name: "{{uplink_profile_name_1}}"
+  teaming:
+    active_list:
+    - uplink_name: "{{uplink_name_1}}"
+      uplink_type: PNIC
+    policy: FAILOVER_ORDER
+  transport_vlan: 0
+
+transport_nodes:
+- display_name: "esx-03a"
+  uplink_profile_name: "{{uplink_profile_name_1}}"
+  host_switch_name: "{{host_switch_name_1}}"
+  device_name: "{{device_name_1}}"
+  uplink_name: "{{uplink_name_1}}"
+  ip_pool_name: "{{ip_pool_name_1}}"
+  transport_zone_name: "{{transport_zone_name_1}}"
+  ip_address: "192.168.20.3"
+  os_type: "ESXI"
+  os_version: "6.7.0"
+  username: "root"
+  password: "VMware1!"
+  # thumbprint: "5AC7F0CA989ADAB46AFA443CA0C7AC91EB8C1B36571AEE4D60403C20DDACE3E7"
+  thumbprint: ""
+
+- display_name: "esx-04a"
+  uplink_profile_name: "{{uplink_profile_name_1}}"
+  host_switch_name: "{{host_switch_name_1}}"
+  device_name: "{{device_name_1}}"
+  uplink_name: "{{uplink_name_1}}"
+  ip_pool_name: "{{ip_pool_name_1}}"
+  transport_zone_name: "{{transport_zone_name_1}}"
+  ip_address: "192.168.20.4"
+  os_type: "ESXI"
+  os_version: "6.7.0"
+  username: "root"
+  password: "VMware1!"
+  # thumbprint: "2742B493AA40E285D96F6452733333A988DE0AD335593EB9AF4AFB0A95812E57"
+  thumbprint: ""
+
+transport_node_profiles:
+- display_name: "test-transport-node-profile-1"
+  uplink_profile_name: "{{uplink_profile_name_1}}"
+  host_switch_name: "{{host_switch_name_1}}"
+  device_name: "{{device_name_1}}"
+  uplink_name: "{{uplink_name_1}}"
+  ip_pool_name: "{{ip_pool_name_1}}"
+  transport_zone_name: "{{transport_zone_name_1}}"
+
+
+############  UPGRADE TOPOLOGY SETTING  ############
+component_types:
+- display_name: ESXi Host
+  component_type: "HOST"
+  parallel: False
+  pause_on_error: True
+  pause_after_each_group: True
+- display_name: Management Plane
+  component_type: "MP"
+  parallel: True
+  pause_on_error: True
+  pause_after_each_group: False
+# - display_name: NSX Edge
+#   component_type: EDGE
+#   parallel: True
+#   pause_on_error: True
+#   pause_after_each_group: True
+
+url: "http://192.168.205.174/VMware-NSX-upgrade-bundle-2.4.0.0.0.12250668.mub" # URL of MUB file location
+upgrade_ip_address: "192.168.100.1"
+# bundle_id: 2400012250668  # bundle_id is the version of the bundle withouth the dots
+# result: {"ip_address": "192.168.100.1"}  # TODO Remove when not needed

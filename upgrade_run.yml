@@ -1,0 +1,16 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile-upgrade.yml
+  tasks:
+
+#  #############  Run Upgrade  #############
+  
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
