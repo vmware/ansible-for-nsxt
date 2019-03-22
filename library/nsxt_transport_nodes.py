@@ -127,6 +127,14 @@ options:
         description: Display name
         required: true
         type: str
+    description:
+        description: Description of this resource
+        required: False
+        type: str
+    resource_type:
+        description: Must be set to the value TransportNode
+        required: False
+        type: str
     host_switch_spec:
         description: 'This property is used to either create standard host switches
                       or to inform NSX about preconfigured host switches that already
@@ -580,6 +588,8 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                       description=dict(required=False, type='str'),
+                       resource_type=dict(required=False, choices=['TransportNode']),
                        host_switch_spec=dict(required=False, type='dict',
                        host_switches=dict(required=True, type='list'),
                        resource_type=dict(required=True, type='str')),
