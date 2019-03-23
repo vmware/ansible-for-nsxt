@@ -151,3 +151,14 @@ compute_managers:
   username: "administrator@vsphere.local"
   password: "Admin!23"
   thumbprint: "46:1E:31:DD:0B:37:4C:F0:91:5B:49:A1:A1:94:B5:DF:82:93:90:52:D9:68:0F:86:C8:CA:6C:34:CB:82:D7:D5"
+
+
+route_advertise:
+  display_name: "tier-1" # Must be a tier 1 router name
+  enabled: True
+  advertise_dns_forwarder: False
+  advertise_lb_snat_ip: True
+  advertise_lb_vip: True
+  advertise_nat_routes: True
+  advertise_nsx_connected_routes: True
+  advertise_static_routes: True
