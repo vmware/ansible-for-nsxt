@@ -81,7 +81,8 @@ Install PyVmOmi
 ```
 pip install --upgrade pyvmomi pyvim requests ssl
 ```
-Download and Install Ovf tool - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353)
+Download and Install Ovf tool 4.3 - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL430&productId=742)
+(Note: Using ovftool version 4.0/4.1 causes OVA/OVF deployment failure with Error: cURL error: SSL connect error\nCompleted with errors\n)
 
 Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
 ```
