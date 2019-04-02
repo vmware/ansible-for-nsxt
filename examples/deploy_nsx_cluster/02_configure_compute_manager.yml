@@ -1,0 +1,26 @@
+---
+#
+# Playbook to register Compute Managers with NSX Appliance
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - deploy_nsx_cluster_vars.yml
+  tasks:
+    - name: Register compute manager
+      nsxt_fabric_compute_managers:
+          hostname: "{{ nsx_node1.hostname }}"
+          username: "{{ nsx_username }}"
+          password: "{{ nsx_password }}"
+          validate_certs: "{{ validate_certs }}"
+          display_name: "{{ item.display_name }}"
+          server: "{{ item.mgmt_ip }}"
+          origin_type: "{{ item.origin_type }}"
+          credential:
+            credential_type: "{{ item.credential_type }}"
+            username: "{{ item.username }}"
+            password: "{{ item.password }}"
+          state: present
+      with_items:
+        - "{{compute_managers}}"

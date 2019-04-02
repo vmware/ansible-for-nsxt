@@ -1,0 +1,43 @@
+---
+#
+# Playbook to deploy the first NSX Appliance node. Also checks the node
+# status
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - deploy_nsx_cluster_vars.yml
+  tasks:
+    - name: deploy NSX Manager OVA
+      nsxt_deploy_ova:
+        ovftool_path: "/usr/bin"
+        datacenter: "{{ nsx_node1['datacenter'] }}"
+        datastore: "{{ nsx_node1['datastore'] }}"
+        portgroup: "{{ nsx_node1['portgroup'] }}"
+        cluster: "{{ nsx_node1['cluster'] }}"
+        vmname: "{{ nsx_node1['hostname'] }}"
+        hostname: "{{ nsx_node1['hostname'] }}"
+        dns_server: "{{ dns_server }}"
+        dns_domain: "{{ domain }}"
+        ntp_server: "{{ ntp_server }}"
+        gateway: "{{ gateway }}"
+        ip_address: "{{ nsx_node1['mgmt_ip'] }}"
+        netmask: "{{ netmask }}"
+        admin_password: "{{ nsx_password }}"
+        cli_password: "{{ nsx_password }}"
+        path_to_ova: "{{ nsx_ova_path }}"
+        ova_file: "{{ nsx_ova }}"
+        vcenter: "{{ compute_manager['mgmt_ip'] }}"
+        vcenter_user: "{{ compute_manager['username'] }}"
+        vcenter_passwd: "{{ compute_manager['password'] }}"
+        deployment_size: "small"
+        role: "nsx-manager nsx-controller"
+
+    - name: Check manager status
+      nsxt_manager_status:
+          hostname: "{{ nsx_node1['hostname'] }}"
+          username: "{{ nsx_username }}"
+          password: "{{ nsx_password }}"
+          validate_certs: "{{ validate_certs }}"
+          wait_time: 50
