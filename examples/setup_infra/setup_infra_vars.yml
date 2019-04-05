@@ -253,9 +253,7 @@
   "edge_clusters": [
     {
       "display_name": "Edge-Cluster-01",
-      "description": "NSX Edge Cluster 01",
       "cluster_profile_binding_id": "91bcaa06-47a1-11e4-8316-17ffc770799b",
-      "cluster_profile_binding_type": "EdgeHighAvailabilityProfile",
       "transport_node_names": [ "EdgeNode-01", "EdgeNode-02" ]
     }
   ]
