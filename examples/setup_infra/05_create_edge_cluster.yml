@@ -1,0 +1,22 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Add edge cluster
+      nsxt_edge_clusters:
+        hostname: "{{ nsx_node1.hostname }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        display_name: "{{ item.display_name }}"
+        description: "{{ item.description }}"
+        cluster_profile_bindings:
+        - profile_id: "{{ item.cluster_profile_binding_id }}"
+          resource_type: " {{ item.cluster_pforile_binding_type }}"
+        members:
+        - transport_node_name: "edge-1"
+        - transport_node_name: "edge-2"
+        state: present
