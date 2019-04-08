@@ -254,7 +254,14 @@
     {
       "display_name": "Edge-Cluster-01",
       "cluster_profile_binding_id": "91bcaa06-47a1-11e4-8316-17ffc770799b",
-      "transport_node_names": [ "EdgeNode-01", "EdgeNode-02" ]
+      "members": [
+        {
+          "transport_node_name": "EdgeNode-01"
+        },
+        {
+          "transport_node_name": "EdgeNode-02"
+        }
+      ]
     }
   ]
 }

@@ -14,9 +14,7 @@
         display_name: "{{ item.display_name }}"
         cluster_profile_bindings:
         - profile_id: "{{ item.cluster_profile_binding_id }}"
-        members:
-        - transport_node_name: "EdgeNode-01"
-        - transport_node_name: "EdgeNode-01"
+        members: "{{ item.members }}"
         state: present
       with_items:
         - "{{ edge_clusters }}"
