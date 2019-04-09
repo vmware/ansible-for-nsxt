@@ -17,6 +17,6 @@
           host_switches: "{{ item.host_switches }}"
         transport_zone_endpoints: "{{ item.transport_zone_endpoints }}"
         node_deployment_info: "{{ item.node_deployment_info }}"
-        state: present
+        state: "{{ state }}"
       with_items:
         - "{{ transport_nodes }}"

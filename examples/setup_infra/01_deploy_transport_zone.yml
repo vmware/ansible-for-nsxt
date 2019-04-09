@@ -16,6 +16,6 @@
         description: "{{ item.description }}"
         transport_type: "{{ item.transport_type }}"
         host_switch_name: "{{ item.host_switch_name }}"
-        state: "present"
+        state: "{{ state }}"
       with_items:
         - "{{ transport_zones }}"

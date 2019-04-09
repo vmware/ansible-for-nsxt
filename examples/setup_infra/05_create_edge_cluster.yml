@@ -15,6 +15,6 @@
         cluster_profile_bindings:
         - profile_id: "{{ item.cluster_profile_binding_id }}"
         members: "{{ item.members }}"
-        state: present
+        state: "{{ state }}"
       with_items:
         - "{{ edge_clusters }}"

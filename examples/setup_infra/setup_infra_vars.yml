@@ -1,13 +1,26 @@
 #
-# Variables file for deploying NSX-T Cluster
+#
+# Variables file for Day-0/1 setup
+# Creates the following:
+#   - 2 Transport Zones
+#   - 1 IP Pool (used by Edge)
+#   - 1 Transport Done Profile with 2 TZ endpoints
+#   - 2 Edge Transport Nodes
+#   - 1 Edge Cluster with the 2 Edge Nodes
 #
 {
+
+  #
+  # Flag to create or delete all the objects
+  # Accepts: 'present' to create; 'absent' to delete
+  #
+  "state": "present",
 
   #
   # Common NSX Appliance variables
   #
   "nsx_username": "admin",
-  "nsx_password": "VMware1!VMware1!",
+  "nsx_password": "myPassword1!myPassword1!",
   "validate_certs": False,
 
   #
@@ -45,12 +58,12 @@
         {
           "allocation_ranges": [
             {
-              "start": "192.168.100.50",
-              "end": "192.168.100.100"
+              "start": "172.16.227.20",
+              "end": "172.16.227.29"
             }
           ],
-          "gateway_ip": "192.168.100.1",
-          "cidr": "192.168.100.0/24"
+          "gateway_ip": "172.16.227.1",
+          "cidr": "172.16.227.0/27"
         }
       ]
     }
@@ -153,7 +166,7 @@
             ],
             "management_port_subnets": [
               {
-                "ip_addresses": [ "10.114.200.15" ],
+                "ip_addresses": [ "10.114.200.16" ],
                 "prefix_length": 27
               }
             ],
@@ -165,10 +178,10 @@
           "form_factor": "MEDIUM",
           "node_user_settings": {
             "cli_username": "admin" ,
-            "root_password": "VMware1!VMware1!",
-            "cli_password": "VMware1!VMware1!",
+            "root_password": "myPassword1!myPassword1!",
+            "cli_password": "myPassword1!myPassword1!",
             "audit_username": "audit",
-            "audit_password": "VMware1!VMware1!"
+            "audit_password": "myPassword1!myPassword1!"
           }
         },
         "resource_type": "EdgeNode",
@@ -226,7 +239,7 @@
             ],
             "management_port_subnets": [
               {
-                "ip_addresses": [ "10.114.200.16" ],
+                "ip_addresses": [ "10.114.200.17" ],
                 "prefix_length": 27
               }
             ],
@@ -238,10 +251,10 @@
           "form_factor": "MEDIUM",
           "node_user_settings": {
             "cli_username": "admin" ,
-            "root_password": "VMware1!VMware1!",
-            "cli_password": "VMware1!VMware1!",
+            "root_password": "myPassword1!myPassword1!",
+            "cli_password": "myPassword1!myPassword1!",
             "audit_username": "audit",
-            "audit_password": "VMware1!VMware1!"
+            "audit_password": "myPassword1!myPassword1!"
           }
         },
         "resource_type": "EdgeNode",

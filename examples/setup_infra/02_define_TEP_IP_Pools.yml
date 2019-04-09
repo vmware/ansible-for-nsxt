@@ -13,6 +13,6 @@
         validate_certs: "{{ validate_certs }}"
         display_name: "{{ item.display_name }}"
         subnets: "{{ item.subnets }}"
-        state: present
+        state: "{{ state }}"
       with_items:
         - "{{ ip_pools  }}"
