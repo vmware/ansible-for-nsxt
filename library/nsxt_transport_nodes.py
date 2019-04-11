@@ -544,10 +544,13 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
             transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                                     mgr_username, mgr_password, validate_certs,
                                                                                     "/transport-zones", transport_zone_name)
-    if transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
-        vc_name = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vc_name', None)
-        transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['vc_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                    "/fabric/compute-managers", vc_name)
+    try:
+        if transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
+            vc_name = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vc_name', None)
+            transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['vc_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                        "/fabric/compute-managers", vc_name)
+    except KeyError:
+        pass
 
     transport_node_params['display_name'] = transport_node_params.pop('display_name', None)
     return transport_node_params
