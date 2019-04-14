@@ -14,7 +14,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': 'xx',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nsxt_ns_groups
-short_description: Register and Install NSX Components on a Node
+short_description: Create and update NS Groups
 description:  Creates an NS Group with either static or dynamic memeber.
               
               Reference the API guide for which params can be used with which operations.
@@ -212,6 +212,7 @@ import json, time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
+from collections import Counter
 
 try:
     from __main__ import display
@@ -273,13 +274,47 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
                           endpoint_lookup[member['target_type']], value, True, 'external_id')
     return ns_group_params
 
+def add_equals_operator_if_missing(dict_to_check):
+    addition_string = ''
+    if not dict_to_check.__contains__('tag_op'):
+        addition_string += 'EQUALS'
+    if not dict_to_check.__contains__('scope_op'):
+        addition_string += 'EQUALS'
+    return addition_string
+
+def extract_membership_criteria_strings(membership_criteria_list):
+    output_string = ''
+    for membership_criteria in membership_criteria_list:
+        if membership_criteria['resource_type'] == 'NSGroupComplexExpression':
+            for expression in membership_criteria['expressions']:
+                output_string += add_equals_operator_if_missing(expression)
+                for value in expression.values():
+                    output_string += value
+        elif membership_criteria['resource_type'] == 'NSGroupTagExpression':
+            output_string += add_equals_operator_if_missing(membership_criteria)
+            for value in membership_criteria.values():
+                output_string += value
+    return output_string
+
+# TODO check for updates properly
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params):
     existing_ns_group = get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params['display_name'])
     if existing_ns_group is None:
         return False
-    if existing_ns_group.__contains__('ip_addresses') and ns_group_params.__contains__('ip_addresses') and \
-        existing_ns_group['ip_addresses'] != ns_group_params['ip_addresses']:
-        return True
+    # Compares the value for all static members, which is the object ID.
+    if ns_group_params['members']:
+        existing_members = [d['value'] for d in existing_ns_group['members'] if 'value' in d]
+        new_members = [d['value'] for d in ns_group_params['members'] if 'value' in d]
+        if not Counter(existing_members) == Counter(new_members):
+            return True
+    # Membership criterial has no unique keys, so all values need to be compared. 
+    if ns_group_params['membership_criteria']:
+        existings_membership_criteria_string = extract_membership_criteria_strings(existing_ns_group['membership_criteria'])
+        new_membership_criteria_string = extract_membership_criteria_strings(ns_group_params['membership_criteria'])
+        # display.banner('New = ' + new_membership_criteria_string + " ###### Existing = " + existings_membership_criteria_string)
+        # module.fail_json(msg='New = ' + str(new_membership_criteria_string) + ' ###### Existing = ' + str(existings_membership_criteria_string))
+        if not Counter(existings_membership_criteria_string) == Counter(new_membership_criteria_string):
+            return True
     return False
 
 def main():
@@ -307,8 +342,8 @@ def main():
                                       ['resource_type', 'EdgeNode', ['deployment_config']]])
   
   ns_group_params = get_ns_group_params(module.params.copy())
-  display.banner('B-Original Params = ' + str(ns_group_params))
-  module.log(msg='Original Params = ' + str(ns_group_params))  
+  #display.banner('B-Original Params = ' + str(ns_group_params))
+  #module.log(msg='Original Params = ' + str(ns_group_params))  
   
   state = module.params['state']
   mgr_hostname = module.params['hostname']
