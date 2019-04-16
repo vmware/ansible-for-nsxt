@@ -280,38 +280,41 @@ def add_equals_operator_if_missing(dict_to_check):
         addition_string += 'EQUALS'
     if not dict_to_check.__contains__('scope_op'):
         addition_string += 'EQUALS'
-    return addition_string
+    return addition_string if addition_string <> '' else ''
 
-def extract_membership_criteria_strings(membership_criteria_list):
-    output_string = ''
+# All values are extracted for each membership_criteria and a sorted string is built. 
+def extract_membership_criteria_list(membership_criteria_list):
+    output_list = []
     for membership_criteria in membership_criteria_list:
         if membership_criteria['resource_type'] == 'NSGroupComplexExpression':
             for expression in membership_criteria['expressions']:
-                output_string += add_equals_operator_if_missing(expression)
+                item_string = add_equals_operator_if_missing(expression)
                 for value in expression.values():
-                    output_string += value
+                    item_string += value
+                output_list.append(''.join(sorted(item_string)))
         elif membership_criteria['resource_type'] == 'NSGroupTagExpression':
-            output_string += add_equals_operator_if_missing(membership_criteria)
+            item_string = add_equals_operator_if_missing(membership_criteria)
             for value in membership_criteria.values():
-                output_string += value
-    return output_string
+                item_string += value
+            output_list.append(''.join(sorted(item_string)))
+    return output_list
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params):
-    existing_ns_group = get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params['display_name'])
+    existing_ns_group = get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, 
+                                                       ns_group_params['display_name'])
     if existing_ns_group is None:
         return False
-    # Compares the value for all static members, which is the object ID.
+    # Compares the uniqie value for all static members, which is the object ID.
     if ns_group_params['members'] and len(ns_group_params['members']) == len(existing_ns_group['members']):
         existing_members = [d['value'] for d in existing_ns_group['members'] if 'value' in d]
         new_members = [d['value'] for d in ns_group_params['members'] if 'value' in d]
         if not Counter(existing_members) == Counter(new_members):
             return True
-    # Membership criterial has no unique keys, so all values need to be compared. 
-    # TODO update to catch if a params is swapped between elements.
+    # Membership criterial has no unique keys, so all values need to be compared. Lists are generated with sorted strings.
     if ns_group_params['membership_criteria'] and len(ns_group_params['membership_criteria']) == len(existing_ns_group['membership_criteria']):
-        existings_membership_criteria_string = extract_membership_criteria_strings(existing_ns_group['membership_criteria'])
-        new_membership_criteria_string = extract_membership_criteria_strings(ns_group_params['membership_criteria'])
-        if not Counter(existings_membership_criteria_string) == Counter(new_membership_criteria_string):
+        existings_membership_criteria_list = extract_membership_criteria_list(existing_ns_group['membership_criteria'])
+        new_membership_criteria_list = extract_membership_criteria_list(ns_group_params['membership_criteria'])
+        if not Counter(existings_membership_criteria_list) == Counter(new_membership_criteria_list):
             return True
     return False
 

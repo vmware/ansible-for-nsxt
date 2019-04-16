@@ -162,3 +162,37 @@ route_advertise:
   advertise_nat_routes: True
   advertise_nsx_connected_routes: True
   advertise_static_routes: True
+
+nsxt_ip_sets:
+- display_name: 'ips_test'
+  ip_addresses:
+  - '192.168.0.0/24'
+  - '192.168.1.1'
+  state: present
+
+nsxt_ns_groups:
+- display_name: 'ns_test'
+  members:
+    - resource_type: NSGroupSimpleExpression
+      target_property: id
+      op: EQUALS
+      target_type: IPSet
+      value: 'ips_test'
+  state: present
+- display_name: 'ns_test_criteria'
+  membership_criteria:
+    - resource_type: NSGroupTagExpression
+      target_type: 'LogicalSwitch'
+      scope: 'S1'
+      tag: 'T1'
+    - resource_type: NSGroupComplexExpression
+      expressions:
+        - resource_type: NSGroupTagExpression
+          target_type: 'LogicalPort'
+          scope: 'S2'
+          tag: 'T2'
+        - resource_type: NSGroupTagExpression
+          target_type: 'LogicalPort'
+          scope: '99'
+          tag: 'T1'
+  state: present
