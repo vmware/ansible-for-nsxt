@@ -296,23 +296,21 @@ def extract_membership_criteria_strings(membership_criteria_list):
                 output_string += value
     return output_string
 
-# TODO check for updates properly
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params):
     existing_ns_group = get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params['display_name'])
     if existing_ns_group is None:
         return False
     # Compares the value for all static members, which is the object ID.
-    if ns_group_params['members']:
+    if ns_group_params['members'] and len(ns_group_params['members']) == len(existing_ns_group['members']):
         existing_members = [d['value'] for d in existing_ns_group['members'] if 'value' in d]
         new_members = [d['value'] for d in ns_group_params['members'] if 'value' in d]
         if not Counter(existing_members) == Counter(new_members):
             return True
     # Membership criterial has no unique keys, so all values need to be compared. 
-    if ns_group_params['membership_criteria']:
+    # TODO update to catch if a params is swapped between elements.
+    if ns_group_params['membership_criteria'] and len(ns_group_params['membership_criteria']) == len(existing_ns_group['membership_criteria']):
         existings_membership_criteria_string = extract_membership_criteria_strings(existing_ns_group['membership_criteria'])
         new_membership_criteria_string = extract_membership_criteria_strings(ns_group_params['membership_criteria'])
-        # display.banner('New = ' + new_membership_criteria_string + " ###### Existing = " + existings_membership_criteria_string)
-        # module.fail_json(msg='New = ' + str(new_membership_criteria_string) + ' ###### Existing = ' + str(existings_membership_criteria_string))
         if not Counter(existings_membership_criteria_string) == Counter(new_membership_criteria_string):
             return True
     return False
@@ -337,13 +335,9 @@ def main():
                     resource_type=dict(required=True, type='str', choices=['NSGroup']),
                     state=dict(required=True, choices=['present', 'absent']))
 
-  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
-                         required_if=[['resource_type', 'HostNode', ['os_type']],
-                                      ['resource_type', 'EdgeNode', ['deployment_config']]])
+  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   
   ns_group_params = get_ns_group_params(module.params.copy())
-  #display.banner('B-Original Params = ' + str(ns_group_params))
-  #module.log(msg='Original Params = ' + str(ns_group_params))  
   
   state = module.params['state']
   mgr_hostname = module.params['hostname']
@@ -368,8 +362,6 @@ def main():
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
     body = update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params)
-    #module.fail_json(msg="Lazy  %s " % ns_group_params)
-    module.log(msg='Updated Params = ' + str(ns_group_params))
     updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
 
     if not updated:
