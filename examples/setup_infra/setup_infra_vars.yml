@@ -4,7 +4,7 @@
 # Creates the following:
 #   - 2 Transport Zones
 #   - 1 IP Pool (used by Edge)
-#   - 1 Transport Done Profile with 2 TZ endpoints
+#   - 1 Transport Zone Profile with 2 TZ endpoints
 #   - 2 Edge Transport Nodes
 #   - 1 Edge Cluster with the 2 Edge Nodes
 #
