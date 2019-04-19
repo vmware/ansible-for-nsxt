@@ -76,7 +76,8 @@ options:
             type: str
     membership_criteria:
         description: 'List of membership criteria. Members must conform to NSGroupTagExpression or 
-                      NSGroupComplexExpression schema.'
+                      NSGroupComplexExpression schema.
+                      Minimum 2, maximum 5.'
         required: False
         type: list
 
@@ -94,9 +95,17 @@ options:
             description: "Scope of objects to filter for"
             required: True
             type: str
+        scope_op:
+            description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
+            required: False
+            type: str
         tag:
             description: "Tag used to filter against"
             required: True
+            type: str
+        tag_op:
+            description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
+            required: False
             type: str
         
         ## NSGroupComplexExpression required options
@@ -106,7 +115,7 @@ options:
             required: True
             type: str
         expressions:
-            description: "Simple property which must be passed with all members"
+            description: "List of expressions. Minimum 2, maximum 5."
             required: True
             type: list
             resource_type: 
@@ -331,10 +340,21 @@ def main():
                         target_property=dict(required=True, type='str'),
                         target_type=dict(required=True, type='str', choices=['NSGroup', 'IPSet', 'MACSet', 'LogicalSwitch', 'LogicalPort', 
                                                                               'VirtualMachine', 'DirectoryGroup', 'VirtualNetworkInterface', 'TransportNode']),
-                        value=dict(required=True, type='str', choices=['NSGroupSimpleExpression'])
-                            ),
-                    membership_criteria=dict(required=False, type='list'),
-
+                        value=dict(required=True, type='str', choices=['NSGroupSimpleExpression'])),
+                    membership_criteria=dict(required=False, type='list',
+                        expressions=dict(required=False, type='list',
+                            resource_type=dict(required=True, type='str', choices=['NSGroupSimpleExpression']),
+                            scope=dict(required=True, type='str'),
+                            scope_op=dict(required=False, type='str', choices=['EQUALS']),
+                            tag=dict(required=True, type='str'),
+                            tag_op=dict(required=False, type='str', choices=['EQUALS', 'CONTAINS', 'STARTSWITH', 'ENDSWITH']),
+                            target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalSwitch', 'LogicalPort', 'VirtualMachine', 'TransportNode'])),
+                        resource_type=dict(required=False, type='str', choices=['NSGroupSimpleExpression']),
+                        scope=dict(required=False, type='str'),
+                        scope_op=dict(required=False, type='str', choices=['EQUALS']),
+                        tag=dict(required=False, type='str'),
+                        tag_op=dict(required=False, type='str', choices=['EQUALS', 'CONTAINS', 'STARTSWITH', 'ENDSWITH']),
+                        target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalSwitch', 'LogicalPort', 'VirtualMachine', 'TransportNode']),),
                     resource_type=dict(required=True, type='str', choices=['NSGroup']),
                     state=dict(required=True, choices=['present', 'absent']))
 
