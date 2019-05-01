@@ -13,7 +13,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': 'xx',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -21,30 +21,30 @@ ANSIBLE_METADATA = {'metadata_version': 'xx',
 DOCUMENTATION = '''
 ---
 module: nsxt_dfw_sections
-short_description: 
+short_description: Module to insert and modify DFW firewall sections with rules.
 description:  Creates an Distributed Firewall Section with along with rules.
               This is intended for use with GitOps workflows, where the configuration is stored in Git and the
               playbook run after a change has been made.
-              This module is designed to be run with relatively small firewall sections. Large firewall sections
-              can cause issues with API performance and the API guide states supported rule section size and 
-              maximum levels of concurrency
+              Large firewall sections with many hundreds of rules can cause issues with API performance and the
+              API guide states supported rule section size and maximum levels of concurrency.
               If section params or any rule params are changed, it will re-apply the configuration passed to Ansible
               in a single API call with all firewall rules.
 
-              Exclusions:
-                - Firewall rule name must be unique in each section, as the name is used to compare existing rules
+              Usage:
+                - Firewall rule names must be unique in each section, as the name is used to compare existing rules
                   against vars being passed in.
-                - No checks are made to remove firewall rule params on update. For instance if the destination is 
-                  removed from the answers file, it will not detect it as a change. This it to prevent future NSX API 
-                  changes from breaking the checking algorithm, as the API treats a non-existant value as "ANY" for 
-                  things like source and destination lists. To remediate, if you require a rule to have an empty 
-                  default param set, simply change it description, which will force re-creation.
+                - Sections managed by Ansible must have unique display names.
 
               Reference the API guide for which params can be used with which operations.
+              Maximums and descriptions below taken from the 2.4 API guide, consult for changes.
 
 version_added: "2.7"
 author: Matt Proud
 options:
+    display_name:
+        description: Display name
+        required: true
+        type: str
     hostname:
         description: Deployed NSX manager hostname.
         required: true
@@ -57,110 +57,213 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-    members:
-        description: 'List of members. Must conform to NSGroupSimpleExpression schema.'
+    applied_tos:
+        description: 'List of obects section applies. Must conform to ResourceReference schema.'
         required: False
         type: list
-
-        op: 
-            choices: ['EQUALS', 'CONTAINS', 'STARTSWITH', 'ENDSWITH', 'NOTEQUALS']
-            description: "Operator used to check value against resource type"
-            required: True
-            type: str
-        resource_type: 
-            choices: ['NSGroupSimpleExpression']
-            description: "Simple property which must be passed with all members"
-            required: True
-            type: str
-        target_property: 
-            description: "Object property used to identify. See API guide for details."
+        target_display_name:
+            description: "Display name of the NSX resource."
             required: True
             type: str
         target_type: 
-            choices: ['NSGroup', 'IPSet', 'MACSet', 'LogicalSwitch', 'LogicalPort', 'VirtualMachine', 
-                      'DirectoryGroup', 'VirtualNetworkInterface', 'TransportNode']
-            description: "Type of target object which is supported"
+            choices: ['NSGroup', 'LogicalSwitch', 'LogicalPort']
+            description: "Type of the NSX resource."
             required: True
             type: str
-        value: 
-            description: "Value used to identify member. This can be the unique object ID, which is 'id'
-                          for most objects. Virtual machine uses 'external_id'.
-                          Module supports looking up object IDs by name, but target_property must still
-                          be left as ID."
-            required: True
-            type: str
-    service:
-        description: 'List of membership criteria. Members must conform to NSGroupTagExpression or 
-                      NSGroupComplexExpression schema.'
+    description:
+        description: Description of this resource.
         required: False
+        type: str
+    rules:
+        description: 'List of rules to be applied with the section. Rules follow FirewallRule schema.'
+        required: True
         type: list
-
-        ## NSGroupTagExpression required options
-        resource_type: 
-            choices: ['NSGroupTagExpression']
-            description: "Simple property which must be passed with all members"
-            required: True
+        display_name:
+            description: Display name
+            required: true
             type: str
-        target_type: 
-            description: "Object property used to identify. See API guide for details."
-            required: True
+        description:
+            description: Description of rule
+            required: False
             type: str
-        scope:
-            description: "Scope of objects to filter for"
+        action:
+            choices: ['ALLOW', 'DROP', 'REJECT', 'REDIRECT', 'DO_NOT_REDIRECT']
+            description: Action enforced on the packets which matches the distributed service rule. Currently DS Layer
+                         supports below actions. ALLOW - Forward any packet when a rule with this action gets a match
+                         (Used by Firewall). DROP - Drop any packet when a rule with this action gets a match. Packets
+                         won't go further(Used by Firewall). REJECT - Terminate TCP connection by sending TCP reset 
+                         for a packet when a rule with this action gets a match (Used by Firewall). REDIRECT - 
+                         Redirect any packet to a partner appliance when a rule with this action gets a match 
+                         (Used by Service Insertion). DO_NOT_REDIRECT - Do not redirect any packet to a partner 
+                         appliance when a rule with this action gets a match (Used by Service Insertion).
             required: True
-            type: str
-        tag:
-            description: "Tag used to filter against"
-            required: True
-            type: str
-        
-        ## NSGroupComplexExpression required options
-        resource_type: 
-            choices: ['NSGroupComplexExpression']
-            description: "Simple property which must be passed with all members"
-            required: True
-            type: str
-        expressions:
-            description: "Simple property which must be passed with all members"
-            required: True
+            type str
+        applied_tos:
+            description: List of obects rule applies. Must conform to ResourceReference schema.  Max 128.
+            required: False
             type: list
-            resource_type: 
-                choices: ['NSGroupTagExpression']
-                description: "Simple property which must be passed with all members"
+            target_display_name:
+                description: "Display name of the NSX resource."
                 required: True
                 type: str
             target_type: 
-                choices: ['LogicalSwitch', 'LogicalPort', 'VirtualMachine', ]
-                description: "Object property used to identify. See API guide for details."
+                choices: ['NSGroup', 'LogicalSwitch', 'LogicalPort']
+                description: "Type of the NSX resource."
                 required: True
                 type: str
-            scope:
-                description: "Scope of objects to filter for"
+        context_profiles:
+            description: List of conext profile objects applied. Must conform to ResourceReference schema. Max 128.
+            required: False
+            type: list
+            target_display_name:
+                description: "Display name of the NSX resource."
                 required: True
                 type: str
-            scope_op:
-                description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
-                required: False
-                type: str
-            tag:
-                description: "Tag used to filter against"
+            target_type: 
+                choices: ['NSProfile']
+                description: "Type of the NSX resource."
                 required: True
                 type: str
-            tag_op:
-                description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
-                required: False
+        destinations:
+            description: List of destination obects rule applies. Must conform to ResourceReference schema. Max 128.
+            required: False
+            type: list
+            target_display_name:
+                description: "Display name of the NSX resource."
+                required: True
                 type: str
-                
-    display_name:
-        description: Display name
-        required: true
-        type: str
+            target_type: 
+                choices: ['IPSet', 'NSGroup', 'LogicalSwitch', 'LogicalPort']
+                description: "Type of the NSX resource."
+                required: True
+                type: str
+        direction:
+            description: Rule direction in case of stateless distributed service rules. This will only considered if
+                         section level parameter is set to stateless. Default to IN_OUT if not specified.
+            required: False
+            type: str
+        disabled:
+            description: Flag to disable rule. Disabled will only be persisted but never provisioned/realized.
+            required: False
+            type: bool
+        ip_protocol:
+            choices: ['IPV4', 'IPV6', 'IPV4_IPV6']
+            description: Type of IP packet that should be matched while enforcing the rule.
+            required: False
+            type: str
+        logged:
+            description: Flag to enable packet logging. Default is disabled.
+            required: False
+            type: bool
+        notes:
+            description: User notes specific to the rule. Max 2048 chars.
+            required: False
+            type: str
+        resouce_type:
+            choices: ['FirewallRule']
+            description: Type of NSX Resource.
+            required: False
+            type: str
+        rule_tag:
+            description: User level field which will be printed in CLI and packet logs. Max 32 chars.
+            required: False
+            type: str
+        services:
+            description: List of service obects rule applies. Must conform to ResourceReference schema.
+                         Each service should either comprise target_display_name and target_type, or service.
+                         Max 128.
+            required: False
+            type: list
+            service:
+                description: List of custom services. Must conform to ResourceReference schema.
+                             Should either comprise target_display_name and target_type, or service.
+                             Custom services should conform to ALGTypeNSService, ICMPTypeNSService, 
+                             IGMPTypeNSService, IPProtocolNSService or L4PortSetNSService schemas.
 
+                required: False
+                type: list
+                alg:
+                    choices: ['ORACLE_TNS', 'FTP', 'SUN_RPC_TCP', 'SUN_RPC_UDP', 'MS_RPC_TCP', 'MS_RPC_UDP', 
+                              'NBNS_BROADCAST', 'NBDG_BROADCAST', 'TFTP']
+                    description: The Application Layer Gateway (ALG) protocol. 
+                    required: False
+                    type: str 
+                destination_ports:
+                    description: List of ports as integers. Max 15
+                    required: False
+                    type: list
+                icmp_code:
+                    description: ICMP message code
+                    required: False
+                    type: int
+                icmp_type:
+                    description: ICMP message type
+                    required: False
+                    type: int
+                l4_protocol:
+                protocol:
+                    choices: ['ICMPv4', 'ICMPv6']
+                    description: ICMP protocol type
+                    required: False
+                    type: list
+                protocol_number:
+                    description: The IP protocol number
+                    required: False
+                    type: int
+                resource_type:
+                    choices: ['ALGTypeNSService', 'IPProtocolNSService', 'L4PortSetNSService', 'ICMPTypeNSService',
+                              'IGMPTypeNSService']
+                    description: Type of service.
+                    required: False
+                    type: list
+                source_ports:
+                    description: List of ports as integers. Max 15
+                    required: False
+                    type: list
+            target_display_name:
+                description: "Display name of the NSX resource."
+                required: False
+                type: str
+            target_type: 
+                choices: ['IPSet', 'NSGroup', 'LogicalSwitch', 'LogicalPort']
+                description: "Type of the NSX resource."
+                required: False
+                type: str
+        sources:
+            description: List of source obects rule applies. Must conform to ResourceReference schema. Max 128.
+            required: False
+            type: list
+            target_display_name:
+                description: "Display name of the NSX resource."
+                required: True
+                type: str
+            target_type: 
+                choices: ['NSService', 'NSServiceGroup']
+                description: "Type of the NSX resource."
+                required: True
+                type: str
     resource_type:
-        choices:
-        - NSGroup
-        description: Specifies NSGroup as object type
-        required: true
+        choices: ['FirewallSectionRuleList']
+        description: Type of the NSX resource.
+        required: False
+        type: str
+    section_placement:
+        description: Options on where to insert new secton.
+        required: False
+        type: dict
+        display_name:
+            description: Display name of partner section if insert_after or insert_before used.
+            required: false
+            type: str
+        operation:
+            choices: ['insert_top', 'insert_bottom', 'insert_after', 'insert_before']
+            description: "Insert operation command"
+            required: True
+            type: str
+    section_type:
+        choices: ['LAYER3']
+        description: Insert operation command
+        required: False
         type: str
     state:
         choices:
@@ -170,6 +273,12 @@ options:
                       'present' is used to create or update resource. 
                       'absent' is used to delete resource."
         required: true
+    stateful:
+        description: Stateful nature of the distributed service rules in the section.
+                     Stateful or Stateless nature of distributed service section is enforced 
+                     on all rules inside the section. 
+        required: True
+        type: bool
 '''
 
 EXAMPLES = '''
@@ -198,27 +307,6 @@ EXAMPLES = '''
             tag: 'T2'
     state: "present"
 
-
-- name: Add Distributed Firewall Section with static members
-  nsxt_dfw_section:
-    hostname: "10.192.167.137"
-    username: "admin"
-    password: "Admin!23Admin"
-    validate_certs: False
-    display_name: 'ns_with_criteria'
-    resource_type: NSGroup
-  members:
-    - resource_type: NSGroupSimpleExpression
-      target_property: id
-      op: EQUALS
-      target_type: IPSet
-      value: 'ips_test1'
-    - resource_type: NSGroupSimpleExpression
-      target_property: id
-      op: EQUALS
-      target_type: IPSet
-      value: 'ips_test2'
-    state: "present"
 '''
 
 RETURN = '''# '''
@@ -460,15 +548,10 @@ def check_rules_have_unique_names(module, dfw_section_params):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(display_name=dict(required=True, type='str'),
-                        section_placement=dict(required=True, type='dict',
-                            operation=dict(required=True, type='str', choices=['insert_top', 'insert_bottom', 'insert_after', 
-                                                                            'insert_before']),
-                            id=dict(required=False, type='str'),
-                            display_name=dict(required=True, type='str')),
                         host_credential=dict(required=False, type='dict',
-                        username=dict(required=False, type='str'),
-                        password=dict(required=False, type='str', no_log=True),
-                        thumbprint=dict(required=False, type='str', no_log=True)),
+                            username=dict(required=False, type='str'),
+                            password=dict(required=False, type='str', no_log=True),
+                            thumbprint=dict(required=False, type='str', no_log=True)),
                         applied_tos=dict(required=False, type='list', default=list([]),
                             target_display_name=dict(required=True, type='str'), # Will insert target_id a runtime
                             target_type=dict(required=True, type='str', choices=['LogicalPort', 'LogicalSwitch', 'NSGroup'])
@@ -498,7 +581,6 @@ def main():
                             notes=dict(required=False, type='str'),
                             resource_type=dict(required=False, type='str', choices=['FirewallRule']),
                             rule_tag=dict(required=False, type='str'),
-                            # section_name=dict(required=False, type='str'), # Will convert to ID and then pop to use in the URL.
                             services=dict(required=False, type='list', default=[],
                                 target_display_name=dict(required=False, type='str'), # Will insert target_id a runtime
                                 target_type=dict(required=False, type='str', choices=['NSService', 'NSServiceGroup']),
@@ -510,20 +592,20 @@ def main():
                                     icmp_code=dict(required=False, type='int'),
                                     icmp_type=dict(required=False, type='int'),
                                     l4_protocol=dict(required=False, type='str'),
-                                    protocol=dict(required=False, type='str', choices=['ICMPv4']),
+                                    protocol=dict(required=False, type='str', choices=['ICMPv4', 'ICMPv6']),
                                     protocol_number=dict(required=False, type='int'),
                                     resource_type=dict(required=True, type='str', 
                                                        choices=['ALGTypeNSService', 'IPProtocolNSService', 
                                                                 'L4PortSetNSService', 'ICMPTypeNSService', 'IGMPTypeNSService']),
-                                    source_ports=dict(required=False, type='list')
-                                    ),
-                                ),
+                                    source_ports=dict(required=False, type='list')),),
                             sources=dict(required=False, type='list', default=[],
                                 target_display_name=dict(required=True, type='str'), # Will insert target_id a runtime
-                                target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalPort', 'LogicalSwitch', 'NSGroup'])
-                                ),
-                            ),
-                        #resource_type=dict(required=True, choices=['FirewallSectionRuleList']),
+                                target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalPort', 'LogicalSwitch', 'NSGroup'])),),
+                        resource_type=dict(required=False, choices=['FirewallSectionRuleList'], default='FirewallSectionRuleList'),
+                        section_placement=dict(required=True, type='dict',
+                            operation=dict(required=True, type='str', choices=['insert_top', 'insert_bottom', 'insert_after', 
+                                                                            'insert_before']),
+                            display_name=dict(required=True, type='str')),
                         section_type=dict(required=False, choices=['LAYER3'], default='LAYER3'),
                         state=dict(required=True, choices=['present', 'absent']),
                         stateful=dict(required=True, type='bool'))
