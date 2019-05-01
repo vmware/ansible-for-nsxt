@@ -1,0 +1,94 @@
+---
+nsxt_dfw_section_with_rules:
+- display_name: Test Section
+  description: Testinging
+  stateful: True
+  state: present
+  applied_tos:
+  - target_display_name: 'ns_Dynamic1'
+    target_type: NSGroup
+  - target_display_name: 'test_lp'
+    target_type: LogicalPort
+  - target_display_name: 'PKS_Infra'
+    target_type: LogicalSwitch
+  section_placement:
+    operation: insert_after
+    display_name: top_section
+  rules:
+  - display_name: 'Test Rule'
+    description: Testing
+    action: ALLOW
+    applied_tos:
+    - target_display_name: 'ns_Dynamic1'
+      target_type: NSGroup
+    - target_display_name: 'ns_Dynamic2'
+      target_type: NSGroup
+    context_profiles:
+    - target_display_name: 'ACTIVDIR'
+      target_type: NSProfile
+    destinations:
+    - target_display_name: 'ips_test1' # Will insert target_id a runtime
+      target_type: IPSet
+    - target_display_name: 'ns_Dynamic1'
+      target_type: NSGroup
+    direction: IN_OUT
+    disabled: False
+    ip_protocol: IPV4_IPV6
+    logged: True
+    notes: "Test rule to prove FW rules"
+    resource_type: FirewallRule
+    rule_tag: Test-Log-Tag
+    # section_name: # Will insert target_id at runtime
+    services: 
+    - target_display_name: 'Active Directory Server UDP' # Will insert target_id a runtime
+      target_type: NSService
+    - target_display_name: 'ESXi Syslog Collector' # Will insert target_id a runtime
+      target_type: NSServiceGroup
+    sources: 
+    - target_display_name: '192.168.0.2'# Will insert target_id a runtime
+      target_type: IPAddress
+    - target_display_name: 'ns_LogicalPort'# Will insert target_id a runtime
+      target_type: NSGroup
+  - display_name: Test Rule 2
+    description: Testing 2
+    action: ALLOW
+    applied_tos: 
+    - target_display_name: 'ns_Dynamic2'
+      target_type: NSGroup
+    destinations:
+      target_display_name: ips_test1 # Will insert target_id a runtime
+      target_type: IPSet
+    direction: IN_OUT
+    disabled: False
+    ip_protocol: IPV4_IPV6
+    logged: True
+    notes: "Test rule to prove FW rules"
+    resource_type: FirewallRule
+  - display_name: 'Test Rule 3'
+    description: Testing 3
+    action: ALLOW
+    resource_type: FirewallRule
+    services: 
+    - service: 
+        protocol: ICMPv4
+        resource_type: ICMPTypeNSService
+    - service: 
+        resource_type: IGMPTypeNSService
+    - service: 
+        protocol_number: 0
+        resource_type: IPProtocolNSService
+    - service: 
+        protocol_number: 1
+        resource_type: IPProtocolNSService
+    - service:
+        alg: ORACLE_TNS 
+        destination_ports:
+        - '1521'
+        resource_type: ALGTypeNSService
+    - service:
+        destination_ports:
+        - '8080'
+        - '8090'
+        - '8091'
+        l4_protocol: TCP
+        resource_type: L4PortSetNSService
