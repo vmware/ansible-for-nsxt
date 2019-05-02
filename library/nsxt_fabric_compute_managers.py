@@ -211,10 +211,10 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
-                    credential=dict(required=False, type='dict',
+                    credential=dict(required=False, type='dict', no_log=True,
                     username=dict(required=False, type='str'),
-                    password=dict(required=False, type='str', no_log=True),
-                    thumbprint=dict(required=False, type='str', no_log=True),
+                    password=dict(required=False, type='str'),
+                    thumbprint=dict(required=False, type='str'),
                     asymmetric_credential=dict(required=False, type='str'),
                     credential_verifier=dict(required=False, type='str'),
                     credential_key=dict(required=False, type='str', no_log=True),
