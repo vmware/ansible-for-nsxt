@@ -72,13 +72,14 @@ These modules support ansible version 2.7 and onwards.
 
 # Build & Run
 
-Install PyVmOmi
+### Install PyVmOmi
 ```
 pip install --upgrade pyvmomi pyvim requests ssl
 ```
-Download and Install Ovf tool - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353)
+### Download and Install Ovf tool 4.3 - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL430&productId=742)
+(Note: Using ovftool version 4.0/4.1 causes OVA/OVF deployment failure with Error: cURL error: SSL connect error\nCompleted with errors\n)
 
-Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
+### Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
 ```
 unzip ansible-for-nsxt-master.zip
 cd ansible-for-nsxt-master
@@ -89,6 +90,38 @@ Edit test_basic_topology.yml and answerfile.yml to match values to your environm
 ```
 ansible-playbook test_basic_topology.yml -vvv
 ```
+
+### Authentication
+Ansible-for-nsxt supports two types of authentication. They are: 
+* Basic server authentication
+* client based authentication
+
+#### Basic server authentication
+In basic server authentication client has to explicitly provide NSX username and password to the NSX manager. The credentials have to be listed in ansible-playbook i.e. *.yml files.
+
+#### Client based certificate authentication
+In this case clients have to register their certificates to NSX manager. After registering the certificates, client has to create its own principal identity on NSX manager.
+The process of certificate registration and creation of principal identity has to be donw using basic server authentication. Edit test_certificates.yml and test_principal_identities.yml to match the values according to the client's environment.
+```
+ansible-playbook test_certificates.yml -vvv
+ansible-playbook test_principal_identities -vvv
+```
+The path of the .p12 file i.e the file containing public and private key has to be set to an environment variable named NSX_MANAGER_CERT_PATH. 
+**Note:** MAke sure NSX_MANAGER_CERT_PATH is set in the same environment, where the module is being executed.
+
+##### Generating certificates?
+Following commands can be used in order to generate certificates.
+```
+openssl req -newkey rsa:2048 -nodes -keyout nsx_certificate.key -x509 -days 365 -out nsx_certificate.crt -subj "/C=US/ST=California/L=Palo Alto/O=VMware/CN=certauth-test" -sha256
+
+openssl pkcs12 -export -out nsx_certificate.pfx -inkey nsx_certificate.key -in nsx_certificate.crt
+
+openssl pkcs12 -in nsx_certificate.pfx -out nsx_certificate.p12 -nodes
+```
+
+The nsx_certificate.crt file generated as output from the above command contains the public key certificate.
+the file nsx_certificate.p12 file contains the public and private key generated. The path of nsx_certificate.p12 file has to be set in the environment variable NSX_MANAGER_CERT_PATH.
+
 # Interoperability
 
 The following versions of NSX are supported:
