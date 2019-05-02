@@ -1,0 +1,16 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Add a new certificate
+      nsxt_certificates:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "Certificate_file"
+        pem_encoded_file: "/Users/akhileshk/work/open_source/pyopenssl/examples/simple/client.p12"
+        #private_key_file: "/Path/to/p12/private/key/file"
+        state: "present"
