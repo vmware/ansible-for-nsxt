@@ -53,15 +53,14 @@ options:
         required: true
     ip_addresses:
         description: "ip_addresses can be IPv4 or IPv6 and they should not overlap. The maximum
-                      number will not exceed 5 ip_addresses."
+                      number will not exceed 4000."
         required: false
         type: 'list'
     tags:
         description: 'Opaque identifiers meaningful to the API user'
         required: false
         type: str
-
-    
+   
 '''
 
 EXAMPLES = '''
@@ -105,18 +104,14 @@ def get_ip_sets(module, manager_url, mgr_username, mgr_password, validate_certs)
 
 def get_ip_set_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     ip_sets = get_ip_sets(module, manager_url, mgr_username, mgr_password, validate_certs)
+    return_ip_set = None
     for ip_set in ip_sets['results']:
         if ip_set.__contains__('display_name') and ip_set['display_name'] == display_name:
-            return ip_set
-    return None
-
-# def ordered(obj):
-#     if isinstance(obj, dict):
-#         return sorted((k, ordered(v)) for k, v in obj.items())
-#     if isinstance(obj, list):
-#         return sorted(ordered(x) for x in obj)
-#     else:
-#         return obj
+            if not return_ip_set: # Handle there being 2 sections created with the same display name
+                return_ip_set = ip_set
+            else:
+                module.fail_json(msg='Section with display name %s more than once.' % (display_name))
+    return return_ip_set
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, ip_set_params):
     existing_ip_set = get_ip_set_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, ip_set_params['display_name'])

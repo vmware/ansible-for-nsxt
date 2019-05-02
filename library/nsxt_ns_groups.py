@@ -23,8 +23,7 @@ DOCUMENTATION = '''
 ---
 module: nsxt_ns_groups
 short_description: Create and update NS Groups
-description:  Creates an NS Group with either static or dynamic memeber.
-              
+description:  Creates an NS Group with either static or dynamic membership.
               Reference the API guide for which params can be used with which operations.
 
 version_added: "2.7"
@@ -42,11 +41,14 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
+    display_name:
+        description: Display name
+        required: true
+        type: str
     members:
         description: 'List of members. Must conform to NSGroupSimpleExpression schema.'
         required: False
         type: list
-
         op: 
             choices: ['EQUALS', 'CONTAINS', 'STARTSWITH', 'ENDSWITH', 'NOTEQUALS']
             description: "Operator used to check value against resource type"
@@ -76,24 +78,21 @@ options:
             type: str
     membership_criteria:
         description: 'List of membership criteria. Members must conform to NSGroupTagExpression or 
-                      NSGroupComplexExpression schema.
-                      Minimum 2, maximum 5.'
+                      NSGroupComplexExpression schema.'
         required: False
         type: list
-
-        ## NSGroupTagExpression required options
         resource_type: 
-            choices: ['NSGroupTagExpression']
+            choices: ['NSGroupTagExpression', 'NSGroupComplexExpression']
             description: "Simple property which must be passed with all members"
             required: True
             type: str
         target_type: 
             description: "Object property used to identify. See API guide for details."
-            required: True
+            required: False
             type: str
         scope:
             description: "Scope of objects to filter for"
-            required: True
+            required: False
             type: str
         scope_op:
             description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
@@ -101,22 +100,15 @@ options:
             type: str
         tag:
             description: "Tag used to filter against"
-            required: True
+            required: False
             type: str
         tag_op:
             description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
             required: False
             type: str
-        
-        ## NSGroupComplexExpression required options
-        resource_type: 
-            choices: ['NSGroupComplexExpression']
-            description: "Simple property which must be passed with all members"
-            required: True
-            type: str
         expressions:
-            description: "List of expressions. Minimum 2, maximum 5."
-            required: True
+            description: "List of expressions. Minimum 2, maximum 5. Use when resource_type is NSGroupComplexExpression"
+            required: False
             type: list
             resource_type: 
                 choices: ['NSGroupTagExpression']
@@ -144,17 +136,10 @@ options:
                 description: "Operator to apply to the tag. Defaults to EQUALS. See API guide for options."
                 required: False
                 type: str
-                
-    display_name:
-        description: Display name
-        required: true
-        type: str
-
     resource_type:
-        choices:
-        - NSGroup
+        choices: ['NSGroup']
         description: Specifies NSGroup as object type
-        required: true
+        required: False
         type: str
     state:
         choices:
@@ -173,23 +158,23 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    display_name: 'ns_with_criteria'
+    display_name: "ns_with_criteria"
     resource_type: NSGroup
     membership_criteria:
       - resource_type: NSGroupTagExpression
-        target_type: 'LogicalSwitch'
-        scope: 'S1'
-        tag: 'T1'
+        target_type: "LogicalSwitch"
+        scope: "S1"
+        tag: "T1"
       - resource_type: NSGroupComplexExpression
         expressions:
           - resource_type: NSGroupTagExpression
-            target_type: 'LogicalPort'
-            scope: 'S1'
-            tag: 'T1'
+            target_type: "LogicalPort"
+            scope: "S1"
+            tag: "T1"
           - resource_type: NSGroupTagExpression
-            target_type: 'LogicalPort'
-            scope: 'S2'
-            tag: 'T2'
+            target_type: "LogicalPort"
+            scope: "S2"
+            tag: "T2"
     state: "present"
 
 
@@ -199,19 +184,19 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    display_name: 'ns_with_criteria'
+    display_name: "ns_with_criteria"
     resource_type: NSGroup
   members:
     - resource_type: NSGroupSimpleExpression
       target_property: id
       op: EQUALS
       target_type: IPSet
-      value: 'ips_test1'
+      value: "ips_test1"
     - resource_type: NSGroupSimpleExpression
       target_property: id
       op: EQUALS
       target_type: IPSet
-      value: 'ips_test2'
+      value: "ips_test2"
     state: "present"
 '''
 
@@ -250,10 +235,14 @@ def get_ns_groups(module, manager_url, mgr_username, mgr_password, validate_cert
 
 def get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     ns_groups = get_ns_groups(module, manager_url, mgr_username, mgr_password, validate_certs)
+    return_ns_group = None
     for ns_group in ns_groups['results']:
         if ns_group.__contains__('display_name') and ns_group['display_name'] == display_name:
-            return ns_group
-    return None
+            if not return_ns_group: # Handle there being 2 sections created with the same display name
+                return_ns_group = ns_group
+            else:
+                module.fail_json(msg='Section with display name %s exists more than once.' % (display_name))
+    return return_ns_group
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True, id_notation='id'):
     try:
@@ -311,16 +300,20 @@ def extract_membership_criteria_list(membership_criteria_list):
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, ns_group_params):
     existing_ns_group = get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, 
                                                        ns_group_params['display_name'])
-    if existing_ns_group is None:
+    if not existing_ns_group:
         return False
     # Compares the uniqie value for all static members, which is the object ID.
-    if ns_group_params['members'] and len(ns_group_params['members']) == len(existing_ns_group['members']):
+    if ns_group_params['members']:
+        if len(ns_group_params['members']) <> len(existing_ns_group['members']):
+            return True
         existing_members = [d['value'] for d in existing_ns_group['members'] if 'value' in d]
         new_members = [d['value'] for d in ns_group_params['members'] if 'value' in d]
         if not Counter(existing_members) == Counter(new_members):
             return True
     # Membership criterial has no unique keys, so all values need to be compared. Lists are generated with sorted strings.
-    if ns_group_params['membership_criteria'] and len(ns_group_params['membership_criteria']) == len(existing_ns_group['membership_criteria']):
+    if ns_group_params['membership_criteria']:
+        if len(ns_group_params['membership_criteria']) <> len(existing_ns_group['membership_criteria']):
+            return True
         existings_membership_criteria_list = extract_membership_criteria_list(existing_ns_group['membership_criteria'])
         new_membership_criteria_list = extract_membership_criteria_list(ns_group_params['membership_criteria'])
         if not Counter(existings_membership_criteria_list) == Counter(new_membership_criteria_list):
@@ -355,7 +348,7 @@ def main():
                         tag=dict(required=False, type='str'),
                         tag_op=dict(required=False, type='str', choices=['EQUALS', 'CONTAINS', 'STARTSWITH', 'ENDSWITH']),
                         target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalSwitch', 'LogicalPort', 'VirtualMachine', 'TransportNode']),),
-                    resource_type=dict(required=True, type='str', choices=['NSGroup']),
+                    resource_type=dict(required=False, type='str', default='NSGroup'),
                     state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -375,11 +368,11 @@ def main():
   if ns_group_params['membership_criteria'] == ['']:
     ns_group_params['membership_criteria'] = []
 
-  node_dict = get_ns_group_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
-  node_id, revision = None, None
-  if node_dict:
-    node_id = node_dict['id']
-    revision = node_dict['_revision']
+  group_dict = get_ns_group_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
+  group_id, revision = None, None
+  if group_dict:
+    group_id = group_dict['id']
+    revision = group_dict['_revision']
 
   if state == 'present':
     headers = dict(Accept="application/json")
@@ -392,13 +385,13 @@ def main():
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(request_data), id='12345')
       try:
-          if node_id:
-              module.exit_json(changed=False, id=node_id, message="NS Group with display_name %s already exist."% module.params['display_name'])
+          if group_id:
+              module.exit_json(changed=False, id=group_id, message="NS Group with display_name %s already exist."% module.params['display_name'])
           (rc, resp) = request(manager_url+ '/ns-groups', data=request_data, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
                 module.fail_json(msg="Failed to add node. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
-
+      time.sleep(5)
       module.exit_json(changed=True, id=resp["id"], body= str(resp), message="NS Group with display name %s created succcessfully." % module.params['display_name'])
     else:
       if module.check_mode:
@@ -406,17 +399,18 @@ def main():
 
       ns_group_params['_revision'] = revision # update current revision
       request_data = json.dumps(ns_group_params)
-      id = node_id
+      id = group_id
       try:
           (rc, resp) = request(manager_url+ '/ns-groups/%s' % id, data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
           module.fail_json(msg="Failed to update node wit id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
+      time.sleep(5)
       module.exit_json(changed=True, id=resp["id"], body= str(resp), message="NS Group with node id %s updated." % id)
 
   elif state == 'absent':
     # delete the array
-    id = node_id
+    id = group_id
     if id is None:
         module.exit_json(changed=False, msg='No NS Group exist with display name %s' % display_name)
     if module.check_mode:
@@ -426,7 +420,7 @@ def main():
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
     except Exception as err:
         module.fail_json(msg="Failed to delete NS Group with id %s. Error[%s]." % (id, to_native(err)))
-
+    time.sleep(5)
     module.exit_json(changed=True, id=id, message="NG Group with node id %s deleted." % id)
 
 
