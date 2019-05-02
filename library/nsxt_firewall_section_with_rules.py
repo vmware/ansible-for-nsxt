@@ -282,7 +282,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Add Distributed Firewall Section with membership criteria
+- name: Add Distributed Firewall Section with Rules
   nsxt_dfw_section:
     hostname: "10.192.167.137"
     username: "admin"
@@ -364,7 +364,7 @@ def get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_pas
             if not return_section: # Handle there being 2 sections created with the same display name
                 return_section = dfw_section
             else:
-                module.fail_json(msg='Section with display name %s exists twice.' % (display_name))
+                module.fail_json(msg='Section with display name %s exists more than once.' % (display_name))
     return return_section
 
 def update_param_list_with_ids(module, params, existing_config_lookup, duplicated_objects, rule_display_name, section_name):
@@ -432,24 +432,26 @@ def compare_custom_services(module, existing_services, new_services):
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params):
     existing_dfw_section = get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, 
                                                             validate_certs, dfw_section_params['display_name'])
+
     if not existing_dfw_section:
         return False
     # Lists must be deep copied otherwise pop removes globally.
     copy_dfw_section_params = copy.deepcopy(dfw_section_params)
     new_dfw_secton_rules = copy_dfw_section_params.pop('rules', [])
     new_dfw_secton_applied_tos = copy_dfw_section_params.pop('applied_tos', [])
+    copy_dfw_section_params.pop('resource_type', None)
     
-    # Check to ensure that all keys and values in the new params match the existing configuration
+    # Check to ensure that all keys and values in the new params match the existing configuration.
     if not all(k in existing_dfw_section and copy_dfw_section_params[k] == existing_dfw_section[k] for k in copy_dfw_section_params):
         return True
-    
+
     # Check that applied_tos sections match.
     insert_lists_if_missing(existing_dfw_section, ['applied_tos'])
     existing_applied_tos = [d['target_type'] + d['target_id'] for d in existing_dfw_section['applied_tos'] if 'target_id' in d]
     new_applied_tos = [d['target_type'] + d['target_id'] for d in dfw_section_params['applied_tos'] if 'target_id' in d]
     if not Counter(existing_applied_tos) == Counter(new_applied_tos):
         return True 
-
+    
     # Create lookup table of existing rules by display name. Ignore duplicate names as would trigger a change anyway.
     existing_rule_dict = {}
     existing_dfw_section_rules = get_dfw_section_rules(module, manager_url, mgr_username, mgr_password, validate_certs, existing_dfw_section['id'])
@@ -602,7 +604,7 @@ def main():
                                 target_display_name=dict(required=True, type='str'), # Will insert target_id a runtime
                                 target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalPort', 'LogicalSwitch', 'NSGroup'])),),
                         resource_type=dict(required=False, choices=['FirewallSectionRuleList'], default='FirewallSectionRuleList'),
-                        section_placement=dict(required=True, type='dict',
+                        section_placement=dict(required=False, type='dict',
                             operation=dict(required=True, type='str', choices=['insert_top', 'insert_bottom', 'insert_after', 
                                                                             'insert_before']),
                             display_name=dict(required=True, type='str')),
