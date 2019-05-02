@@ -110,7 +110,7 @@ def get_ip_set_from_display_name(module, manager_url, mgr_username, mgr_password
             if not return_ip_set: # Handle there being 2 sections created with the same display name
                 return_ip_set = ip_set
             else:
-                module.fail_json(msg='Section with display name %s more than once.' % (display_name))
+                module.fail_json(msg='Section with display name %s exists more than once.' % (display_name))
     return return_ip_set
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, ip_set_params):
