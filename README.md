@@ -92,22 +92,22 @@ ansible-playbook test_basic_topology.yml -vvv
 ```
 
 ### Authentication
-Ansible-for-nsxt supports two types of authentication. They are: 
+Ansible-for-nsxt supports two types of authentication.
 * Basic server authentication
-* Client based authentication
+* Certificate based authentication
 
 #### Basic server authentication
-In basic server authentication client has to explicitly provide NSX username and password to the NSX manager. The credentials have to be listed in ansible-playbook i.e. *.yml files.
+In basic server authentication, client has to explicitly provide NSX username and password for the NSX manager. The credentials have to be listed in ansible-playbook.
 
-#### Client based authentication
-In this case clients have to register their certificates to NSX manager. After registering the certificates, client has to create its own principal identity on NSX manager.
-The process of certificate registration and creation of principal identity has to be donw using basic server authentication. Edit test_certificates.yml and test_principal_identities.yml to match the values according to the client's environment.
+#### Certificate based authentication
+In certificate based authentication, client has to register their certificates to NSX manager using nsxt_certificates task. After registering the certificates, client has to create its own principal identity on NSX manager using nsxt_principal_identities taks.
+The process of certificate registration and creation of principal identity has to be done using basic server authentication. Use test_certificates.yml and test_principal_identities.yml to match the values according to the client's environment.
 ```
 ansible-playbook test_certificates.yml -vvv
 ansible-playbook test_principal_identities -vvv
 ```
 The path of the .p12 file i.e the file containing public and private key has to be set to an environment variable named NSX_MANAGER_CERT_PATH. 
-**Note:** MAke sure NSX_MANAGER_CERT_PATH is set in the same environment, where the module is being executed.
+**Note:** Make sure NSX_MANAGER_CERT_PATH is set in the same remote host, where modules would be executed. 
 
 ##### Generating certificates?
 Following commands can be used in order to generate certificates.
