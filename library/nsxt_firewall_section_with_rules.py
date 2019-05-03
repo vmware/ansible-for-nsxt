@@ -428,7 +428,6 @@ def compare_custom_services(module, existing_services, new_services):
                 return True
     return False
 
-
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params):
     existing_dfw_section = get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, 
                                                             validate_certs, dfw_section_params['display_name'])
@@ -516,6 +515,7 @@ def add_backwards_compatibilty(module, manager_url, mgr_username, mgr_password, 
         if float(resp['system_version'][0:3]) < 2.4:
             for idx, rule in enumerate(dfw_section_params['rules']):
                 dfw_section_params['rules'][idx].pop('context_profiles', None)
+                ENDPOINT_LOOKUP.pop('NSProfile', None)
     except Exception as err:
         module.fail_json(msg='Error accessing API verion details. Error [%s]' % (to_native(err)))
 

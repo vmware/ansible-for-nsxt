@@ -6,7 +6,7 @@
     - answerfile_firewall.yml
   tasks:
     - name: Create DFW Section with Rules
-      nsxt_fireall_section_with_rules:
+      nsxt_firewall_section_with_rules:
         hostname: "{{ hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
