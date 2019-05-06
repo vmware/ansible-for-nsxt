@@ -21,14 +21,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nsxt_dfw_sections
-short_description: Module to insert and modify DFW firewall sections with rules.
-description:  Creates an Distributed Firewall Section with along with rules.
+short_description: Module to insert and modify firewall sections with or without rules.
+description:  'Creates an Distributed Firewall Section, with the option to add rules.
               This is intended for use with GitOps workflows, where the configuration is stored in Git and the
               playbook run after a change has been made.
               Large firewall sections with many hundreds of rules can cause issues with API performance and the
               API guide states supported rule section size and maximum levels of concurrency.
               If section params or any rule params are changed, it will re-apply the configuration passed to Ansible
-              in a single API call with all firewall rules.
+              in a single API call per section  with all firewall rules.
 
               Usage:
                 - Firewall rule names must be unique in each section, as the name is used to compare existing rules
@@ -36,7 +36,7 @@ description:  Creates an Distributed Firewall Section with along with rules.
                 - Sections managed by Ansible must have unique display names.
 
               Reference the API guide for which params can be used with which operations.
-              Maximums and descriptions below taken from the 2.4 API guide, consult for changes.
+              Maximums and descriptions below taken from the 2.4 API guide, consult for changes.'
 
 version_added: "2.7"
 author: Matt Proud
@@ -58,7 +58,12 @@ options:
         required: true
         type: str
     applied_tos:
-        description: 'List of obects section applies. Must conform to ResourceReference schema.'
+        description: 'List of obects section applies. Must conform to ResourceReference schema.
+                      For distrubuted firewall rules target_type must be:
+                        ['NSGroup', 'LogicalSwitch', 'LogicalPort', 'LogicalRouter']
+                      For edge firewall rules target_type must be:
+                        ['LogicalRouterPort']
+                      Cannot mix distribted and edge types. Max 128'
         required: False
         type: list
         target_display_name:
@@ -66,7 +71,7 @@ options:
             required: True
             type: str
         target_type: 
-            choices: ['NSGroup', 'LogicalSwitch', 'LogicalPort']
+            choices: ['NSGroup', 'LogicalSwitch', 'LogicalPort', 'LogicalRouter']
             description: "Type of the NSX resource."
             required: True
             type: str
@@ -88,14 +93,14 @@ options:
             type: str
         action:
             choices: ['ALLOW', 'DROP', 'REJECT', 'REDIRECT', 'DO_NOT_REDIRECT']
-            description: Action enforced on the packets which matches the distributed service rule. Currently DS Layer
+            description: 'Action enforced on the packets which matches the distributed service rule. Currently DS Layer
                          supports below actions. ALLOW - Forward any packet when a rule with this action gets a match
                          (Used by Firewall). DROP - Drop any packet when a rule with this action gets a match. Packets
                          won't go further(Used by Firewall). REJECT - Terminate TCP connection by sending TCP reset 
                          for a packet when a rule with this action gets a match (Used by Firewall). REDIRECT - 
                          Redirect any packet to a partner appliance when a rule with this action gets a match 
                          (Used by Service Insertion). DO_NOT_REDIRECT - Do not redirect any packet to a partner 
-                         appliance when a rule with this action gets a match (Used by Service Insertion).
+                         appliance when a rule with this action gets a match (Used by Service Insertion).'
             required: True
             type str
         applied_tos:
@@ -112,7 +117,8 @@ options:
                 required: True
                 type: str
         context_profiles:
-            description: List of conext profile objects applied. Must conform to ResourceReference schema. Max 128.
+            description: 'List of conext profile objects applied. Must conform to ResourceReference schema. 
+                         Can only be usd for distrubted firewall sections on NSX-T 2.4. Max 128.'
             required: False
             type: list
             target_display_name:
@@ -138,8 +144,8 @@ options:
                 required: True
                 type: str
         direction:
-            description: Rule direction in case of stateless distributed service rules. This will only considered if
-                         section level parameter is set to stateless. Default to IN_OUT if not specified.
+            description: 'Rule direction in case of stateless distributed service rules. This will only considered if
+                         section level parameter is set to stateless. Default to IN_OUT if not specified.'
             required: False
             type: str
         disabled:
@@ -169,23 +175,24 @@ options:
             required: False
             type: str
         services:
-            description: List of service obects rule applies. Must conform to ResourceReference schema.
+            description: 'List of service obects rule applies. Must conform to ResourceReference schema.
                          Each service should either comprise target_display_name and target_type, or service.
-                         Max 128.
+                         Max 128.'
             required: False
             type: list
             service:
-                description: List of custom services. Must conform to ResourceReference schema.
+                description: 'List of custom services. Must conform to ResourceReference schema.
                              Should either comprise target_display_name and target_type, or service.
                              Custom services should conform to ALGTypeNSService, ICMPTypeNSService, 
-                             IGMPTypeNSService, IPProtocolNSService or L4PortSetNSService schemas.
+                             IGMPTypeNSService, IPProtocolNSService or L4PortSetNSService schemas.'
 
                 required: False
                 type: list
                 alg:
                     choices: ['ORACLE_TNS', 'FTP', 'SUN_RPC_TCP', 'SUN_RPC_UDP', 'MS_RPC_TCP', 'MS_RPC_UDP', 
                               'NBNS_BROADCAST', 'NBDG_BROADCAST', 'TFTP']
-                    description: The Application Layer Gateway (ALG) protocol. 
+                    description: 'The Application Layer Gateway (ALG) protocol. Consult the documentation for edge
+                                 rules as not all protocols are supported on edge firewalls.' 
                     required: False
                     type: str 
                 destination_ports:
@@ -248,7 +255,8 @@ options:
         required: False
         type: str
     section_placement:
-        description: Options on where to insert new secton.
+        description: Options on where to insert new secton. This must be a reference to a section in the
+                     appropriate firewall.
         required: False
         type: dict
         display_name:
@@ -274,9 +282,9 @@ options:
                       'absent' is used to delete resource."
         required: true
     stateful:
-        description: Stateful nature of the distributed service rules in the section.
+        description: 'Stateful nature of the distributed service rules in the section.
                      Stateful or Stateless nature of distributed service section is enforced 
-                     on all rules inside the section. 
+                     on all rules inside the section.' 
         required: True
         type: bool
 '''
@@ -325,9 +333,9 @@ except ImportError:
   display = Display()
 
 ENDPOINT_LOOKUP = {'NSGroup': '/ns-groups', 'IPSet': '/ip-sets', 'FirewallSection': '/firewall/sections',
-                    'LogicalSwitch': '/logical-switches', 'LogicalPort': '/logical-ports', 'NSProfile': '/ns-profiles',
-                    'NSServiceGroup': '/ns-service-groups', 'NSService': '/ns-services'
-                     }
+                    'LogicalSwitch': '/logical-switches', 'LogicalPort': '/logical-ports', 'LogicalRouter': '/logical-routers', 
+                    'LogicalRouterPort': '/logical-router-ports', 'NSProfile': '/ns-profiles', 
+                    'NSServiceGroup': '/ns-service-groups', 'NSService': '/ns-services'}
 
 
 def get_dfw_section_params(args=None):
@@ -343,12 +351,11 @@ def get_dfw_section_rules(module, manager_url, mgr_username, mgr_password, valid
     try:
         (rc, resp) = request(manager_url+ '/firewall/sections/%s/rules' % section_id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-        results = None
         if resp['results']:
-            results = resp['results']
+            return resp['results']
     except Exception as err:
         module.fail_json(msg='Error accessing Distributed Firewall Section Rules for section %s. \nError [%s]' % (section_id, to_native(err)))
-    return results
+    return []
 
 def get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     try:
@@ -368,17 +375,14 @@ def get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_pas
     return return_section
 
 def update_param_list_with_ids(module, params, existing_config_lookup, duplicated_objects, rule_display_name, section_name):
+    #module.fail_json(msg='Lazy [%s] ' % (existing_config_lookup))
     for idx, param in enumerate(params):
         try:
             if param.__contains__('target_type') and param['target_display_name'] not in duplicated_objects[param['target_type']]:
-                # try:
-                    # Type IPAddress has the IP for display_name and target_id.
-                    if param['target_type'] == 'IPAddress':
-                        params[idx]['target_id'] = param['target_display_name']
-                    else:
-                        params[idx]['target_id'] = existing_config_lookup[param['target_type']][param['target_display_name']]
-                # except Exception as err:
-                #     module.fail_json(msg='Unable to find item within [%s]. Missing [%s]' % (param, to_native(err)))
+                if param['target_type'] == 'IPAddress':
+                    params[idx]['target_id'] = param['target_display_name']
+                else:
+                    params[idx]['target_id'] = existing_config_lookup[param['target_type']][param['target_display_name']]
             elif param.__contains__('target_display_name') and param['target_display_name'] in duplicated_objects[param['target_type']]:
                 module.fail_json(msg='Object [%s] specified exists more than once with the same display name.' % (param['target_display_name']))
         except KeyError as err:
@@ -431,7 +435,6 @@ def compare_custom_services(module, existing_services, new_services):
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params):
     existing_dfw_section = get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, 
                                                             validate_certs, dfw_section_params['display_name'])
-
     if not existing_dfw_section:
         return False
     # Lists must be deep copied otherwise pop removes globally.
@@ -519,18 +522,53 @@ def add_backwards_compatibilty(module, manager_url, mgr_username, mgr_password, 
     except Exception as err:
         module.fail_json(msg='Error accessing API verion details. Error [%s]' % (to_native(err)))
 
-def generate_section_placement(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement):
+def generate_section_placement(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
+                               existing_config_lookup, duplicated_objects, section_name):
+    if not section_placement:
+        return ''
     try:
         if section_placement['operation'] == 'insert_top' or section_placement['operation'] == 'insert_bottom':
-            return '&operation=' + section_placement['operation']
+            return 'operation=' + section_placement['operation'], False
         elif section_placement['operation'] == 'insert_after' or section_placement['operation'] == 'insert_before':
-            node_dict =  get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement['display_name'])
-            if node_dict:
-                return '&operation=' + section_placement['operation'] + '&id=' + node_dict['id']
-        else:
-            module.fail_json(msg='Unable to find section %s.' % (section_placement['display_name']))
+            #section_dict =  get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement['display_name'])
+            if existing_config_lookup['FirewallSection'].__contains__(section_placement['display_name']):
+                if section_placement['display_name'] in duplicated_objects['FirewallSection']:
+                    module.fail_json(msg='Firewall section %s exists more than once when trying to generate placement for section %s.' % (section_placement['display_name'], section_name))
+                
+                return 'operation=' + section_placement['operation'] + '&id=' + existing_config_lookup['FirewallSection'][section_placement['display_name']], True
+        module.fail_json(msg='Unable to find section %s. when generating ID for section placement.' % (section_placement['display_name']))
     except KeyError as err:
         module.fail_json(msg='Unable to find section %s when generating section placement. Error [%s]' % (section_placement['display_name'], to_native(err)))
+
+def generate_query_params(module, dfw_section_params['rules'], manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
+                          updated, existing_config_lookup):
+    section_placement_params, place_updated = generate_section_placement(module, manager_url, mgr_username, mgr_password,
+                                                                     validate_certs, section_placement, existing_config_lookup,
+                                                                     duplicated_objects, dfw_section_params['display_name'])
+    if dfw_section_params['rules']:
+        if not updated:
+            section_placement = ''
+            if section_placement_params != '':
+                section_placement = '&'
+            return '?action=create_with_rules' + '&' + section_placement_params
+        else:
+            if place_updated:
+                return '?action=revise_with_rules&' + section_placement_params
+            else:
+                return '?action=update_with_rules'
+    else:  
+        if updated or place_updated:
+            query_params = '?action=revise'
+            if query_params:
+                return
+            if place_updated:
+                return '?action=revise&' + section_placement_params
+                return '?' + section_placement_params
+            else:
+                
+        else:
+            return ''
+    #TODO add support for revise. Will involve checking current placement.
 
 def check_rules_have_unique_names(module, dfw_section_params):
     rule_names = set()
@@ -542,7 +580,6 @@ def check_rules_have_unique_names(module, dfw_section_params):
             else:
                 rule_names.add(rule['display_name'])
         except KeyError:
-            #TODO fix why ansible isn't checking for required sub-params. Likely need to update the playbook.
             module.fail_json(msg='Rule does not have a display_name param set [%s]. \nEnsure all rules have unique names withiin each section' % (rule))
     if duplicateed_rule_names:
         module.fail_json(msg='The following rules have duplicate display_names [%s]. \nEnsure all rules have unique names withiin each section' % (', '.join(duplicateed_rule_names)))
@@ -556,7 +593,7 @@ def main():
                             thumbprint=dict(required=False, type='str', no_log=True)),
                         applied_tos=dict(required=False, type='list', default=list([]),
                             target_display_name=dict(required=True, type='str'), # Will insert target_id a runtime
-                            target_type=dict(required=True, type='str', choices=['LogicalPort', 'LogicalSwitch', 'NSGroup'])
+                            target_type=dict(required=True, type='str', choices=['LogicalPort', 'LogicalSwitch', 'NSGroup', 'LogicalRouter'])
                             ),
                         description=dict(required=False, type='str'),
                         rules=dict(required=True, type='list',
@@ -608,7 +645,7 @@ def main():
                             operation=dict(required=True, type='str', choices=['insert_top', 'insert_bottom', 'insert_after', 
                                                                             'insert_before']),
                             display_name=dict(required=True, type='str')),
-                        section_type=dict(required=False, choices=['LAYER3'], default='LAYER3'),
+                        section_type=dict(required=False, choices=['LAYER3'], default='LAYER2, LAYER3'),
                         state=dict(required=True, choices=['present', 'absent']),
                         stateful=dict(required=True, type='bool'))
                         
@@ -624,9 +661,6 @@ def main():
     display_name = module.params['display_name']
     manager_url = 'https://{}/api/v1'.format(mgr_hostname)
     section_placement = dfw_section_params.pop('section_placement', None)
-    
-    if not dfw_section_params['rules']:
-        module.fail_json(msg="Failed to add section %s. You must include rules." % (display_name))
 
     check_rules_have_unique_names(module, dfw_section_params)
     insert_lists_if_missing(dfw_section_params, ['applied_tos'])
@@ -641,8 +675,6 @@ def main():
         headers = dict(Accept="application/json")
         headers['Content-Type'] = 'application/json'
         add_backwards_compatibilty(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params)
-        #body = update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params)
-        
         existing_config_lookup, duplicated_objects = collect_all_existing_config(module, manager_url, mgr_username, 
                                                                                  mgr_password, validate_certs)
         update_param_list_with_ids(module, dfw_section_params['applied_tos'], existing_config_lookup, duplicated_objects,
@@ -652,22 +684,23 @@ def main():
                                    duplicated_objects)
         updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params)
         
-        if not updated:
+        query_params = generate_query_params(module, dfw_section_params, manager_url, mgr_username, mgr_password, validate_certs, section_placement, updated, existing_config_lookup, duplicated_objects)
+        if not dfw_section_params['rules']:
+            dfw_section_params.pop('rules', None)
 
-            if section_placement:
-                section_placement_params = generate_section_placement(module, manager_url, mgr_username, mgr_password,
-                                                                     validate_certs, section_placement)
+        if not updated:            
             request_data = json.dumps(dfw_section_params)
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(request_data), id='12345')
             try:
                 if node_id:
                     module.exit_json(changed=False, id=node_id, message="Distributed Firewall Section with display_name %s already exist and has not changed."% module.params['display_name'])
-                (rc, resp) = request(manager_url+ '/firewall/sections?action=create_with_rules%s' % section_placement_params, data=request_data, headers=headers, method='POST',
+                (rc, resp) = request(manager_url+ '/firewall/sections%s' % query_params, data=request_data, headers=headers, method='POST',
                                     url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
             except Exception as err:
                 module.fail_json(msg="Failed to add node. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
-
+            #TODO consult VMWare NSBU on invokation rates and build dynamic delay between calls.
+            # time.sleep(5)
             module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Distributed Firewall Section with display name %s created succcessfully." % module.params['display_name'])
         else:
             if module.check_mode:
@@ -676,10 +709,12 @@ def main():
             request_data = json.dumps(dfw_section_params)
             id = node_id
             try:
-                (rc, resp) = request(manager_url+ '/firewall/sections/%s?action=update_with_rules' % (id), data=request_data, headers=headers, method='POST',
+                module.fail_json(msg="id [%s]. param[%s]."  % (id, query_params))
+                (rc, resp) = request(manager_url+ '/firewall/sections/%s%s' % (id, query_params), data=request_data, headers=headers, method='POST',
                                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
             except Exception as err:
                 module.fail_json(msg="Failed to update node with id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
+            # time.sleep(5)
             module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Distributed Firewall Section with node id %s updated." % id)
 
     elif state == 'absent':
@@ -694,7 +729,7 @@ def main():
                                   url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
         except Exception as err:
             module.fail_json(msg="Failed to delete Distributed Firewall Section with id %s. Error[%s]." % (id, to_native(err)))
-
+        # time.sleep(5)
         module.exit_json(changed=True, id=id, message="NG Group with node id %s deleted." % id)
 
 
