@@ -149,7 +149,7 @@ compute_managers:
   origin_type: vCenter
   credential_type: UsernamePasswordLoginCredential
   username: "administrator@vsphere.local"
-  password: "Admin!23"
+  password: "Admin!123"
   thumbprint: "46:1E:31:DD:0B:37:4C:F0:91:5B:49:A1:A1:94:B5:DF:82:93:90:52:D9:68:0F:86:C8:CA:6C:34:CB:82:D7:D5"
 
 
@@ -162,3 +162,30 @@ route_advertise:
   advertise_nat_routes: True
   advertise_nsx_connected_routes: True
   advertise_static_routes: True
+
+services:
+- display_name: "Custom"
+  nsservice_element:
+  - service:
+      protocol: ICMPv4
+      resource_type: ICMPTypeNSService
+  - service:
+      resource_type: IGMPTypeNSService
+  - service:
+      protocol_number: 0
+      resource_type: IPProtocolNSService
+  - service:
+      protocol_number: 1
+      resource_type: IPProtocolNSService
+  - service:
+      alg: ORACLE_TNS
+      destination_ports:
+      - '1521'
+      resource_type: ALGTypeNSService
+  - service:
+      destination_ports:
+      - '8080'
+      - '8090'
+      - '8091'
+      l4_protocol: TCP
+      resource_type: L4PortSetNSService
