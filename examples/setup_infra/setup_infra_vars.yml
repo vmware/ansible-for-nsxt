@@ -4,8 +4,9 @@
 # Creates the following:
 #   - 2 Transport Zones
 #   - 1 IP Pool (used by Edge)
-#   - 1 Transport Done Profile with 2 TZ endpoints
+#   - 1 Transport Node Profile with 2 TZ endpoints
 #   - 2 Edge Transport Nodes
+#   - 2 ESX Host Transport Nodes
 #   - 1 Edge Cluster with the 2 Edge Nodes
 #
 {
@@ -260,6 +261,110 @@
         "resource_type": "EdgeNode",
         "display_name": "EdgeNode-02"
       },
+    },
+    {
+      "resource_type": "TransportNode",
+      "display_name": "esx-c14",
+      "description": "Host Transport Node for first ESXi host",
+      "host_switches": [
+        {
+          "host_switch_name": "nvds",
+          "host_switch_profiles": [
+            {
+              "name": "nsx-default-uplink-hostswitch-profile",
+              "type": "UplinkHostSwitchProfile"
+            },
+            {
+              "name": "nsx-default-nioc-hostswitch-profile",
+              "type": "NiocProfile"
+            },
+            {
+              "name": "LLDP [Send Packet Disabled]",
+              "type": "LldpHostSwitchProfile"
+            }
+          ],
+          "pnics": [
+            {
+              "device_name": "vmnic1",
+              "uplink_name": "uplink-1"
+            }
+          ],
+          "ip_assignment_spec": {
+            "resource_type": "StaticIpPoolSpec",
+            "ip_pool_name": "TEP-IP-Pool"
+          }
+        }
+      ],
+      "transport_zone_endpoints": [
+        {
+          "transport_zone_name": "Overlay-TZ"
+        },
+        {
+          "transport_zone_name": "VLAN-TZ"
+        }
+      ],
+      "node_deployment_info": {
+        "resource_type": "HostNode",
+        "ip_addresses": ["10.114.200.14"],
+        "os_type": "ESXI",
+        "host_credential": {
+          "username": "root",
+          "password": "VMware1!",
+          "thumbprint": "64:C7:59:F1:6E:80:94:7A:1C:23:04:9F:BC:FE:E0:4E:6C:EC:23:26:F6:FF:F5:72:A6:CC:D9:0B:A7:29:B5:D8"
+        }
+      }
+    },
+    {
+      "resource_type": "TransportNode",
+      "display_name": "esx-c15",
+      "description": "Host Transport Node for second ESXi host",
+      "host_switches": [
+        {
+          "host_switch_name": "nvds",
+          "host_switch_profiles": [
+            {
+              "name": "nsx-default-uplink-hostswitch-profile",
+              "type": "UplinkHostSwitchProfile"
+            },
+            {
+              "name": "nsx-default-nioc-hostswitch-profile",
+              "type": "NiocProfile"
+            },
+            {
+              "name": "LLDP [Send Packet Disabled]",
+              "type": "LldpHostSwitchProfile"
+            }
+          ],
+          "pnics": [
+            {
+              "device_name": "vmnic1",
+              "uplink_name": "uplink-1"
+            }
+          ],
+          "ip_assignment_spec": {
+            "resource_type": "StaticIpPoolSpec",
+            "ip_pool_name": "TEP-IP-Pool"
+          }
+        }
+      ],
+      "transport_zone_endpoints": [
+        {
+          "transport_zone_name": "Overlay-TZ"
+        },
+        {
+          "transport_zone_name": "VLAN-TZ"
+        }
+      ],
+      "node_deployment_info": {
+        "resource_type": "HostNode",
+        "ip_addresses": ["10.114.200.15"],
+        "os_type": "ESXI",
+        "host_credential": {
+          "username": "root",
+          "password": "VMware1!",
+          "thumbprint": "61:FB:63:1A:7B:C2:9F:B2:1D:11:E4:4F:76:29:61:9B:E3:D2:DF:0D:F7:19:64:4B:39:DF:6F:A4:93:E1:BE:1B"
+        }
+      }
     }
   ],
 

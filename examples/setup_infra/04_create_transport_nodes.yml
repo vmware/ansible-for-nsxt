@@ -5,7 +5,7 @@
   vars_files:
     - setup_infra_vars.yml
   tasks:
-    - name: Create Edge Nodes
+    - name: Create Transport Nodes
       nsxt_transport_nodes:
         hostname: "{{ nsx_node1.mgmt_ip }}"
         username: "{{ nsx_username }}"
