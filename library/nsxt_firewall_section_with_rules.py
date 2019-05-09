@@ -325,12 +325,6 @@ from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 from collections import Counter
 
-try:
-  from __main__ import display
-except ImportError:
-  # the default display object in Ansible action plugins.
-  from ansible.utils.display import Display
-  display = Display()
 
 ENDPOINT_LOOKUP = {'NSGroup': '/ns-groups', 'IPSet': '/ip-sets', 'FirewallSection': '/firewall/sections',
                     'LogicalSwitch': '/logical-switches', 'LogicalPort': '/logical-ports', 'LogicalRouter': '/logical-routers', 
@@ -422,7 +416,8 @@ def compare_custom_services(module, existing_services, new_services):
         new_services_copy = copy.deepcopy(new_services)
         existing_custom_services = [d.pop('service') for d in existing_services_copy if 'service' in d]
         new_custom_services = [d.pop('service') for d in new_services_copy if 'service' in d]
-        if len(existing_custom_services) <> len(new_custom_services):
+        
+        if len(existing_custom_services) != len(new_custom_services):
             return True
         elif existing_custom_services or new_custom_services:
             # Extract list containing a strings of custom services. Lists of strings are hashable and faster to compare.
@@ -457,7 +452,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     # Create lookup table of existing rules by display name. Ignore duplicate names as would trigger a change anyway.
     existing_rule_dict = {}
     existing_dfw_section_rules = get_dfw_section_rules(module, manager_url, mgr_username, mgr_password, validate_certs, existing_dfw_section['id'])
-    if len(existing_dfw_section_rules) <> len(new_dfw_secton_rules):
+    if len(existing_dfw_section_rules) != len(new_dfw_secton_rules):
         return True
     for rule in existing_dfw_section_rules:
         try:
@@ -540,16 +535,18 @@ def generate_section_placement(module, manager_url, mgr_username, mgr_password, 
     except KeyError as err:
         module.fail_json(msg='Unable to find section %s when generating section placement. Error [%s]' % (section_placement['display_name'], to_native(err)))
 
-def generate_query_params(module, dfw_section_params['rules'], manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
-                          updated, existing_config_lookup):
+def generate_query_params(module, dfw_section_params, manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
+                          updated, existing_config_lookup, duplicated_objects):
     section_placement_params, place_updated = generate_section_placement(module, manager_url, mgr_username, mgr_password,
                                                                      validate_certs, section_placement, existing_config_lookup,
                                                                      duplicated_objects, dfw_section_params['display_name'])
-    if dfw_section_params['rules']:
+    if not dfw_section_params['rules'] and not place_updated:
+        if section_placement_params != '':
+            return '?' + section_placement_params 
+        else:
+            return ''
+    elif dfw_section_params['rules']:
         if not updated:
-            section_placement = ''
-            if section_placement_params != '':
-                section_placement = '&'
             return '?action=create_with_rules' + '&' + section_placement_params
         else:
             if place_updated:
@@ -557,17 +554,8 @@ def generate_query_params(module, dfw_section_params['rules'], manager_url, mgr_
             else:
                 return '?action=update_with_rules'
     else:  
-        if updated or place_updated:
-            query_params = '?action=revise'
-            if query_params:
-                return
-            if place_updated:
-                return '?action=revise&' + section_placement_params
-                return '?' + section_placement_params
-            else:
-                
-        else:
-            return ''
+        return '?action=revise&' + section_placement_params
+
     #TODO add support for revise. Will involve checking current placement.
 
 def check_rules_have_unique_names(module, dfw_section_params):
@@ -703,11 +691,12 @@ def main():
             # time.sleep(5)
             module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Distributed Firewall Section with display name %s created succcessfully." % module.params['display_name'])
         else:
+            id = node_id
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(json.dumps(dfw_section_params)), id=id)
             dfw_section_params['_revision'] = revision # update current revision   
             request_data = json.dumps(dfw_section_params)
-            id = node_id
+            
             try:
                 module.fail_json(msg="id [%s]. param[%s]."  % (id, query_params))
                 (rc, resp) = request(manager_url+ '/firewall/sections/%s%s' % (id, query_params), data=request_data, headers=headers, method='POST',
