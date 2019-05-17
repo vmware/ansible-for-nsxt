@@ -112,7 +112,7 @@ The path of the .p12 file i.e the file containing public and private key has to 
 ##### Generating certificates?
 Following commands can be used in order to generate certificates.
 ```
-openssl req -newkey rsa:2048 -nodes -keyout nsx_certificate.key -x509 -days 365 -out nsx_certificate.crt -subj "/C=US/ST=California/L=Palo Alto/O=VMware/CN=certauth-test" -sha256
+openssl req -newkey rsa:2048 -extensions usr_cert -nodes -keyout nsx_certificate.key -x509 -days 365 -out nsx_certificate.crt -subj "/C=US/ST=California/L=PaloAlto/O=VMware/CN=certauth-test" -sha256
 
 openssl pkcs12 -export -out nsx_certificate.pfx -inkey nsx_certificate.key -in nsx_certificate.crt
 
@@ -122,6 +122,7 @@ openssl pkcs12 -in nsx_certificate.pfx -out nsx_certificate.p12 -nodes
 The nsx_certificate.crt file generated as output from the above command contains the public key certificate.
 the file nsx_certificate.p12 file contains the public and private key generated. The path of nsx_certificate.p12 file has to be set in the environment variable NSX_MANAGER_CERT_PATH.
 
+Note: In case '-extension usr_cert' option doesn't does work, then usr_cert has to be explicitly defined in openssl.conf file.
 # Interoperability
 
 The following versions of NSX are supported:
