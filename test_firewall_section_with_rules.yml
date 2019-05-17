@@ -1,3 +1,4 @@
+---
 - hosts: 127.0.0.1
   connection: local
   become: yes
@@ -13,11 +14,13 @@
         applied_tos: "{{ item.applied_tos | default([]) }}"
         display_name: "{{ item.display_name }}"
         description: "{{ item.description | default(omit) }}"
+        modify_placement: "{{ item.modify_placement | default(omit) }}"
+        rules: "{{ item.rules | default([]) }}"
         section_placement: "{{ item.section_placement | default(omit) }}"
         section_type: LAYER3
-        stateful: "{{ item.stateful | default(True) }}"
-        rules: "{{ item.rules | default([]) }}"
         state: "{{ item.state }}"
+        stateful: "{{ item.stateful | default(True) }}"
+        tags: "{{ item.tags | default([]) }}"
         validate_certs: False
       with_items:
         - "{{ nsxt_dfw_section_with_rules }}"

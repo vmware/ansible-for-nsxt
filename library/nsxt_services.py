@@ -38,10 +38,58 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
+    description:
+        description: Description of this resource.
+        required: False
+        type: str
     display_name:
         description: 'Display name'
         required: true
         type: str
+    nsservice_element:
+        description: "Custom services should conform to ALGTypeNSService, ICMPTypeNSService, 
+                      IGMPTypeNSService, IPProtocolNSService or L4PortSetNSService schemas."
+        required: True
+        type: 'dict'
+        alg:
+            choices: ['ORACLE_TNS', 'FTP', 'SUN_RPC_TCP', 'SUN_RPC_UDP', 'MS_RPC_TCP', 'MS_RPC_UDP', 
+                        'NBNS_BROADCAST', 'NBDG_BROADCAST', 'TFTP']
+            description: 'The Application Layer Gateway (ALG) protocol. Consult the documentation for edge
+                            rules as not all protocols are supported on edge firewalls.' 
+            required: False
+            type: str 
+        destination_ports:
+            description: List of ports as integers. Max 15
+            required: False
+            type: list
+        icmp_code:
+            description: ICMP message code
+            required: False
+            type: int
+        icmp_type:
+            description: ICMP message type
+            required: False
+            type: int
+        l4_protocol:
+        protocol:
+            choices: ['ICMPv4', 'ICMPv6']
+            description: ICMP protocol type
+            required: False
+            type: list
+        protocol_number:
+            description: The IP protocol number
+            required: False
+            type: int
+        resource_type:
+            choices: ['ALGTypeNSService', 'IPProtocolNSService', 'L4PortSetNSService', 'ICMPTypeNSService',
+                        'IGMPTypeNSService']
+            description: Type of service.
+            required: False
+            type: list
+        source_ports:
+            description: List of ports as integers. Max 15
+            required: False
+            type: list
     state:
         choices:
             - present
@@ -50,15 +98,18 @@ options:
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
         required: true
-    nsservice_element:
-        description: "####"
-        required: false
-        type: 'dict'
     tags:
-        description: 'Opaque identifiers meaningful to the API user'
+        description: 'Opaque identifiers meaningful to the API user. Max 30 items'
         required: false
-        type: str
-
+        type: list
+        scope:
+            description: 'Tag scope. Tag searches may optionally be restricted by scope. Max len 128 charactors.'
+            required: true
+            type: str
+        tag:
+            description: ' 	Tag value. Identifier meaningful to user. Max len 128 charactors.'
+            required: true
+            type: str
     
 '''
 
@@ -69,11 +120,17 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    display_name: IPset-IPV4-1
-    ip_addresses:
-    - "10.112.201.28"
-    - "10.112.201.64/26"
+    description: "HTTPS Alt port example"
+    display_name: HTTPS-ALT
+    nsservice_element:
+        destination_ports:
+        - '8443'
+        l4_protocol: TCP
+        resource_type: L4PortSetNSService
     state: "present"
+    tags:
+    - scope: exmaple
+      tag: https_alt
 '''
 
 RETURN = '''# '''
@@ -84,7 +141,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 
+
 def get_service_params(args=None):
+    '''Strip args from pararms that don't get passed within the JSON'''
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
     for key in args_to_remove:
         args.pop(key, None)
@@ -93,18 +152,30 @@ def get_service_params(args=None):
             args.pop(key, None)
     return args
 
-def get_services(module, manager_url, mgr_username, mgr_password, validate_certs):
+def get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
+    '''Handle the API service respondign with a cursor and make subsequent request.'''
     try:
-        (rc, resp) = request(manager_url+ '/ns-services', headers=dict(Accept='application/json'),
-                            url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+        output_list = []
+        cursor = ''
+        while True:
+            (rc, resp) = request(manager_url + endpoint + cursor, headers=dict(Accept='application/json'),
+                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, 
+                                 ignore_errors=True)
+            if resp['results']:
+                output_list += resp['results']
+            if resp.__contains__('cursor'):
+                cursor = '?cursor=' + resp['cursor']
+            else:
+                break
+        return output_list
     except Exception as err:
-        module.fail_json(msg='Error accessing services. Error [%s]' % (to_native(err)))
-    return resp
+        module.fail_json(msg='Error accessing endpoint %s. \nError [%s]' % (endpoint, to_native(err)))
 
 def get_service_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
-    services = get_services(module, manager_url, mgr_username, mgr_password, validate_certs)
+    '''Retrn service dict from display name if display name is unique'''
+    services = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, '/ns-services')
     return_service = None
-    for service in services['results']:
+    for service in services:
         if service.__contains__('display_name') and service['display_name'] == display_name:
             if not return_service: # Handle there being 2 sections created with the same display name
                 return_service = service
@@ -112,7 +183,8 @@ def get_service_from_display_name(module, manager_url, mgr_username, mgr_passwor
                 module.fail_json(msg='Section with display name %s exists twice.' % (display_name))
     return return_service
 
-def flatten_child_list_to_string(nsservice_element):
+def flatten_list_to_string(nsservice_element):
+    '''Flatten sorted list of ports to a string to a concatenated string allow comparison'''
     for list_type in ['sourse_ports', 'destination_ports']:
         if nsservice_element.__contains__(list_type):
             ports_string = ''
@@ -120,9 +192,34 @@ def flatten_child_list_to_string(nsservice_element):
                 ports_string += str(port) + ','
             nsservice_element[list_type] = ports_string
 
+def convert_tag_dict_to_string(tag_list):
+    '''Convert list of tag dicts to a list of strings'''
+    existing_tag_strings = []
+    for tag in tag_list:
+        tag_string = ''
+        for key in ['tag', 'scope']:
+            if tag.__contains__(key) and tag[key] != '':
+                tag_string += key + tag[key]
+        existing_tag_strings.append(tag_string)
+    return existing_tag_strings
+
+def compare_tags(module, existing_tags, new_tags):
+    '''Compare tags as lists of strings to check for differences'''
+    if len(existing_tags) != len(new_tags):
+        return True
+    
+    # Convert tag dictionaries to strings to allow list compare and account of empty values in either element.
+    existing_tag_strings = convert_tag_dict_to_string(existing_tags)
+    new_tag_string = convert_tag_dict_to_string(new_tags)
+    if existing_tag_strings != new_tag_string:
+        return True
+
+    return False
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, service_params):
-    existing_service = get_service_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, service_params['display_name'])
+    '''Check if any element of a section has changed'''
+    existing_service = get_service_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, 
+                                                     service_params['display_name'])
     if existing_service is None:
         return False
 
@@ -130,21 +227,25 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     copy_service_params = copy.deepcopy(service_params)
     copy_nsservice_element = copy_service_params.pop('nsservice_element', [])
     existing_nsservice_element = existing_service.pop('nsservice_element', None)
+    copy_tags = copy_service_params.pop('tags', [])
+    existing_tags = existing_service.pop('tags', [])
 
     # Flatten list of ports for ALGTypeNSService and L4PortSetNSService so that can be easily compared
-    flatten_child_list_to_string(copy_nsservice_element)
-    flatten_child_list_to_string(existing_nsservice_element)
+    flatten_list_to_string(copy_nsservice_element)
+    flatten_list_to_string(existing_nsservice_element)
 
-    #TODO add support for tags
     # Check to ensure that all keys and values in the base of the params match the existing configuration.
     if not all(k in existing_service and copy_service_params[k] == existing_service[k] for k in copy_service_params):
-        #module.fail_json(msg="Lazy old 1 [%s]  ########## New[%s]." % (existing_service, copy_service_params))
         return True
     
     # Check to ensure that all keys and values nsservice_element match the existing configration.
     if not all(k in existing_nsservice_element and copy_nsservice_element[k] == existing_nsservice_element[k] for k in copy_nsservice_element):
         return True
     
+    # Compare list of tags as strings
+    if compare_tags(module, existing_tags, copy_tags):
+        return True
+
     return False
 
 def main():
@@ -167,7 +268,9 @@ def main():
                                 source_ports=dict(required=False, type='list')),
                             resource_type=dict(required=False, type='str', default='NSService'),
                             state=dict(required=True, choices=['present', 'absent']),
-                            tags=dict(required=False, type='str'))
+                            tags=dict(required=False, type='list',
+                                tag=dict(required=False, type='str'),
+                                scope=dict(required=False, type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
     service_params = get_service_params(module.params.copy())
@@ -179,7 +282,8 @@ def main():
     display_name = module.params['display_name']
     manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
-    service_dict = get_service_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
+    service_dict = get_service_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, 
+                                                  display_name)
     service_id, revision = None, None
     if service_dict:
         service_id = service_dict['id']
@@ -191,20 +295,22 @@ def main():
         updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, service_params)
 
         if not updated:
-            # add the set
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(json.dumps(service_params)), id='12345')
             request_data = json.dumps(service_params)
             try:
                 if service_id:
-                    module.exit_json(changed=False, id=service_id, message="Service with display_name %s already exist."% module.params['display_name'])
+                    module.exit_json(changed=False, id=service_id, message="Service with display_name %s already exist." % 
+                                     module.params['display_name'])
                 (rc, resp) = request(manager_url+ '/ns-services', data=request_data, headers=headers, method='POST',
-                                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+                                     url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, 
+                                     ignore_errors=True)
             except Exception as err:
                 module.fail_json(msg="Failed to add service. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
-            time.sleep(0.5)
-            module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Service with display name %s created." % module.params['display_name'])
+            time.sleep(5)
+            module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Service with display name %s created." % 
+                             module.params['display_name'])
         else:
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(json.dumps(service_params)), id=service_id)
@@ -213,10 +319,12 @@ def main():
             id = service_id
             try:
                 (rc, resp) = request(manager_url+ '/ns-services/%s' % id, data=request_data, headers=headers, method='PUT',
-                                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+                                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, 
+                                        ignore_errors=True)
             except Exception as err:
-                module.fail_json(msg="Failed to update service with id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
-            time.sleep(0.5)
+                module.fail_json(msg="Failed to update service with id %s. Request body [%s]. Error[%s]." % 
+                                 (id, request_data, to_native(err)))
+            time.sleep(5)
             module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Service with id %s updated." % id)
 
     elif state == 'absent':

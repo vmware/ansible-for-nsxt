@@ -298,6 +298,18 @@ options:
                      on all rules inside the section.' 
         required: True
         type: bool
+    tags:
+        description: 'Opaque identifiers meaningful to the API user. Max 30 items'
+        required: false
+        type: list
+        scope:
+            description: 'Tag scope. Tag searches may optionally be restricted by scope. Max len 128 charactors.'
+            required: true
+            type: str
+        tag:
+            description: ' 	Tag value. Identifier meaningful to user. Max len 128 charactors.'
+            required: true
+            type: str
 
 '''
 
@@ -308,25 +320,78 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    display_name: 'ns_with_criteria'
-    resource_type: NSGroup
-    service:
-      - resource_type: NSGroupTagExpression
-        target_type: 'LogicalSwitch'
-        scope: 'S1'
-        tag: 'T1'
-      - resource_type: NSGroupComplexExpression
-        expressions:
-          - resource_type: NSGroupTagExpression
-            target_type: 'LogicalPort'
-            scope: 'S1'
-            tag: 'T1'
-          - resource_type: NSGroupTagExpression
-            target_type: 'LogicalPort'
-            scope: 'S2'
-            tag: 'T2'
-    state: "present"
+    display_name: Test Section
+    description: Testing DFW
+    stateful: True
+    state: present
+    applied_tos:
+    section_placement:
+        operation: insert_top
+    rules:
+    - display_name: 'Test Rule'
+        description: Testing
+        action: ALLOW
+        applied_tos:
+        - target_display_name: 'ns_test'
+          target_type: NSGroup
+        context_profiles:
+        - target_display_name: 'SSL'
+          target_type: NSProfile
+        destinations: 
+        - target_display_name: 'ip_set_test'
+          target_type: IPSet
+        direction: IN_OUT
+        ip_protocol: IPV4
+        logged: True
+        resource_type: FirewallRule
+        rule_tag: Test-Log-Tag
+        services: 
+        - target_display_name: 'HTTPS'
+          target_type: NSService
+        sources: 
+        - target_display_name: '10.1.1.1'
+          target_type: IPAddress
 
+- name: Add Edge Firewall Section with Rules
+  nsxt_dfw_section:
+    hostname: "10.192.167.137"
+    username: "admin"
+    password: "Admin!23Admin"
+    validate_certs: False
+    display_name: Test Section
+    description: Testing Edge
+    stateful: True
+    state: present
+    applied_tos:
+    - target_display_name: 't0-router'
+        target_type: LogicalRouter
+    section_placement:
+        operation: insert_top
+    rules:
+    - display_name: 'Test Rule'
+        description: Testing
+        action: ALLOW
+        destinations: 
+        - target_display_name: 'ip_set_test'
+          target_type: IPSet
+        resource_type: FirewallRule
+        services: 
+        - target_display_name: 'HTTPS'
+          target_type: NSService
+        sources: 
+        - target_display_name: '10.1.1.1'
+          target_type: IPAddress
+
+- name: Add Distributed Firewall Section
+  nsxt_dfw_section:
+    hostname: "10.192.167.137"
+    username: "admin"
+    password: "Admin!23Admin"
+    validate_certs: False
+    display_name: Test Section
+    description: Testing edge
+    stateful: True
+    state: present
 '''
 
 RETURN = '''# '''
@@ -344,6 +409,24 @@ ENDPOINT_LOOKUP = {'NSGroup': '/ns-groups', 'IPSet': '/ip-sets', 'FirewallSectio
                     'NSServiceGroup': '/ns-service-groups', 'NSService': '/ns-services'}
 
 
+def get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
+    '''Handle the API service respondign with a cursor and make subsequent request.'''
+    try:
+        output_list = []
+        cursor = ''
+        while True:
+            (rc, resp) = request(manager_url + endpoint + cursor, headers=dict(Accept='application/json'),
+                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+            if resp['results']:
+                output_list += resp['results']
+            if resp.__contains__('cursor'):
+                cursor = '?cursor=' + resp['cursor']
+            else:
+                break
+        return output_list
+    except Exception as err:
+        module.fail_json(msg='Error accessing endpoint %s. \nError [%s]' % (endpoint, to_native(err)))
+
 def get_dfw_section_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
     for key in args_to_remove:
@@ -353,24 +436,9 @@ def get_dfw_section_params(args=None):
             args.pop(key, None)
     return args
 
-def get_dfw_section_rules(module, manager_url, mgr_username, mgr_password, validate_certs, section_id):
-    try:
-        (rc, resp) = request(manager_url+ '/firewall/sections/%s/rules' % section_id, headers=dict(Accept='application/json'),
-                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-        if resp['results']:
-            return resp['results']
-    except Exception as err:
-        module.fail_json(msg='Error accessing Firewall Section Rules for section %s. \nError [%s]' % (section_id, to_native(err)))
-    return []
-
 def get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
-    try:
-        (rc, resp) = request(manager_url+ '/firewall/sections', headers=dict(Accept='application/json'),
-                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-        dfw_sections = resp['results']
-    except Exception as err:
-        module.fail_json(msg='Error accessing Firewall Section. Error [%s]' % (to_native(err)))
-    
+    '''Return dict of firewall section by section name, if name is unique'''
+    dfw_sections = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, '/firewall/sections')
     return_section = None
     for dfw_section in dfw_sections:
         if dfw_section.__contains__('display_name') and dfw_section['display_name'] == display_name:
@@ -382,6 +450,7 @@ def get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_pas
 
 # Generate IDs for each sub-section
 def update_param_list_with_ids(module, params, existing_config_lookup, duplicated_objects, rule_display_name, section_name):
+    '''Update sections with ID of objects based on display_name'''
     for idx, param in enumerate(params):
         try:
             if param.__contains__('target_type') and param['target_display_name'] not in duplicated_objects[param['target_type']]:
@@ -395,6 +464,7 @@ def update_param_list_with_ids(module, params, existing_config_lookup, duplicate
                 module.fail_json(msg='Unable to find mandatory param [%s] within [%s] sub-section [%s]' % (to_native(err), rule_display_name, section_name))
 
 def update_rules_list_with_ids(module, rules, existing_config_lookup, list_section_names, duplicated_objects):
+    '''Loop through each rule and insert IDs into each section where display_name is supplied'''
     for idx, rule in enumerate(rules):
         for section_name in list_section_names:
             if rule.__contains__(section_name) and rule[section_name]:
@@ -403,11 +473,13 @@ def update_rules_list_with_ids(module, rules, existing_config_lookup, list_secti
                                          'Rule ' + rule['display_name'], section_name)
 
 def insert_lists_if_missing(source_dict, keys):
+  '''Insert empty list as value in a dict if the dict does not contain the key'''
   for key in keys:
     if not source_dict.__contains__(key):
       source_dict[key] = []
 
 def extract_services_list_of_strings(services):
+    '''Extract services and represent them as a list of sorted strings to allow comparison'''
     output_list = []
     for service in services:
         item_string = ''
@@ -417,11 +489,13 @@ def extract_services_list_of_strings(services):
                     item_string += key + str(item)
             else:
                 item_string += key + str(value)
+        
         # String is sorted to allow for dictionary order to change.
         output_list.append(''.join(sorted(item_string)))
     return output_list
 
 def compare_custom_services(module, existing_services, new_services):
+    '''Compare custom services by extracting parameters as strings'''
     if existing_services and new_services:
         # Lists must be deep copied otherwise pop removes globally.
         existing_services_copy = copy.deepcopy(existing_services)
@@ -431,27 +505,61 @@ def compare_custom_services(module, existing_services, new_services):
         
         if len(existing_custom_services) != len(new_custom_services):
             return True
+        
         elif existing_custom_services or new_custom_services:
             # Extract list containing a strings of custom services. Lists of strings are hashable and faster to compare.
             existing_custom_service_list = extract_services_list_of_strings(existing_custom_services)
             new_custom_service_list = extract_services_list_of_strings(new_custom_services)
             if not Counter(existing_custom_service_list) == Counter(new_custom_service_list):
                 return True
+
+    return False
+
+def convert_tag_dict_to_string(tag_list):
+    '''Convert list of tag dicts to a list of strings'''
+    existing_tag_strings = []
+    for tag in tag_list:
+        tag_string = ''
+        for key in ['tag', 'scope']:
+            if tag.__contains__(key) and tag[key] != '':
+                tag_string += key + tag[key]
+        existing_tag_strings.append(tag_string)
+    return existing_tag_strings
+
+def compare_tags(module, existing_tags, new_tags):
+    '''Compare tags as lists of strings to check for differences'''
+    if len(existing_tags) != len(new_tags):
+        return True
+    
+    # Convert tag dictionaries to strings to allow list compare and account of empty values in either element.
+    existing_tag_strings = convert_tag_dict_to_string(existing_tags)
+    new_tag_string = convert_tag_dict_to_string(new_tags)
+    if existing_tag_strings != new_tag_string:
+        return True
+        
     return False
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params):
+    '''Check if any element of a section has changed'''
     existing_dfw_section = get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, 
                                                             validate_certs, dfw_section_params['display_name'])
     if not existing_dfw_section:
         return False
+    
     # Lists must be deep copied otherwise pop removes globally.
     copy_dfw_section_params = copy.deepcopy(dfw_section_params)
     new_dfw_secton_rules = copy_dfw_section_params.pop('rules', [])
     new_dfw_secton_applied_tos = copy_dfw_section_params.pop('applied_tos', [])
     copy_dfw_section_params.pop('resource_type', None)
+    copy_tags = copy_dfw_section_params.pop('tags', [])
+    existing_tags = existing_dfw_section.pop('tags', [])
     
     # Check to ensure that all keys and values in the new params match the existing configuration.
     if not all(k in existing_dfw_section and copy_dfw_section_params[k] == existing_dfw_section[k] for k in copy_dfw_section_params):
+        return True
+    
+    # Compare list of tags as strings
+    if compare_tags(module, existing_tags, copy_tags):
         return True
 
     # Check that applied_tos sections match.
@@ -463,7 +571,8 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     
     # Create lookup table of existing rules by display name. Ignore duplicate names as would trigger a change anyway.
     existing_rule_dict = {}
-    existing_dfw_section_rules = get_dfw_section_rules(module, manager_url, mgr_username, mgr_password, validate_certs, existing_dfw_section['id'])
+    existing_dfw_section_rules = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                 '/firewall/sections/%s/rules' % existing_dfw_section['id'])
     if len(existing_dfw_section_rules) != len(new_dfw_secton_rules):
         return True
     for rule in existing_dfw_section_rules:
@@ -497,18 +606,15 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     return False
 
 def collect_all_existing_config(module, manager_url, mgr_username, mgr_password, validate_certs):
+    '''Collect all existing configuration and return as dict mapping display_name to IDs and list of duplicates'''
     existing_config_lookup = {}
-    duplicated_objects = {'IPAddress': []}
+    duplicated_objects = {'IPAddress': []} # Manually isert IP Addresses as the cannot be duplicated.
     for endpoint_name, endpoint in ENDPOINT_LOOKUP.items():
-        try:
-            (rc, resp) = request(manager_url + endpoint, headers=dict(Accept='application/json'),
-                            url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-        except Exception as err:
-            module.fail_json(msg='Error accessing %s. Error [%s]' % (endpoint_name, to_native(err)))
+        resp = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint)
         if resp:
             duplicated_objects[endpoint_name] = []
             lookup_table = {}
-            for item in resp['results']:
+            for item in resp:
                 if item.__contains__('display_name') and item.__contains__('id'):
                     if item['display_name'] not in duplicated_objects[endpoint_name]:
                         lookup_table[item['display_name']] = item['id']
@@ -517,8 +623,8 @@ def collect_all_existing_config(module, manager_url, mgr_username, mgr_password,
             existing_config_lookup[endpoint_name] = lookup_table
     return existing_config_lookup, duplicated_objects
 
-# Remove context profiles to allow support for 2.3 and below
 def add_backwards_compatibilty(module, manager_url, mgr_username, mgr_password, validate_certs, dfw_section_params):
+    '''Remove context profiles to allow support for 2.3 and below'''
     try:
         (rc, resp) = request(manager_url+ '/upgrade/summary', headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
@@ -529,14 +635,12 @@ def add_backwards_compatibilty(module, manager_url, mgr_username, mgr_password, 
     except Exception as err:
         module.fail_json(msg='Error accessing API verion details. Error [%s]' % (to_native(err)))
 
-def check_if_section_moved(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement, existing_config_lookup, dfw_section_params, modify_placement):
+def check_if_section_moved(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
+                           existing_config_lookup, dfw_section_params, modify_placement):
+    '''Check if FW section placement does not match definition'''
     if not modify_placement:
         return False
-    # Assume that fw sections returned without error, as already collected when gathering existing config
-    (rc, resp) = request(manager_url + '/firewall/sections', headers=dict(Accept='application/json'),
-                                                url_username=mgr_username, url_password=mgr_password, 
-                                                validate_certs=validate_certs, ignore_errors=True)
-    existing_section_list = resp['results']                                                 
+    existing_section_list = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, '/firewall/sections')                                                
     for idx, section in enumerate(existing_section_list):
         if section['display_name'] == dfw_section_params['display_name']:
             try:
@@ -559,20 +663,24 @@ def check_if_section_moved(module, manager_url, mgr_username, mgr_password, vali
                         return True
                     elif section_placement.__contains__('id') and section_placement['id'] != existing_section_list[idx - 1]['id']:
                         return True
-                    elif section_placement.__contains__('display_name') and existing_config_lookup['FirewallSection'][str(section_placement['display_name'])] != existing_section_list[idx - 1]['id']:
+                    elif section_placement.__contains__('display_name') and \
+                        existing_config_lookup['FirewallSection'][str(section_placement['display_name'])] != existing_section_list[idx - 1]['id']:
                         return True
                 elif section_placement['operation'] == 'insert_before':
                     if section_placement.__contains__('id') and section_placement['id'] != existing_section_list[idx + 1]['id']:
                         return True
-                    elif section_placement.__contains__('display_name') and existing_config_lookup['FirewallSection'][str(section_placement['display_name'])] != existing_section_list[idx + 1]['id']:
+                    elif section_placement.__contains__('display_name') and \
+                        existing_config_lookup['FirewallSection'][str(section_placement['display_name'])] != existing_section_list[idx + 1]['id']:
                         return True
             except KeyError:
-                module.fail_json(msg="Failed when looking up section placement for section [%s] with params [%s]."  % (dfw_section_params['display_name'], section_placement))
+                module.fail_json(msg="Failed when looking up section placement for section [%s] with params [%s]."  % 
+                                 (dfw_section_params['display_name'], section_placement))
             break
     return False
 
 def generate_section_placement(module, manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
                                existing_config_lookup, duplicated_objects, section_name, place_updated):
+    '''Generate option string to post on create or update'''
     if not section_placement:
         return ''
     try:
@@ -581,39 +689,45 @@ def generate_section_placement(module, manager_url, mgr_username, mgr_password, 
         elif section_placement['operation'] == 'insert_after' or section_placement['operation'] == 'insert_before':
             if section_placement.__contains__('id'):
                 return 'operation=' + section_placement['operation'] + '&id=' + section_placement['id']
-            elif section_placement.__contains__('display_name') and  existing_config_lookup['FirewallSection'].__contains__(str(section_placement['display_name'])):
+            elif section_placement.__contains__('display_name') and existing_config_lookup['FirewallSection'].__contains__(str(section_placement['display_name'])):
                 if section_placement[str('display_name')] in duplicated_objects['FirewallSection']:
-                    module.fail_json(msg='Firewall section %s exists more than once when trying to assign placement for section %s.' % (section_placement['display_name'], section_name))
+                    module.fail_json(msg='Firewall section %s exists more than once when trying to assign placement for section %s.' % 
+                                     (section_placement['display_name'], section_name))
                 return 'operation=' + section_placement['operation'] + '&id=' + existing_config_lookup['FirewallSection'][str(section_placement['display_name'])]
         else:
             module.fail_json(msg='[%s] is not a valid section plecement operator for section [%s].' % (section_placement['operation'], section_name))
-        module.fail_json(msg='Unable to find section [%s]. when generating placement ID for section [%s].' % (section_placement['display_name'], section_name))
+        module.fail_json(msg='Unable to find section [%s]. when generating placement ID for section [%s].' % 
+                         (section_placement['display_name'], section_name))
     except KeyError as err:
-        module.fail_json(msg='Unable to find section [%s] when generating section placement. Error [%s]' % (section_placement['display_name'], to_native(err)))
+        module.fail_json(msg='Unable to find section [%s] when generating section placement. Error [%s]' % 
+                         (section_placement['display_name'], to_native(err)))
 
-def generate_query_params(module, dfw_section_params, manager_url, mgr_username, mgr_password, validate_certs, section_placement, 
-                          updated, existing_config_lookup, duplicated_objects, modify_placement, place_updated):
-    section_placement_params  = generate_section_placement(module, manager_url, mgr_username, mgr_password,
-                                                                     validate_certs, section_placement, existing_config_lookup,
-                                                                     duplicated_objects, dfw_section_params['display_name'], place_updated)
+def generate_query_params(module, dfw_section_params, manager_url, mgr_username, mgr_password, validate_certs, 
+                          section_placement, updated, existing_config_lookup, duplicated_objects, modify_placement, 
+                          place_updated):
+    '''Allow for different query action depending on what has changed and whether play has modify flag'''
+    section_place_params  = generate_section_placement(module, manager_url, mgr_username, mgr_password,
+                                                       validate_certs, section_placement, existing_config_lookup,
+                                                       duplicated_objects, dfw_section_params['display_name'], place_updated)
     if place_updated and modify_placement and not updated:
         dfw_section_params['rules'] = [] # action=revise doesn't support rules, so emptying rules if no changes
-        return '?action=revise&' + section_placement_params
+        return '?action=revise&' + section_place_params
     elif updated:
         if dfw_section_params['rules'] and place_updated and modify_placement:
-            return '?action=revise_with_rules&' + section_placement_params
+            return '?action=revise_with_rules&' + section_place_params
         else:
             return '?action=update_with_rules'
     else:
         if dfw_section_params['rules']:
-            return '?action=create_with_rules&' + section_placement_params
+            return '?action=create_with_rules&' + section_place_params
         else:
-            if section_placement_params != '':
-                return '?' + section_placement_params
+            if section_place_params != '':
+                return '?' + section_place_params
             else:
                 return ''
 
 def check_rules_have_unique_names(module, dfw_section_params):
+    '''Check whether all supplied FW rules have unique display names to allow module to be idempotent'''
     rule_names = set()
     duplicateed_rule_names = set()
     for rule in dfw_section_params['rules']:
@@ -623,9 +737,11 @@ def check_rules_have_unique_names(module, dfw_section_params):
             else:
                 rule_names.add(rule['display_name'])
         except KeyError:
-            module.fail_json(msg='Rule does not have a display_name param set [%s]. \nEnsure all rules have unique names withiin each section' % (rule))
+            module.fail_json(msg='Rule does not have a display_name param set [%s].' +
+                                 '\nEnsure all rules have unique names withiin each section' % (rule))
     if duplicateed_rule_names:
-        module.fail_json(msg='The following rules have duplicate display_names [%s]. \nEnsure all rules have unique names withiin each section' % (', '.join(duplicateed_rule_names)))
+        module.fail_json(msg='The following rules have duplicate display_names [%s]. ' +
+                             '\nEnsure all rules have unique names withiin each section' % (', '.join(duplicateed_rule_names)))
 
 def main():
     argument_spec = vmware_argument_spec()
@@ -685,20 +801,22 @@ def main():
                                 target_display_name=dict(required=True, type='str'), # Will insert target_id a runtime
                                 target_type=dict(required=True, type='str', choices=['IPSet', 'LogicalPort', 
                                                                                      'LogicalSwitch', 'NSGroup'])),),
-                        resource_type=dict(required=False, choices=['FirewallSectionRuleList'], default='FirewallSectionRuleList'),
+                        resource_type=dict(required=False, choices=['FirewallSectionRuleList'], 
+                                           default='FirewallSectionRuleList'),
                         section_placement=dict(required=False, type='dict',
-                            operation=dict(required=True, type='str', choices=['insert_top', 'insert_bottom', 'insert_after', 
-                                                                            'insert_before']),
+                            operation=dict(required=True, type='str', choices=['insert_top', 'insert_bottom', 
+                                                                               'insert_after', 'insert_before']),
                             display_name=dict(required=True, type='str')),
                         section_type=dict(required=False, choices=['LAYER3'], default='LAYER2, LAYER3'),
                         state=dict(required=True, choices=['present', 'absent']),
                         stateful=dict(required=True, type='bool'),
+                        tags=dict(required=False, type='list',
+                                tag=dict(required=False, type='str'),
+                                scope=dict(required=False, type='str')),
                         modify_placement=dict(required=False, type='bool', default=False))
                         
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    
     dfw_section_params = get_dfw_section_params(module.params.copy())
-    
     state = module.params['state']
     mgr_hostname = module.params['hostname']
     mgr_username = module.params['username']
@@ -710,13 +828,14 @@ def main():
     modify_placement = dfw_section_params.pop('modify_placement', None)
 
     check_rules_have_unique_names(module, dfw_section_params)
-    insert_lists_if_missing(dfw_section_params, ['applied_tos'])
+    insert_lists_if_missing(dfw_section_params, ['applied_tos', 'tags'])
 
-    node_dict = get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
-    node_id, revision = None, None
-    if node_dict:
-        node_id = node_dict['id']
-        revision = node_dict['_revision']
+    section_dict = get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, 
+                                                     display_name)
+    section_id, revision = None, None
+    if section_dict:
+        section_id = section_dict['id']
+        revision = section_dict['_revision']
     
     if state == 'present':
         headers = dict(Accept="application/json")
@@ -740,38 +859,45 @@ def main():
         updated = updated or place_updated
         if not dfw_section_params['rules']:
             dfw_section_params.pop('rules', None)
-
         if not updated:            
             request_data = json.dumps(dfw_section_params)
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(request_data), id='12345')
             try:
-                if node_id:
-                    module.exit_json(changed=False, id=node_id, message="Firewall Section with display_name [%s] already exist and has not changed."% module.params['display_name'])
-                (rc, resp) = request(manager_url+ '/firewall/sections%s' % query_params, data=request_data, headers=headers, method='POST',
-                                    url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+                if section_id:
+                    module.exit_json(changed=False, id=section_id, 
+                                     message="Firewall Section with display_name [%s] already exist and has not changed." % 
+                                     module.params['display_name'])
+                (rc, resp) = request(manager_url+ '/firewall/sections%s' % query_params, data=request_data, 
+                                     headers=headers, method='POST', url_username=mgr_username, url_password=mgr_password, 
+                                     validate_certs=validate_certs, ignore_errors=True)
             except Exception as err:
                 module.fail_json(msg="Failed to add node. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
             #TODO consult VMWare NSBU on invokation rates and build dynamic delay between calls.
-            # time.sleep(5)
-            module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Firewall Section with display_name %s created succcessfully." % module.params['display_name'])
+            time.sleep(5)
+            module.exit_json(changed=True, id=resp["id"], body= str(resp), 
+                             message="Firewall Section with display_name %s created succcessfully." % 
+                             module.params['display_name'])
         else:
-            id = node_id
+            id = section_id
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(json.dumps(dfw_section_params)), id=id)
             dfw_section_params['_revision'] = revision # update current revision   
             request_data = json.dumps(dfw_section_params)
-            
             try:
-                (rc, resp) = request(manager_url+ '/firewall/sections/%s%s' % (id, query_params), data=request_data, headers=headers, method='POST',
-                                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+                (rc, resp) = request(manager_url+ '/firewall/sections/%s%s' % (id, query_params), data=request_data, 
+                                     headers=headers, method='POST', url_username=mgr_username, url_password=mgr_password, 
+                                     validate_certs=validate_certs, ignore_errors=True)
             except Exception as err:
-                module.fail_json(msg="Failed to update Section with display_name %s. Request body [%s]. Error[%s]." % (module.params['display_name'], request_data, to_native(err)))
-            # time.sleep(5)
-            module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Firewall Section with display_name [%s] updated with params [%s]." % (module.params['display_name'], query_params))
+                module.fail_json(msg="Failed to update Section with display_name %s. Request body [%s]. Error[%s]." % 
+                                 (module.params['display_name'], request_data, to_native(err)))
+            time.sleep(5)
+            module.exit_json(changed=True, id=resp["id"], body= str(resp), 
+                             message="Firewall Section with display_name [%s] updated with params [%s]." % 
+                             (module.params['display_name'], query_params))
 
     elif state == 'absent':
-        id = node_id
+        id = section_id
         if id is None:
             module.exit_json(changed=False, msg='No Firewall Section exist with display name %s' % display_name)
         if module.check_mode:
@@ -781,7 +907,7 @@ def main():
                                   url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
         except Exception as err:
             module.fail_json(msg="Failed to delete Firewall Section with id %s. Error[%s]." % (id, to_native(err)))
-        # time.sleep(5)
+        time.sleep(5)
         module.exit_json(changed=True, id=id, message="NG Group with node id %s deleted." % id)
 
 
