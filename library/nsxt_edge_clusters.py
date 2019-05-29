@@ -79,9 +79,9 @@ EXAMPLES = '''
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
-      display_name: edge-cluster-1
+      display_name: edge-cluster-1  `
       cluster_profile_bindings:
-        - profile_id: "ee7e2008-3626-4373-9ba4-521887840984"
+        - profile_name: "nsx-edge-profile"
           resource_type: EdgeHighAvailabilityProfile
       members:
         - transport_node_name: "TN_1"
@@ -149,12 +149,34 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     return False
 
-def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params ):
+def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params):
     if edge_cluster_params.__contains__('members'):
         for transport_node in edge_cluster_params['members']:
             transport_node_name = transport_node.pop('transport_node_name', None)
             transport_node['transport_node_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
                                                     "/transport-nodes", transport_node_name)
+    return edge_cluster_params
+
+def get_cluster_profiles(module, manager_url, mgr_username, mgr_password, validate_certs):
+    try:
+      (rc, resp) = request(manager_url+ '/cluster-profiles', headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing edge clusters. Error [%s]' % (to_native(err)))
+    return resp
+
+def get_profile_id_from_profile_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
+    cluster_profiles = get_cluster_profiles(module, manager_url, mgr_username, mgr_password, validate_certs)
+    for cluster_profile in cluster_profiles['results']:
+        if cluster_profile.__contains__('display_name') and cluster_profile['display_name'] == display_name:
+            return cluster_profile['id']
+    module.fail_json(msg='No id exist with display name %s' % display_name)
+
+def update_params_with_profile_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params):
+    if edge_cluster_params.__contains__('cluster_profile_bindings'):
+        for cluster_profile in edge_cluster_params['cluster_profile_bindings']:
+            cluster_profile_name = cluster_profile.pop('profile_name', None)
+            cluster_profile['profile_id'] = get_profile_id_from_profile_name(module, manager_url, mgr_username, mgr_password, validate_certs, cluster_profile_name)
     return edge_cluster_params
 
 def main():
@@ -183,6 +205,7 @@ def main():
 
   if state == 'present':
     body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params)
+    body = update_params_with_profile_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params)
     updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'

@@ -217,14 +217,16 @@ options:
                                   reasons.'
                     required: false
                     type: boolean
-                compute_id:
+                compute:
                     description: 'The cluster node VM will be deployed on the specified cluster
-                                  or resourcepool for specified VC server.'
+                                  or resourcepool for specified VC server. If vc_username and 
+                                  vc_password are present then this field takes name else id.'
                     required: true
                     type: str
-                data_network_ids:
-                    description: "List of distributed portgroup or VLAN logical identifiers to
-                       which the datapath serving vnics of edge node vm will be connected."
+                data_networks:
+                    description: "List of distributed portgroup or VLAN logical identifiers or names to
+                       which the datapath serving vnics of edge node vm will be connected. If vc_username 
+                      and vc_password are present then this field takes names else id."
                     required: true
                     type: list
                 default_gateway_addresses:
@@ -253,20 +255,20 @@ options:
                                   reasons.'
                     required: false
                     type: boolean
-                host_id:
-                    description: "The service VM will be deployed on the specified host in the\
-                       specified server within the cluster if host_id is specified.
-                       Note: You must ensure that storage and specified networks are accessible
-                       by this host."
+                host:
+                    description: "Name of the host where edge VM is to be deployed
+                                  if vc_username and vc_password are present then
+                                  this field takes host name else host id."
                     required: false
                     type: str
                 hostname:
                     description: Desired host name/FQDN for the VM to be deployed
                     required: true
                     type: str
-                management_network_id:
+                management_network:
                     description: 'Distributed portgroup identifier to which the management vnic
-                                  of cluster node VM will be connected.'
+                                  of cluster node VM will be connected. If vc_username and vc_password 
+                                  are present then this field takes name else id.'
                     required: true
                     type: str
                 management_port_subnets:
@@ -298,17 +300,26 @@ options:
                                   names.'
                     required: false
                     type: list
-                storage_id:
-                    description: Moref of the datastore in VC. If it is to be taken from 'Agent
-                                 VM Settings', then it should be empty.
+                storage:
+                    description: Moref or name of the datastore in VC. If it is to be taken from 'Agent
+                                 VM Settings', then it should be empty If vc_username and vc_password are present then
+                                  this field takes name else id.
                     required: true
                     type: str
                 type: dict
-                vc_id:
-                    description: 'The VC-specific identifiers will be resolved on this VC, so all
+                vc_name:
+                    description: 'The VC-specific names will be resolved on this VC, so all
                                   other identifiers specified in the config must belong to this vCenter 
                                   server.'
                     required: true
+                    type: str
+                vc_username:
+                    description: 'Username of VC'
+                    required: false
+                    type: str
+                vc_password:
+                    description: 'VC Password'
+                    required: false
                     type: str
         deployment_type:
             description: Specifies whether the service VM should be deployed on each host such
@@ -436,9 +447,12 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, get_vc_ip_from_display_name
+from ansible.module_utils.vcenter_utils import get_resource_id_from_name, get_data_network_id_from_name
 from ansible.module_utils._text import to_native
-
+import socket
+import hashlib
+import ssl
 
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
@@ -543,14 +557,6 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
 
     transport_node_params['display_name'] = transport_node_params.pop('display_name', None)
     return transport_node_params
-#
-# def ordered(obj):
-#     if isinstance(obj, dict):
-#         return sorted((k, ordered(v)) for k, v in obj.items())
-#     if isinstance(obj, list):
-#         return sorted(ordered(x) for x in obj)
-#     else:
-#         return obj
 
 def id_exist_in_list_dict_obj(key, list_obj1, list_obj2):
     all_id_presents = False
@@ -565,6 +571,7 @@ def id_exist_in_list_dict_obj(key, list_obj1, list_obj2):
             if not all_id_presents:
                 return False
     return True
+
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_with_ids):
     existing_transport_node = get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_with_ids['display_name'])
     if existing_transport_node is None:
@@ -576,6 +583,83 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         existing_transport_node['host_switch_spec']['host_switches'] != transport_node_with_ids['host_switch_spec']['host_switches']:
         return True
     return False
+
+def get_api_cert_thumbprint(ip_address, module):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    wrappedSocket = ssl.wrap_socket(sock)
+    try:
+        wrappedSocket.connect((ip_address, 443))
+    except Exception as err:
+        module.fail_json(msg='Failed to get node ID from ESXi host with IP {}. Error: {}'.format(ip_address, err))
+    else:
+        der_cert_bin = wrappedSocket.getpeercert(True)
+        thumb_sha256 = hashlib.sha256(der_cert_bin).hexdigest()
+        return thumb_sha256
+    finally:
+        wrappedSocket.close()
+
+
+def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params):
+  vm_deployment_config = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']
+      
+  if vm_deployment_config.__contains__('vc_username') and vm_deployment_config.__contains__('vc_password'):
+    vc_name = vm_deployment_config['vc_name']
+    vc_ip = get_vc_ip_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                         "/fabric/compute-managers", vc_name)
+    
+        
+    vc_username = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vc_username', None)
+        
+    vc_password = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vc_password', None)
+
+    if vm_deployment_config.__contains__('host'):
+      host = vm_deployment_config.pop('host', None)
+      host_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
+                                    'host', host)
+      transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['host_id'] = str(host_id)
+        
+    storage = vm_deployment_config.pop('storage')
+    storage_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
+                                           'storage', storage)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = str(storage_id)
+
+    cluster = vm_deployment_config.pop('compute')
+    cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
+                                           'cluster', cluster)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = str(cluster_id)
+
+    management_network = vm_deployment_config.pop('management_network')
+    management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
+                                               'network', management_network)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = str(management_network_id)
+
+    data_networks = vm_deployment_config.pop('data_networks')
+    data_network_ids = get_data_network_id_from_name(module, vc_ip, vc_username, vc_password, 
+                                                data_networks)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
+        
+    if vm_deployment_config.__contains__('host'):
+      transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('host', None)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('cluster', None)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('storage', None)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('management_network', None)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks', None)
+  else:
+    if vm_deployment_config.__contains__('host'):
+      host_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('host', None)
+      transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['host_id'] = host_id
+        
+    cluster_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('compute', None)
+    storage_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('storage', None)
+    management_network_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('management_network', None)
+    data_network_ids = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks', None)
+        
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = cluster_id
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = storage_id
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = management_network_id
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
+
 
 def main():
   argument_spec = vmware_argument_spec()
@@ -593,20 +677,22 @@ def main():
                        cli_password=dict(required=False, type='str'),
                        audit_password=dict(required=False, type='str')),
                        vm_deployment_config=dict(required=True, type='dict',
-                       data_network_ids=dict(required=True, type='list'),
+                       data_networks=dict(required=True, type='list'),
                        dns_servers=dict(required=False, type='list'),
                        ntp_servers=dict(required=False, type='list'),
-                       management_network_id=dict(required=True, type='str'),
+                       management_network=dict(required=True, type='str'),
+                       vc_username=dict(required=False, type='str'),
+                       vc_password=dict(required=False, type='str', no_log=True),
                        enable_ssh=dict(required=False, type='boolean'),
                        allow_ssh_root_login=dict(required=False, type='boolean'),
                        placement_type=dict(required=True, type='str'),
-                       compute_id=dict(required=True, type='str'),
+                       compute=dict(required=True, type='str'),
                        search_domains=dict(required=False, type='list'),
-                       vc_id=dict(required=True, type='str'),
-                       storage_id=dict(required=True, type='str'),
+                       vc_name=dict(required=True, type='str'),
+                       storage=dict(required=True, type='str'),
                        default_gateway_addresses=dict(required=False, type='list'),
                        management_port_subnets=dict(required=False, type='list'),
-                       host_id=dict(required=False, type='str'),
+                       host=dict(required=False, type='str'),
                        hostname=dict(required=True, type='str')),
                        form_factor=dict(required=False, type='str')),
                        discovered_ip_addresses=dict(required=False, type='list'),
@@ -645,15 +731,26 @@ def main():
     revision = transport_node_dict['_revision']
 
   if state == 'present':
+    if transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
+      inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params)
+
     body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params)
     updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-
     if not updated:
       # add the node
       if module.check_mode:
-          module.exit_json(changed=True, debug_out=str(json.dumps(logical_switch_params)), id='12345')
+        module.exit_json(changed=True, debug_out=str(json.dumps(logical_switch_params)), id='12345')
+      if body["node_deployment_info"].__contains__('host_credential'):
+        if body["node_deployment_info"]["host_credential"].__contains__("thumbprint"):
+          thumbprint = body["node_deployment_info"]["host_credential"]["thumbprint"]
+        else:
+          if not body["node_deployment_info"].__contains__("ip_addresses"):
+            module.fail_json(msg="ESXi ip adresses are not provided")
+          esxi_ip_address = body["node_deployment_info"]["ip_addresses"][0]
+          thumbprint = get_api_cert_thumbprint(esxi_ip_address, module)
+          body["node_deployment_info"]["host_credential"]["thumbprint"] = thumbprint
       request_data = json.dumps(body)
       try:
           if not transport_node_id:
