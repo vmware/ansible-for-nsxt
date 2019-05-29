@@ -77,10 +77,10 @@ EXAMPLES = '''
         deployment_config:
           placement_type: VsphereClusterNodeVMDeploymentConfig
           vc_id: "7503e86e-c502-46fc-8d91-45a06d314d88"
-          management_network_id: "network-44"
+          management_network: "network-44"
           hostname: "manager-2"
-          compute_id: "domain-c49"
-          storage_id: "datastore-43"
+          compute: "domain-c49"
+          storage: "datastore-43"
           default_gateway_addresses:
           - 10.112.203.253
           management_port_subnets:
@@ -94,7 +94,8 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, get_vc_ip_from_display_name
+from ansible.module_utils.vcenter_utils import get_resource_id_from_name
 from ansible.module_utils._text import to_native
 
 FAILED_STATES = ["UNKNOWN_STATE", "VM_DEPLOYMENT_FAILED", "VM_POWER_ON_FAILED", "VM_ONLINE_FAILED", "VM_CLUSTERING_FAILED",
@@ -179,6 +180,62 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
       time.sleep(5)
       return
 
+def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, node_params):
+  for deployment_request in node_params['deployment_requests']:
+    deployment_config = deployment_request['deployment_config']
+    if deployment_config.__contains__('vc_username') and deployment_config.__contains__('vc_password'):
+      vc_name = deployment_config['vc_name']
+      vc_ip = get_vc_ip_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                         "/fabric/compute-managers", vc_name)
+
+
+      vc_username = deployment_config.pop('vc_username', None)
+
+      vc_password = deployment_config.pop('vc_password', None)
+
+      if deployment_config.__contains__('host'):
+        host = deployment_config.pop('host', None)
+        host_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                      'host', host)
+        deployment_request['deployment_config']['host_id'] = str(host_id)
+
+      storage = deployment_config.pop('storage')
+      storage_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'storage', storage)
+
+      deployment_request['deployment_config']['storage_id'] = str(storage_id)
+
+      cluster = deployment_config.pop('compute')
+      cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'cluster', cluster)
+
+      deployment_request['deployment_config']['compute_id'] = str(cluster_id)
+
+      management_network = deployment_config.pop('management_network')
+      management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                               'network', management_network)
+
+      deployment_request['deployment_config']['management_network_id'] = str(management_network_id)
+
+      if deployment_config.__contains__('host'):
+        deployment_request['deployment_config'].pop('host', None)
+      deployment_request['deployment_config'].pop('cluster', None)
+      deployment_request['deployment_config'].pop('storage', None)
+      deployment_request['deployment_config'].pop('management_network', None)
+    else:
+      if deployment_config.__contains__('host'):
+        host_id = deployment_request['deployment_config'].pop('host', None)
+        deployment_request['deployment_config']['host_id'] = host_id
+ 
+      cluster_id = deployment_request['deployment_config'].pop('compute', None)
+      storage_id = deployment_request['deployment_config'].pop('storage', None)
+      management_network_id = deployment_request['deployment_config'].pop('management_network', None)
+ 
+      deployment_request['deployment_config']['compute_id'] = cluster_id
+      deployment_request['deployment_config']['storage_id'] = storage_id
+      deployment_request['deployment_config']['management_network_id'] = management_network_id
+
+
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(deployment_requests=dict(required=True, type='list'),
@@ -198,7 +255,9 @@ def main():
 
   headers = dict(Accept="application/json")
   headers['Content-Type'] = 'application/json'
+  inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, node_params)
   update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, node_params)
+
   request_data = json.dumps(node_params)
   results = get_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
   is_node_exist, hostname = check_node_exist(results, module)
