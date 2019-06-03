@@ -583,7 +583,10 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 
     # Iterate through each rule and compare each subsection list and finally the keys and values.
     for new_rule in new_dfw_secton_rules:
-        existing_rule = existing_rule_dict[new_rule['display_name']]
+        try:
+            exsting_rule = existing_rule_dict[new_rule['display_name']]
+        except KeyError:
+            continue
         section_labels = ['applied_tos', 'context_profiles', 'destinations', 'services', 'sources']
         insert_lists_if_missing(new_rule, section_labels)
         insert_lists_if_missing(existing_rule, section_labels)
