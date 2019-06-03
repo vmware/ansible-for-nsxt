@@ -208,13 +208,6 @@ from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 from collections import Counter
 
-try:
-    from __main__ import display
-except ImportError:
-    # pylint: disable=ungrouped-imports; this is the standard way how to import
-    # the default display object in Ansible action plugins.
-    from ansible.utils.display import Display
-    display = Display()
 
 def get_ns_group_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
