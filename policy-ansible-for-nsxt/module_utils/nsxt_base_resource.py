@@ -13,7 +13,7 @@ import inspect
 
 # Add all the base resources that can be configured in the
 # Policy API here. Required to infer base resource params.
-BASE_RESOURCES = {"NSXTSegment", "NSXTTier0"}
+BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1"}
 
 
 class NSXTBaseRealizableResource(ABC):
@@ -489,7 +489,7 @@ class NSXTBaseRealizableResource(ABC):
     def _send_request_to_API(self, suffix="", ignore_error=True,
                              method='GET', data=None):
         try:
-            if self:
+            if self.get_resource_name() not in BASE_RESOURCES:
                 resource_base_url = self.resource_class.get_resource_base_url(
                     parent_info=self._parent_info)
             else:
