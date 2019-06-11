@@ -1,6 +1,5 @@
 from ansible.module_utils.policy_communicator import PolicyCommunicator
 from ansible.module_utils.policy_communicator import DuplicateRequestError
-import ansible.module_utils.constants as constants
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
