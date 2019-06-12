@@ -34,19 +34,8 @@ description: Creates/Updates/Deletes a Tier-1 resource using the Policy API.
              respectively.
 version_added: '2.8'
 author: 'Gautam Verma'
+extends_documentation_fragment: vmware_nsxt
 options:
-    hostname:
-        description: Deployed NSX manager hostname.
-        required: true
-        type: str
-    username:
-        description: The username to authenticate with the NSX manager.
-        required: true
-        type: str
-    password:
-        description: The password to authenticate with the NSX manager.
-        required: true
-        type: str
     id:
         description: Tier-1 ID
         required: true
@@ -54,25 +43,6 @@ options:
     description:
         description: Tier-1 description
         type: str
-    display_name:
-        description: Tier-1 display name
-        type: str
-        default: id
-    state:
-        description: State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource.
-        choices:
-            - present
-            - absent
-        required: true
-    tags:
-        description: Opaque identifiers meaningful to the API user
-        type: str
-    validate_certs:
-        description: Enable server certificate verification.
-        type: bool
-        default: False
     default_rule_logging:
         description: Enable logging for whitelisted rule.
                      Indicates if logging should be enabled for the default
@@ -129,16 +99,25 @@ options:
         type: str
         default: t1ls_id
     t1ls_state:
-        description: State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource.
-                     Required if t1ls_id is specified.
+        description:
+            - "State can be either 'present' or 'absent'. 'present' is used to
+              create or update resource. 'absent' is used to delete resource."
+            - Required if I(segp_id != null)."
         choices:
             - present
             - absent
     t1ls_tags:
-        description: Opaque identifiers meaningful to the API user
-        type: str
+        description: Opaque identifiers meaningful to the API user.
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
     t1ls_edge_cluster_info:
         description: Used to create path to edge cluster. Auto-assigned
                      if associated enforcement-point has only one edge
@@ -219,59 +198,41 @@ options:
         type: str
         default: t1iface_id
     t1iface_state:
-        description: State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource.
-                     Required if t1iface_id is specified.
+        description:
+            - "State can be either 'present' or 'absent'. 'present' is used to
+              create or update resource. 'absent' is used to delete resource."
+            - Required if I(segp_id != null)."
         choices:
             - present
             - absent
     t1iface_tags:
-        description: Opaque identifiers meaningful to the API user
-        type: str
-    t1iface_segment_id:
-        description: Specify Segment to which this interface is
-                     connected to.
-                     Required if t1iface_id is specified.
-        type: str
-    t1iface_type:
-        description: Interface type
-        choices:
-            - "EXTERNAL"
-            - "LOOPBACK"
-            - "SERVICE"
-        default: "EXTERNAL"
-        type: str
-    t1iface_edge_node_info:
-        description: Info to create policy path to edge node to handle
-                     externalconnectivity.
-                     Required when interface type is EXTERNAL and
-                     t1iface_id is specified.
+        description: Opaque identifiers meaningful to the API user.
         type: dict
         suboptions:
-            site_id:
-                description: site_id where edge node is located
+            scope:
+                description: Tag scope.
                 required: true
                 type: str
-            enforcementpoint_id:
-                description: enforcementpoint_id where edge node is
-                             located
+            tag:
+                description: Tag value.
                 required: true
                 type: str
-            edge_cluster_id:
-                description: edge_cluster_id where edge node is
-                             located
-                required: true
-                type: str
-            edge_id:
-                description: ID of the edge node
-                required: true
-                type: str
+    t1iface_ipv6_ndra_profile_id:
+        description:
+            - "Configrue IPv6 NDRA profile. Only one NDRA profile can be
+               configured."
+            - Required if I(t1iface_id != null).
+        type: str
+    t1iface_segment_id:
+        description:
+            - Specify Segment to which this interface is connected to.
+            - Required if I(t1iface_id != null).
+        type: str
     t1iface_subnets:
-        description: IP address and subnet specification for interface.
-                     Specify IP address and network prefix for
-                     interface.
-                     Required if t1iface_id is specified.
+        description:
+            - IP address and subnet specification for interface.
+            - Specify IP address and network prefix for interface.
+            - Required if I(t1iface_id != null).
         type: list
 '''
 

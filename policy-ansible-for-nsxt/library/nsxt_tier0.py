@@ -34,19 +34,8 @@ description: Creates/Updates/Deletes a Tier-0 resource using the Policy API.
              respectively.
 version_added: '2.8'
 author: 'Gautam Verma'
+extends_documentation_fragment: vmware_nsxt
 options:
-    hostname:
-        description: Deployed NSX manager hostname.
-        required: true
-        type: str
-    username:
-        description: The username to authenticate with the NSX manager.
-        required: true
-        type: str
-    password:
-        description: The password to authenticate with the NSX manager.
-        required: true
-        type: str
     id:
         description: Tier-0 ID
         required: true
@@ -54,25 +43,6 @@ options:
     description:
         description: Tier-0 description
         type: str
-    display_name:
-        description: Tier-0 display name
-        type: str
-        default: id
-    state:
-        description: State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource.
-        choices:
-            - present
-            - absent
-        required: true
-    tags:
-        description: Opaque identifiers meaningful to the API user
-        type: str
-    validate_certs:
-        description: Enable server certificate verification.
-        type: bool
-        default: False
     default_rule_logging:
         description: Enable logging for whitelisted rule.
                      Indicates if logging should be enabled for the default
@@ -148,23 +118,34 @@ options:
         required: false
         type: str
     t0ls_description:
-        description: Tier-0 Locale Service  description
+        description:
+            - Tier-0 Locale Service  description.
         type: str
     t0ls_display_name:
-        description: Tier-0 Locale Service display name
+        description:
+            - Tier-0 Locale Service display name.
         type: str
         default: t0ls_id
     t0ls_state:
-        description: State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource.
-                     Required if t0ls_id is specified.
+        description:
+            - "State can be either 'present' or 'absent'. 'present' is used to
+               create or update resource. 'absent' is used to delete resource."
+            - Required if t0ls_id is specified.
         choices:
             - present
             - absent
     t0ls_tags:
         description: Opaque identifiers meaningful to the API user
-        type: str
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
     t0ls_edge_cluster_info:
         description: Used to create path to edge cluster. Auto-assigned
                      if associated enforcement-point has only one edge
@@ -219,8 +200,6 @@ options:
                                TIER0_ROUTER_LINK, TIER0_SEGMENT,
                                TIER0_DNS_FORWARDER_IP,
                                TIER0_IPSEC_LOCAL_IP, TIER0_NAT types.
-            - TIER1_STATIC: Redistribute all subnets and static routes
-                            advertised by Tier-1s.
             - TIER0_EXTERNAL_INTERFACE: Redistribute external interface
                                         subnets on Tier-0.
             - TIER0_LOOPBACK_INTERFACE: Redistribute loopback interface
@@ -235,27 +214,9 @@ options:
                                       subnets.
             - TIER0_IPSEC_LOCAL_IP: Redistribute IPSec subnets.
             - TIER0_NAT: Redistribute NAT IPs owned by Tier-0.
-            - TIER1_NAT: Redistribute NAT IPs advertised by Tier-1
-                         instances.
-            - TIER1_LB_VIP: Redistribute LB VIP IPs advertised by
-                            Tier-1 instances.
-            - TIER1_LB_SNAT: Redistribute LB SNAT IPs advertised by
-                             Tier-1 instances.
-            - TIER1_DNS_FORWARDER_IP: Redistribute DNS forwarder
-                                      subnets on Tier-1 instances.
-            - TIER1_CONNECTED: Redistribute all subnets configured on
-                               Segments and Service Interfaces.
-            - TIER1_SERVICE_INTERFACE: Redistribute Tier1 service
-                                       interface subnets.
-            - TIER1_SEGMENT: Redistribute subnets configured on
-                             Segments connected to Tier1.
-            - TIER1_IPSEC_LOCAL_ENDPOINT: Redistribute IPSec VPN
-                                          local-endpoint  subnets
-                                          advertised by TIER1.
         type: list
     t0iface_id:
         description: Tier-0 Interface ID
-        required: false
         type: str
     t0iface_description:
         description: Tier-0 Interface  description
@@ -265,16 +226,25 @@ options:
         type: str
         default: t0iface_id
     t0iface_state:
-        description: State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource.
-                     Required if t0iface_id is specified.
+        description:
+            - "State can be either 'present' or 'absent'. 'present' is used to
+              create or update resource. 'absent' is used to delete resource."
+            - Required if I(segp_id != null)."
         choices:
             - present
             - absent
     t0iface_tags:
         description: Opaque identifiers meaningful to the API user
-        type: str
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
     t0iface_segment_id:
         description: Specify Segment to which this interface is
                      connected to.
@@ -289,10 +259,11 @@ options:
         default: "EXTERNAL"
         type: str
     t0iface_edge_node_info:
-        description: Info to create policy path to edge node to handle
-                     externalconnectivity.
-                     Required when interface type is EXTERNAL and
-                     t0iface_id is specified.
+        description:
+            - "Info to create policy path to edge node to handle
+               externalconnectivity."
+            - "Required if interface type is EXTERNAL and
+               I(t0iface_id != null)."
         type: dict
         suboptions:
             site_id:
@@ -314,10 +285,10 @@ options:
                 required: true
                 type: str
     t0iface_subnets:
-        description: IP address and subnet specification for interface.
-                     Specify IP address and network prefix for
-                     interface.
-                     Required if t0iface_id is specified.
+        description:
+            - IP address and subnet specification for interface.
+            - Specify IP address and network prefix for interface.
+            - Required if I(t0iface_id != null).
         type: list
 '''
 
