@@ -34,41 +34,14 @@ description:
     If the specified TransportZone is of VLAN type, a vlan_id is also required.
 version_added: "2.8"
 author: Gautam Verma
+extends_documentation_fragment: vmware_nsxt
 options:
-    hostname:
-        description: Deployed NSX manager hostname.
-        required: true
-        type: str
-    username:
-        description: The username to authenticate with the NSX manager.
-        required: true
-        type: str
-    password:
-        description: The password to authenticate with the NSX manager.
-        required: true
-        type: str
-    display_name:
-        description: Display name
+    id:
+        description: The id of the Policy Segment.
         required: true
         type: str
     description:
-        description: Segment description
-        type: str
-    state:
-        choices:
-        - present
-        - absent
-        description: "State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource."
-        required: true
-    validate_certs:
-        description: Enable server certificate verification.
-        type: bool
-        default: False
-    id:
-        descripttion: The id of the Policy Segment.
-        required: true
+        description: Segment description.
         type: str
     tier_0_id:
         description: The Uplink of the Policy Segment.
@@ -119,55 +92,58 @@ options:
                              and IPv6.
                 required: True
                 type: str
-    tags:
-        description: Tags associated with PolicySegment
+    segp_id:
+        description: The id of the Policy Segment.
+        type: str
+    segp_display_name:
+        description:
+            - Display name.
+        type: str
+    segp_description:
+        description:
+            - Segment description.
+        type: str
+    segp_tags:
+        description: Opaque identifiers meaningful to the API user.
         type: dict
         suboptions:
             scope:
-                description: Tag scope
+                description: Tag scope.
+                required: true
                 type: str
             tag:
-                description: Tag value
+                description: Tag value.
+                required: true
                 type: str
-    segp_display_name:
-        description: Display name
-        required: true
-        type: str
-    segp_description:
-        description: Segment description
-        type: str
     segp_state:
         choices:
-        - present
-        - absent
-        description: "State can be either 'present' or 'absent'.
-                     'present' is used to create or update resource.
-                     'absent' is used to delete resource."
+            - present
+            - absent
+        description:
+            - "State can be either 'present' or 'absent'. 'present' is used to
+              create or update resource. 'absent' is used to delete resource."
+            - Required if I(segp_id != null)."
         required: true
-    segp_id:
-        descripttion: The id of the Policy Segment.
-        required: true
-        type: str
     segp_address_bindings:
         description: Static address binding used for the port.
         type: dict
         suboptions:
             ip_address:
-                description: IP Address for port binding
+                description: IP Address for port binding.
                 type: str
             mac_address:
-                description: Mac address for port binding
+                description: Mac address for port binding.
                 type: str
             vlan_id:
-                description: VLAN ID for port binding
+                description: VLAN ID for port binding.
                 type: str
     segp_attachment:
-        description: VIF attachment
+        description: VIF attachment.
         type: dict
         suboptions:
             allocate_addresses:
                 description: Indicate how IP will be
-                             allocated for the port
+                             allocated for the port.
                 type: str
                 choices:
                     - IP_POOL
@@ -177,24 +153,24 @@ options:
             app_id:
                 description: ID used to identify/look up a
                              child attachment behind a
-                             parent attachment
+                             parent attachment.
                 type: str
             context_id:
                 description: Parent VIF ID if type is CHILD,
                              Transport node ID if type is
-                             INDEPENDENT
+                             INDEPENDENT.
                 type: str
             id:
-                description: VIF UUID on NSX Manager
+                description: VIF UUID on NSX Manager.
                 type: str
             traffic_tag:
                 description: VLAN ID
                              Not valid when type is INDEPENDENT, mainly used to
                              identify traffic from different ports in container
-                             use case
+                             use case.
                 type: int
             type:
-                description: Type of port attachment
+                description: Type of port attachment.
                 type: str
                 choices:
                     - PARENT
@@ -232,8 +208,8 @@ from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 from ansible.module_utils._text import to_native
 
 if __name__ == '__main__':
-    from ansible.module_utils.nsxt_policy_transport_zone import\
-     NSXTPolicyTransportZone
+    from ansible.module_utils.nsxt_policy_transport_zone import (
+        NSXTPolicyTransportZone)
 
     import os
     import sys
@@ -300,21 +276,21 @@ class NSXTSegment(NSXTBaseRealizableResource):
     def update_resource_params(self):
         if "tier_0_id" in self.resource_params:
             tier_0_id = self.resource_params.pop("tier_0_id")
-            self.resource_params["connectivity_path"] =\
-                NSXTTier0.get_resource_base_url() + "/" + tier_0_id
+            self.resource_params["connectivity_path"] = (
+                NSXTTier0.get_resource_base_url() + "/" + tier_0_id)
         elif "tier_1_id" in self.resource_params:
             tier_1_id = self.resource_params.pop("tier_1_id")
-            self.resource_params["connectivity_path"] =\
-                NSXTTier1.get_resource_base_url() + "/" + tier_1_id
+            self.resource_params["connectivity_path"] = (
+                NSXTTier1.get_resource_base_url() + "/" + tier_1_id)
 
         if "transport_zone_id" in self.resource_params:
             site_id = self.resource_params.pop("site_id")
-            enforcementpoint_id = self.resource_params\
-                .pop("enforcementpoint_id")
+            enforcementpoint_id = self.resource_params.pop(
+                "enforcementpoint_id")
             transport_zone_id = self.resource_params.pop("transport_zone_id")
-            self.resource_params["transport_zone_path"] =\
+            self.resource_params["transport_zone_path"] = (
                 NSXTPolicyTransportZone.get_resource_base_url(
-                    site_id, enforcementpoint_id) + "/" + transport_zone_id
+                    site_id, enforcementpoint_id) + "/" + transport_zone_id)
 
     def update_parent_info(self, parent_info):
         parent_info["segment_id"] = self.id
