@@ -203,7 +203,7 @@ options:
             - TIER0_EXTERNAL_INTERFACE: Redistribute external interface
                                         subnets on Tier-0.
             - TIER0_LOOPBACK_INTERFACE: Redistribute loopback interface
-                                        subnets on Tier-0. 
+                                        subnets on Tier-0.
             - TIER0_SEGMENT: Redistribute subnets configured on
                              Segments connected to Tier-0.
             - TIER0_ROUTER_LINK: Redistribute router link port subnets
@@ -308,7 +308,7 @@ EXAMPLES = '''
     force_whitelisting: True
     tags:
       - scope: "a"
-      tag: "b"
+        tag: "b"
     t0ls_id: test-t0ls
     t0ls_state: "present"
     t0ls_display_name: "test-t0ls"
@@ -338,22 +338,27 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import json, time
+
+import json
+import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 
 if __name__ == '__main__':
     from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
-    from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6NdraProfiles
+    from ansible.module_utils.policy_ipv6_profiles import (
+        PolicyIpv6NdraProfiles)
     from ansible.module_utils.policy_dhcp import PolicDhcpRelayConfig
     from ansible.module_utils.policy_edge_cluster import PolicyEdgeCluster
     from ansible.module_utils.policy_edge_node import PolicyEdgeNode
 
-    import os, sys
+    import os
+    import sys
     sys.path.append(os.getcwd())
 
     from library.nsxt_segment import NSXTSegment
+
 
 class NSXTTier0(NSXTBaseRealizableResource):
     @staticmethod
@@ -416,25 +421,26 @@ class NSXTTier0(NSXTBaseRealizableResource):
     def update_resource_params(self):
         ipv6_profile_paths = []
         if "ipv6_ndra_profile_id" in self.resource_params:
-            ipv6_ndra_profile_id = self.resource_params\
-                .pop("ipv6_ndra_profile_id")
-            ipv6_profile_paths\
-                .append(PolicyIpv6NdraProfiles.get_resource_base_url() +\
-                    "/" + ipv6_ndra_profile_id)
+            ipv6_ndra_profile_id = self.resource_params.pop(
+                "ipv6_ndra_profile_id")
+            ipv6_profile_paths.append(
+                PolicyIpv6NdraProfiles.get_resource_base_url() +
+                "/" + ipv6_ndra_profile_id)
         if "ipv6_dad_profile_id" in self.resource_params:
-            ipv6_dad_profile_id = self.resource_params\
-                .pop("ipv6_dad_profile_id")
-            ipv6_profile_paths\
-                .append(PolicyIpv6DadProfiles.get_resource_base_url() +\
-                    "/" + ipv6_dad_profile_id)
+            ipv6_dad_profile_id = self.resource_params.pop(
+                "ipv6_dad_profile_id")
+            ipv6_profile_paths.append(
+                PolicyIpv6DadProfiles.get_resource_base_url() +
+                "/" + ipv6_dad_profile_id)
         if ipv6_profile_paths:
             self.resource_params["ipv6_profile_paths"] = ipv6_profile_paths
 
         if "dhcp_config_id" in self.resource_params:
             dhcp_config_id = self.resource_params.pop("dhcp_config_id")
-            self.resource_params["dhcp_config_paths"] = \
-                [PolicDhcpRelayConfig.get_resource_base_url() + "/" + dhcp_config_id]
-    
+            self.resource_params["dhcp_config_paths"] = [
+                PolicDhcpRelayConfig.get_resource_base_url() + "/" +
+                dhcp_config_id]
+
     def update_parent_info(self, parent_info):
         parent_info["tier0_id"] = self.id
 
@@ -504,29 +510,41 @@ class NSXTTier0(NSXTBaseRealizableResource):
 
         def update_resource_params(self):
             if "edge_cluster_info" in self.resource_params:
-                edge_cluster_info = self.resource_params.pop("edge_cluster_info")
+                edge_cluster_info = self.resource_params.pop(
+                    "edge_cluster_info")
                 site_id = edge_cluster_info["site_id"]
                 enforcementpoint_id = edge_cluster_info["enforcementpoint_id"]
                 edge_cluster_id = edge_cluster_info["edge_cluster_id"]
-                self.resource_params["edge_cluster_path"] = \
-                PolicyEdgeCluster.get_resource_base_url(site_id, enforcementpoint_id) + "/" + edge_cluster_id
+                self.resource_params["edge_cluster_path"] = (
+                    PolicyEdgeCluster.get_resource_base_url(site_id,
+                                                            enforcementpoint_id
+                                                            ) + "/" +
+                    edge_cluster_id)
 
             if "preferred_edge_nodes_info" in self.resource_params:
-                preferred_edge_nodes_info = self.resource_params.pop("preferred_edge_nodes_info")
+                preferred_edge_nodes_info = self.resource_params.pop(
+                    "preferred_edge_nodes_info")
                 self.resource_params["preferred_edge_paths"] = []
                 for preferred_edge_node_info in preferred_edge_nodes_info:
                     site_id = preferred_edge_node_info["site_id"]
-                    enforcementpoint_id = preferred_edge_node_info["enforcementpoint_id"]
-                    edge_cluster_id = preferred_edge_node_info["edge_cluster_id"]
+                    enforcementpoint_id = preferred_edge_node_info[
+                        "enforcementpoint_id"]
+                    edge_cluster_id = preferred_edge_node_info[
+                        "edge_cluster_id"]
                     edge_id = preferred_edge_node_info["edge_id"]
-                    self.resource_params["preferred_edge_paths"].append(PolicyEdgeNode.get_resource_base_url(site_id, enforcementpoint_id, edge_cluster_id) + "/" + edge_id)
+                    self.resource_params["preferred_edge_paths"].append(
+                        PolicyEdgeNode.get_resource_base_url(
+                            site_id, enforcementpoint_id, edge_cluster_id)
+                        + "/" + edge_id)
 
         def update_parent_info(self, parent_info):
             parent_info["t0ls_id"] = self.id
-    
+
         class NSXTTier0Interface(NSXTBaseRealizableResource):
             def get_unique_arg_identifier(self):
-                return NSXTTier0.NSXTTier0LocaleService.NSXTTier0Interface.get_unique_arg_identifier()
+                return (
+                    NSXTTier0.NSXTTier0LocaleService.NSXTTier0Interface.
+                    get_unique_arg_identifier())
 
             @staticmethod
             def get_unique_arg_identifier():
@@ -579,13 +597,14 @@ class NSXTTier0(NSXTBaseRealizableResource):
             def get_resource_base_url(parent_info):
                 tier0_id = parent_info.get("tier0_id", 'default')
                 locale_service_id = parent_info.get("t0ls_id", 'default')
-                return '/infra/tier-0s/{}/locale-services/{}/interfaces'.format(tier0_id, locale_service_id)
+                return ('/infra/tier-0s/{}/locale-services/{}/interfaces'
+                        .format(tier0_id, locale_service_id))
 
             def update_resource_params(self):
                 # segment_id is a required attr
                 segment_id = self.resource_params.pop("segment_id")
-                self.resource_params["segment_path"] = \
-                NSXTSegment.get_resource_base_url() + "/" + segment_id
+                self.resource_params["segment_path"] = (
+                    NSXTSegment.get_resource_base_url() + "/" + segment_id)
 
                 # edge_node_info is a required attr
                 edge_node_info = self.resource_params.pop("edge_node_info")
@@ -593,8 +612,11 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 enforcementpoint_id = edge_node_info["enforcementpoint_id"]
                 edge_cluster_id = edge_node_info["edge_cluster_id"]
                 edge_id = edge_node_info["edge_id"]
-                self.resource_params["edge_path"] = \
-                PolicyEdgeNode.get_resource_base_url(site_id, enforcementpoint_id, edge_cluster_id) + "/" + edge_id
+                self.resource_params["edge_path"] = (
+                    PolicyEdgeNode.get_resource_base_url(site_id,
+                                                         enforcementpoint_id,
+                                                         edge_cluster_id) + "/"
+                    + edge_id)
 
 
 if __name__ == '__main__':
