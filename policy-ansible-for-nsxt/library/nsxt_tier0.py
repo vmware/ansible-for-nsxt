@@ -369,22 +369,20 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 from ansible.module_utils._text import to_native
+from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 
-from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
-from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6NdraProfiles
-from ansible.module_utils.policy_dhcp import PolicDhcpRelayConfig
-from ansible.module_utils.policy_edge_cluster import PolicyEdgeCluster
-from ansible.module_utils.policy_edge_node import PolicyEdgeNode
+if __name__ == '__main__':
+    from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
+    from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6NdraProfiles
+    from ansible.module_utils.policy_dhcp import PolicDhcpRelayConfig
+    from ansible.module_utils.policy_edge_cluster import PolicyEdgeCluster
+    from ansible.module_utils.policy_edge_node import PolicyEdgeNode
 
-from ansible.module_utils.logger import Logger
-logger = Logger.getInstance()
+    import os, sys
+    sys.path.append(os.getcwd())
 
-import os, sys
-sys.path.append(os.getcwd())
-
-from library.nsxt_segment import NSXTSegment
+    from library.nsxt_segment import NSXTSegment
 
 class NSXTTier0(NSXTBaseRealizableResource):
     @staticmethod
@@ -441,7 +439,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
         return tier0_arg_spec
 
     @staticmethod
-    def get_resource_base_url(parent_info):
+    def get_resource_base_url():
         return '/infra/tier-0s'
 
     def update_resource_params(self):
