@@ -1,0 +1,27 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Segment
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  tasks:
+    - name: create Segment
+      nsxt_segment:
+        hostname: "10.160.84.49"
+        username: "admin"
+        password: "Admin!23Admin"
+        validate_certs: False
+        id: test-seg
+        display_name: test-seg
+        state: "present"
+        tier_1_id: "test-tier1"
+        domain_name: "dn1"
+        transport_zone_id: "5f0ea34b-7549-4303-be1e-2ef7ea3155e2"
+        subnets:
+        - gateway_address: "40.1.1.1/16"
+        segp_id: "test-sp"
+        segp_display_name: "test-sp"
+        segp_state: "present"
