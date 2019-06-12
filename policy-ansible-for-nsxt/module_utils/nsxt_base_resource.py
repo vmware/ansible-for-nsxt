@@ -153,6 +153,8 @@ class NSXTBaseRealizableResource(ABC):
             - dict, it traverses that also.
             - list, it merely compares the order.
             Can be overriden in the subclass for specific custom checking.
+
+            Returns true if the params differ
         """
         if not existing_params:
             return False
@@ -370,25 +372,21 @@ class NSXTBaseRealizableResource(ABC):
             # updated in the YAML.
             if self.module.check_mode:
                 successful_resource_exec_logs.append({
-                    self.id: {
-                        "changed": True,
-                        "debug_out": str(json.dumps(self.resource_params)),
-                        "id": '12345',
-                        "resource_type": self.get_resource_name()
-                    }
+                    "changed": True,
+                    "debug_out": str(json.dumps(self.resource_params)),
+                    "id": '12345',
+                    "resource_type": self.get_resource_name()
                 })
                 return
             try:
                 if self.existing_resource:
                     # Resource already exists
                     successful_resource_exec_logs.append({
-                        self.id: {
-                            "changed": False,
-                            "id": self.id,
-                            "message": "%s with id %s already exists." %
-                            (self.get_resource_name(), self.id),
-                            "resource_type": self.get_resource_name()
-                        }
+                        "changed": False,
+                        "id": self.id,
+                        "message": "%s with id %s already exists." %
+                        (self.get_resource_name(), self.id),
+                        "resource_type": self.get_resource_name()
                     })
                     return
                 # Create a new resource
@@ -400,14 +398,12 @@ class NSXTBaseRealizableResource(ABC):
                     raise Exception
 
                 successful_resource_exec_logs.append({
-                    self.id: {
-                        "changed": True,
-                        "id": self.id,
-                        "body": str(resp),
-                        "message": "%s with id %s created." %
-                        (self.get_resource_name(), self.id),
-                        "resource_type": self.get_resource_name()
-                    }
+                    "changed": True,
+                    "id": self.id,
+                    "body": str(resp),
+                    "message": "%s with id %s created." %
+                    (self.get_resource_name(), self.id),
+                    "resource_type": self.get_resource_name()
                 })
             except Exception as err:
                 srel = successful_resource_exec_logs
@@ -421,7 +417,7 @@ class NSXTBaseRealizableResource(ABC):
         else:
             # The resource exists and was updated in the YAML.
             if self.module.check_mode:
-                successfully_updated_resources.append({
+                successful_resource_exec_logs.append({
                     "changed": True,
                     "debug_out": str(json.dumps(self.resource_params)),
                     "id": self.id,
@@ -454,12 +450,10 @@ class NSXTBaseRealizableResource(ABC):
     def _achieve_absent_state(self, successful_resource_exec_logs):
         if self.existing_resource is None:
             successful_resource_exec_logs.append({
-                self.id: {
-                    "changed": False,
-                    "msg": 'No %s exist with id %s' %
-                    (self.get_resource_name(), self.id),
-                    "resource_type": self.get_resource_name()
-                }
+                "changed": False,
+                "msg": 'No %s exist with id %s' %
+                (self.get_resource_name(), self.id),
+                "resource_type": self.get_resource_name()
             })
             return
         if self.module.check_mode:
@@ -532,8 +526,15 @@ class NSXTBaseRealizableResource(ABC):
             self.achieve_subresource_state(successful_resource_exec_logs)
 
         if self.get_resource_name() in BASE_RESOURCES:
-            self.module.exit_json(
-                successfully_updated_resources=successful_resource_exec_logs)
+            changed = False
+            logger.log(str(successful_resource_exec_logs))
+            for successful_resource_exec_log in successful_resource_exec_logs:
+                if successful_resource_exec_log["changed"]:
+                    changed = True
+                    break
+            srel = successful_resource_exec_logs
+            self.module.exit_json(changed=changed,
+                                  successfully_updated_resources=srel)
 
     def _get_sub_resources_class_of(self, resource_class):
         subresources = []
