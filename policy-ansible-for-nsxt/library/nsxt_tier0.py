@@ -69,6 +69,10 @@ options:
     tags:
         description: Opaque identifiers meaningful to the API user
         type: str
+    validate_certs:
+        description: Enable server certificate verification.
+        type: bool
+        default: False
     default_rule_logging:
         description: Enable logging for whitelisted rule.
                      Indicates if logging should be enabled for the default
@@ -166,7 +170,7 @@ options:
                      if associated enforcement-point has only one edge
                      cluster.
         type: dict
-        options:
+        suboptions:
             site_id:
                 description: site_id where edge cluster is located
                 required: true
@@ -186,7 +190,7 @@ options:
                      failover mode is set to PREEMPTIVE, not
                      applicable otherwise.
         type: list
-        options:
+        suboptions:
             site_id:
                 description: site_id where edge node is located
                 required: true
@@ -290,7 +294,7 @@ options:
                      Required when interface type is EXTERNAL and
                      t0iface_id is specified.
         type: dict
-        options:
+        suboptions:
             site_id:
                 description: site_id where edge node is located
                 required: true
