@@ -1,0 +1,42 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Segment
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  tasks:
+    - name: create Tier1
+      nsxt_tier1:
+        hostname: "10.160.84.49"
+        username: "admin"
+        password: "Admin!23Admin"
+        validate_certs: False
+        id: test-tier11
+        display_name: test-tier11
+        state: "present"
+        failover_mode: "PREEMPTIVE"
+        disable_firewall: True
+        force_whitelisting: True
+        tags:
+          - scope: "a"
+            tag: "b"
+        route_advertisement_rules:
+          - name: "test-route-advertisement-rules"
+            route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED']
+            subnets: ["35.1.1.1/23"]
+        route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED', 'TIER1_NAT']
+        tier0_id: "test-tier00"
+        t1ls_id: test-t1ls
+        t1ls_state: "present"
+        t1ls_display_name: "test-t1ls"
+        t1ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+        t1iface_id: "test-t1-t1ls-iface"
+        t1iface_display_name: "test-t1-t1ls-iface"
+        t1iface_state: "present"
+        t1iface_subnets:
+          - ip_addresses: ["35.1.1.1"]
+            prefix_len: 24
+        t1iface_segment_id: "sg-uplink"
