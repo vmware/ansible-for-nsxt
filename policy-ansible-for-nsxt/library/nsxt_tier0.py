@@ -481,7 +481,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
             tier0_ls_arg_spec.update(
                 edge_cluster_info=dict(
                     required=False,
-                    type=dict,
+                    type='dict',
                     options=dict(
                         site_id=dict(
                             required=True,
@@ -499,7 +499,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 ),
                 preferred_edge_nodes_info=dict(
                     required=False,
-                    type=list,
+                    type='list',
                     options=dict(
                         site_id=dict(
                             required=True,
@@ -521,7 +521,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 ),
                 route_redistribution_types=dict(
                     required=False,
-                    type=list
+                    type='list'
                 )
             )
             return tier0_ls_arg_spec
@@ -571,7 +571,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     ),
                     edge_node_info=dict(
                         required=True,
-                        type=dict,
+                        type='dict',
                         options=dict(
                             site_id=dict(
                                 required=True,
@@ -593,11 +593,11 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     ),
                     subnets=dict(
                         required=True,
-                        type=list
+                        type='list'
                     ),
                     type=dict(
                         required=False,
-                        type=str,
+                        type='str',
                         default="EXTERNAL",
                         choices=["EXTERNAL", "SERVICE", "LOOPBACK"]
                     )

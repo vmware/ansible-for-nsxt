@@ -382,7 +382,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
             ),
             route_advertisement_rules=dict(
                 required=False,
-                type=list,
+                type='list',
                 options=dict(
                     action=dict(
                         required=False,
@@ -402,7 +402,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     ),
                     route_advertisement_types=dict(
                         required=False,
-                        type=list,
+                        type='list',
                         choices=['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED',
                                  'TIER1_NAT', 'TIER1_LB_VIP', 'TIER1_LB_SNAT',
                                  'TIER1_DNS_FORWARDER_IP',
@@ -410,13 +410,13 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     ),
                     subnets=dict(
                         required=True,
-                        type=list
+                        type='list'
                     )
                 )
             ),
             route_advertisement_types=dict(
                 required=False,
-                type=list,
+                type='list',
                 choices=['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED', 'TIER1_NAT',
                          'TIER1_LB_VIP', 'TIER1_LB_SNAT',
                          'TIER1_DNS_FORWARDER_IP', 'TIER1_IPSEC_LOCAL_ENDPOINT']
@@ -476,7 +476,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
             tier1_ls_arg_spec.update(
                 edge_cluster_info=dict(
                     required=False,
-                    type=dict,
+                    type='dict',
                     options=dict(
                         site_id=dict(
                             required=True,
@@ -494,7 +494,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 ),
                 preferred_edge_nodes_info=dict(
                     required=False,
-                    type=list,
+                    type='list',
                     options=dict(
                         site_id=dict(
                             required=True,
@@ -516,7 +516,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 ),
                 route_redistribution_types=dict(
                     required=False,
-                    type=list
+                    type='list'
                 )
             )
             return tier1_ls_arg_spec
@@ -570,7 +570,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     ),
                     subnets=dict(
                         required=True,
-                        type=list
+                        type='list'
                     )
                 )
                 return tier1_ls_int_arg_spec

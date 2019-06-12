@@ -333,7 +333,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
             segment_port_arg_spec.update(
                 address_bindings=dict(
                     required=False,
-                    type=dict,
+                    type='dict',
                     options=dict(
                         ip_address=dict(
                             required=False,
@@ -351,7 +351,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 ),
                 attachment=dict(
                     required=False,
-                    type=dict,
+                    type='dict',
                     options=dict(
                         allocate_addresses=dict(
                             required=False,
