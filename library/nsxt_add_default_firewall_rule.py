@@ -110,9 +110,9 @@ def main():
         if rc == 200:
             module.exit_json(changed=True, msg="Successfully changed the default section's rule to {}".format(action))
         else:
-            module.fail_json(msg="Failed to changed the default section's rule to {}. Response code: {}, response content: {}".format(action, rc, resp))
+            module.fail_json(msg="Failed to change the default section's rule to {}. Response code: {}, response content: {}".format(action, rc, resp))
     except Exception as err:
-        module.fail_json(msg="Failed to changed the default section's rule to {} Error{}.".format(action, to_native(err)))
+        module.fail_json(msg="Failed to change the default section's rule to {} Error{}.".format(action, to_native(err)))
 
 if __name__ == '__main__':
     main()

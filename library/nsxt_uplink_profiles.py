@@ -138,10 +138,10 @@ def main():
           (rc, resp) = request(manager_url+ '/host-switch-profiles', data=request_data, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
-          module.fail_json(msg="Failed to add host profile. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
+          module.fail_json(msg="Failed to add uplink profile. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="host profile with display name %s created." % module.params['display_name'])
+      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="uplink profile with display name %s created." % module.params['display_name'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(profile_params)), id=host_switch_profile_id)

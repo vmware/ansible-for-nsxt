@@ -53,7 +53,7 @@ EXAMPLES = '''
     vcenter: "10.161.244.213"
     vcenter_user: "administrator@vsphere.local"
     vcenter_passwd: "Admin!23"
-    deployment_size: "small"
+    deployment_size: "{{appliance_size}}"
     role: "nsx-manager nsx-controller"
     validate_certs: "True"
     mgr_username: "admin"
@@ -126,13 +126,13 @@ def install_nsx_manager(module):
     ovf_base_options = ['--X:vimSessionTimeout=1', '--powerOffTarget', '--overwrite', '--acceptAllEulas', '--skipManifestCheck', '--X:injectOvfEnv', '--powerOn', '--noSSLVerify',
                         '--allowExtraConfig', '--diskMode={}'.format(module.params['disk_mode']),
                         '--datastore={}'.format(module.params['datastore']),
-                        '--name={}'.format(module.params['vmname'])]
+                        '--name={}'.format(module.params['vmname']),
+                        '--deploymentOption={}'.format(module.params['deployment_size'])]
     if module.params['portgroup_ext']:
         ovf_base_options.extend(['--net:Network 0={}'.format(module.params['portgroup']),
                                  '--net:Network 1={}'.format(module.params['portgroup_ext']),
                                  '--net:Network 2={}'.format(module.params['portgroup_transport']),
-                                 '--net:Network 3={}'.format(module.params['portgroup']),
-                                 '--deploymentOption={}'.format(module.params['deployment_size'])])
+                                 '--net:Network 3={}'.format(module.params['portgroup'])])
     else:
         ovf_base_options.extend(['--network={}'.format(module.params['portgroup'])])
     ovf_command.extend(ovf_base_options)

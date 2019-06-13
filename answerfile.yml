@@ -16,7 +16,7 @@ netmask: "255.255.0.0"
 prefix_length: "22"
 
 transport_zone_name_1: "test-transport-zone-1"
-host_switch_name_1: "test-host-switch-name-1"
+host_switch_name_1: "n-vds"
 ip_pool_name_1: "test-ip-pool-1"
 uplink_profile_name_1: "test-uplink-profile-1"
 uplink_name_1: "test-uplink-1"
@@ -43,8 +43,8 @@ deploy_ova:
   netmask: "255.255.0.0"
 
 ovftool_path: "/usr/bin"
-path_to_ova: "/root/"
-ova_file: "nsx-unified-appliance-2.4.0.0.0.11224879.ova"
+path_to_ova: "/mnt/files/"
+ova_file: "nsx-unified-appliance-2.4.1.0.0.13716579.ova"
 
 vcenter_prod_name: "vc-l-01a"
 vcenter_prod: "192.168.40.1"
@@ -62,7 +62,19 @@ vcenter_passwd: "VMware1!"
 
 appliance_role: "nsx-manager nsx-controller"
 appliance_password: "{{password}}"
-appliance_size: "SMALL"
+appliance_size: "medium"
+ssh_enabled: True
+allow_ssh_root_login: True
+
+# Possible appliance_size options: 
+# 
+# extra_small   2 CPUs, 8GB RAM, 200GB Storage
+# small         4 CPUs, 16GB RAM, 200GB Storage
+# medium        6 CPUs, 24GB RAM, 200GB Storage
+# large         12 CPUs, 48GB RAM, 200GB Storage
+
+# Destination IP for extra firewall rules
+destination_ip: "169.254.169.254"
 
 backup_servers:
 - display_name: "backup_server_1"
@@ -78,16 +90,16 @@ backup_servers:
   backup_passphrase: "VMwarensbu_12234"
   backup_inventory_summary_interval: 300
 
-syslog_servers:
-- display_name: "syslog_server"
-  syslog_server: "10.0.0.11"
-  syslog_server_port: 1234
-  syslog_protocol_name: "<protocol_name>"
-  syslog_level: "<syslog_level>"
-  hostname: "{{hostname}}"
-  username: "{{username}}"
-  password: "{{password}}"
-  validate_certs: "{{validate_certs}}"
+# syslog_servers:
+# - display_name: "syslog_server"
+#   syslog_server: "10.0.0.11"
+#   syslog_server_port: 1234
+#   syslog_protocol_name: "<protocol_name>"
+#   syslog_level: "<syslog_level>"
+#   hostname: "{{hostname}}"
+#   username: "{{username}}"
+#   password: "{{password}}"
+#   validate_certs: "{{validate_certs}}"
 
 transport_zones:
 - display_name: "{{transport_zone_name_1}}"
@@ -111,6 +123,7 @@ uplink_profiles:
       uplink_type: PNIC
     policy: FAILOVER_ORDER
   transport_vlan: 0
+  mtu: 9000
 
 transport_nodes:
 - display_name: "esx-03a"
