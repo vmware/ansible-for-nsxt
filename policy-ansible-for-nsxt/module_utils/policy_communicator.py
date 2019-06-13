@@ -119,9 +119,8 @@ class PolicyCommunicator:
 
     def register_request(self, request_id):
         """
-            This creates a hash from URL and data and stores it in a cache.
-            If a same hash is created, the request is identified as a duplicate
-            and it returns False. Otherwise, returns True.
+            If the request_id is identified as a duplicate and it returns
+            False. Otherwise, returns True.
         """
         if request_id in self.active_requests:
             return False
