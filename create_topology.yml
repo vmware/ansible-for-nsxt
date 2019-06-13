@@ -40,6 +40,22 @@
       with_items:
         - "{{deploy_ova}}"
 
+    - name: Create DRS Anti-Affinity Rule for VM-VM
+      vmware_vm_vm_drs_rule:
+        hostname: "{{vcenter_prod}}"
+        username: "{{vcenter_user}}"
+        password: "{{vcenter_passwd}}"
+        cluster_name: "{{cluster}}"
+        validate_certs: no
+        vms:
+            - "nsxm-1"
+            - "nsxm-2"
+            - "nsxm-3"
+        drs_rule_name: "nsxt-affinity-rule-001"
+        enabled: True
+        mandatory: True
+        affinity_rule: False
+
     - name: Check manager status
       nsxt_manager_status:
         hostname: "{{item.hostname}}"
@@ -108,19 +124,22 @@
       with_items:
         - "{{backup_servers}}"
 
-    # - name: Configure Syslog Server
-    #   nsxt_configure_syslog_server:
-    #       syslog_server: "{{syslog_server}}"
-    #       syslog_server_port: "{{syslog_server_port}}"
-    #       syslog_protocol_name: "{{syslog_protocol_name}}"
-    #       syslog_level: "{{syslog_level}}"
-    #       hostname: "{{hostname}}"
-    #       username: "{{username}}"
-    #       password: "{{password}}"
-    #       validate_certs: "{{validate_certs}}"
-    #       syslog_state: absent
-    #   with_items:
-    #     - "{{syslog_servers}}"
+    - name: Configure Syslog Server
+      nsxt_configure_syslog_server:
+          syslog_server: "{{item.syslog_server}}"
+          syslog_server_port: "{{item.syslog_server_port}}"
+          syslog_protocol: "{{item.syslog_protocol}}"
+          syslog_level: "{{item.syslog_level}}"
+          exporter_name: "{{item.exporter_name}}"
+          facilities: "{{item.facilities}}"
+          msgids: "{{item.msgids}}"
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          syslog_state: present
+      with_items:
+        - "{{syslog_servers}}"
 
     - name: Add Default Firewall Rule
       nsxt_add_default_firewall_rule:
@@ -130,14 +149,14 @@
         validate_certs: "{{validate_certs}}"
         state: present
 
-    # - name: Add Default Extra Firewall Rules
-    #   nsxt_add_extra_firewall_rules:
-    #     hostname: "{{hostname}}"
-    #     username: "{{username}}"
-    #     password: "{{password}}"
-    #     validate_certs: "{{validate_certs}}"
-    #     destination_ip: "{{destination_ip}}"
-    #     state: present
+    - name: Add Extra Firewall Rules
+      nsxt_add_extra_firewall_rules:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: "{{validate_certs}}"
+        destination_ip: "{{destination_ip}}"
+        state: present
 
     - name: Remove Password Expiration Limit
       nsxt_remove_password_expiration:
@@ -162,18 +181,6 @@
       with_items:
         - "{{transport_zones}}"
 
-    - name: Create ip pools
-      nsxt_ip_pools:
-        hostname: "{{hostname}}"
-        username: "{{username}}"
-        password: "{{password}}"
-        validate_certs: False
-        display_name: "{{item.display_name}}"
-        subnets: "{{item.subnets}}"
-        state: present
-      with_items:
-        - "{{ip_pools}}"
-
     - name: Create uplink profile
       nsxt_uplink_profiles:
         hostname: "{{hostname}}"
@@ -195,7 +202,6 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        # resource_type: "TransportNode"
         display_name: "{{item.display_name}}"
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
@@ -207,9 +213,6 @@
             pnics:
             - device_name: "{{item.device_name}}"
               uplink_name: "{{item.uplink_name}}"
-            ip_assignment_spec:
-              resource_type: StaticIpPoolSpec
-              ip_pool_name: "{{item.ip_pool_name}}"
         transport_zone_endpoints:
         - transport_zone_name: "{{item.transport_zone_name}}"
         node_deployment_info:
@@ -241,14 +244,13 @@
           host_switches:
           - host_switch_profiles:
             - name: "{{item.uplink_profile_name}}"
-              type: UplinkHostSwitchProfile
+              type: UplinkHostSwitchProfile                             
+            - name: "{{item.lldp_profile_name}}"
+              type: LldpHostSwitchProfile                             
             host_switch_name: "{{item.host_switch_name}}"
             pnics:
             - device_name: "{{item.device_name}}"
               uplink_name: "{{item.uplink_name}}"
-            ip_assignment_spec:
-              resource_type: StaticIpPoolSpec
-              ip_pool_name: "{{item.ip_pool_name}}"
         transport_zone_endpoints:
         - transport_zone_name: "{{item.transport_zone_name}}"
         state: present

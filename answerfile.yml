@@ -17,8 +17,8 @@ prefix_length: "22"
 
 transport_zone_name_1: "test-transport-zone-1"
 host_switch_name_1: "n-vds"
-ip_pool_name_1: "test-ip-pool-1"
 uplink_profile_name_1: "test-uplink-profile-1"
+lldp_profile_name_1: "LLDP [Send Packet Enabled]"
 uplink_name_1: "test-uplink-1"
 device_name_1: "vmnic1"
 
@@ -90,30 +90,25 @@ backup_servers:
   backup_passphrase: "VMwarensbu_12234"
   backup_inventory_summary_interval: 300
 
-# syslog_servers:
-# - display_name: "syslog_server"
-#   syslog_server: "10.0.0.11"
-#   syslog_server_port: 1234
-#   syslog_protocol_name: "<protocol_name>"
-#   syslog_level: "<syslog_level>"
-#   hostname: "{{hostname}}"
-#   username: "{{username}}"
-#   password: "{{password}}"
-#   validate_certs: "{{validate_certs}}"
+syslog_servers:
+- display_name: "syslog_server_1"
+  syslog_server: "10.0.0.11"
+  syslog_server_port: 514
+  syslog_protocol: "TCP"
+  syslog_level: "INFO"
+  exporter_name: "syslog1"
+  facilities: ["KERN", "USER"]
+  msgids: ["tcpin", "tcpout"]
+  hostname: "{{hostname}}"
+  username: "{{username}}"
+  password: "{{password}}"
+  validate_certs: "{{validate_certs}}"
 
 transport_zones:
 - display_name: "{{transport_zone_name_1}}"
   transport_type: "VLAN"
   host_switch_name: "{{host_switch_name_1}}"
   description: "transport-zone description"
-
-ip_pools:
-- display_name: "{{ip_pool_name_1}}"
-  subnets:
-  - allocation_ranges:
-    - start: "10.110.80.141"
-      end: "10.110.80.150"
-    cidr: "10.110.80.0/22"
 
 uplink_profiles:
 - display_name: "{{uplink_profile_name_1}}"
@@ -131,7 +126,6 @@ transport_nodes:
   host_switch_name: "{{host_switch_name_1}}"
   device_name: "{{device_name_1}}"
   uplink_name: "{{uplink_name_1}}"
-  ip_pool_name: "{{ip_pool_name_1}}"
   transport_zone_name: "{{transport_zone_name_1}}"
   ip_address: "192.168.20.3"
   os_type: "ESXI"
@@ -146,7 +140,6 @@ transport_nodes:
   host_switch_name: "{{host_switch_name_1}}"
   device_name: "{{device_name_1}}"
   uplink_name: "{{uplink_name_1}}"
-  ip_pool_name: "{{ip_pool_name_1}}"
   transport_zone_name: "{{transport_zone_name_1}}"
   ip_address: "192.168.20.4"
   os_type: "ESXI"
@@ -159,8 +152,8 @@ transport_nodes:
 transport_node_profiles:
 - display_name: "test-transport-node-profile-1"
   uplink_profile_name: "{{uplink_profile_name_1}}"
+  lldp_profile_name: "{{lldp_profile_name_1}}"
   host_switch_name: "{{host_switch_name_1}}"
   device_name: "{{device_name_1}}"
   uplink_name: "{{uplink_name_1}}"
-  ip_pool_name: "{{ip_pool_name_1}}"
   transport_zone_name: "{{transport_zone_name_1}}"
