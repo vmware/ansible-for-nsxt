@@ -121,7 +121,6 @@ def create_payload(destination_ip, service_ids, section_name):
     rule2["display_name"] = "Allow DHCP"
     rule2["action"] = "ALLOW"
     rule2["direction"] = "IN_OUT"
-    rule2["destinations"] = destinations
     rule2["services"] = services2
 
     rules.append(rule1)
