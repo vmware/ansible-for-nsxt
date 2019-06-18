@@ -120,3 +120,21 @@ def get_private_key_string(p12_file):
 
 def get_certificate_file_path(environment_variable):
     return os.getenv(environment_variable)
+
+def get_vc_ip_from_display_name(module, manager_url, mgr_username, mgr_password, 
+                                validate_certs, endpoint, display_name, 
+                                exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, 
+                      validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error occured while retrieving vCenter IP for %s. '
+                           'Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['server']
+    if exit_if_not_found:
+        module.fail_json(msg='vCenter with display name %s doesn\'t exist.' % display_name)
+        return -1
