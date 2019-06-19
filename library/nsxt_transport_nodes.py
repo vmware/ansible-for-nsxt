@@ -601,6 +601,13 @@ def get_api_cert_thumbprint(ip_address, module):
 
 
 def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params):
+  '''
+  params:
+  - transport_node_params: These are the transport node parameters passed from playbook file
+  result:
+  - takes the vecenter parameters accepted by playbook and converts it into the form accepted
+    by transport node api using pyvmomi functions.
+  '''
   vm_deployment_config = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']
       
   if vm_deployment_config.__contains__('vc_username') and vm_deployment_config.__contains__('vc_password'):

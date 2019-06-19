@@ -124,6 +124,12 @@ def get_certificate_file_path(environment_variable):
 def get_vc_ip_from_display_name(module, manager_url, mgr_username, mgr_password, 
                                 validate_certs, endpoint, display_name, 
                                 exit_if_not_found=True):
+    '''
+    param:
+    display_name: Display name of the vC
+    result:
+    IP of the vC name provided
+    '''
     try:
       (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, 

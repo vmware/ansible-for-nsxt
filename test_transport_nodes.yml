@@ -39,12 +39,12 @@
           #   vm_deployment_config:
           #     placement_type: "{{item.node_deployment_info.deployment_config.vm_deployment_config.placement_type}}"
           #     vc_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.vc_id}}"
-          #     data_network_ids: "{{item.node_deployment_info.deployment_config.vm_deployment_config.data_network_ids}}"
-          #     management_network_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_network_id}}"
+          #     data_network: "{{item.node_deployment_info.deployment_config.vm_deployment_config.data_network_ids}}"
+          #     management_network: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_network_id}}"
           #     hostname: "{{item.node_deployment_info.deployment_config.vm_deployment_config.hostname}}"
-          #     compute_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.compute_id}}"
-          #     storage_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.storage_id}}"
-          #     host_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.host_id}}"
+          #     compute: "{{item.node_deployment_info.deployment_config.vm_deployment_config.compute_id}}"
+          #     storage: "{{item.node_deployment_info.deployment_config.vm_deployment_config.storage_id}}"
+          #     host: "{{item.node_deployment_info.deployment_config.vm_deployment_config.host_id}}"
           #     default_gateway_addresses: "{{item.node_deployment_info.deployment_config.vm_deployment_config.default_gateway_addresses}}"
               # management_port_subnets:
               # - ip_addresses: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_port_subnets.ip_addresses}}"

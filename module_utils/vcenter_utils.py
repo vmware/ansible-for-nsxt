@@ -17,6 +17,14 @@ from pyVmomi import vmodl
 from pyVmomi import vim
 
 def establish_vcenter_connection(module, vCenter_host, username, password):
+    '''
+    params:
+    - vCenter_host: vCenter host IP
+    - username: vCenter username
+    - password: vCenter password
+    result:
+    Retrieves vCenter information from service instance and returns as content object. 
+    '''
     sslContext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
     sslContext.verify_mode = ssl.CERT_NONE
 
@@ -39,6 +47,13 @@ def establish_vcenter_connection(module, vCenter_host, username, password):
 
 def get_resource_id_from_name(module, vCenter_host, username, password, 
                               resource_type, resource_name):
+    '''
+    params:
+    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage' and 'network'. 
+    - resouce_name: Name of the resource.
+    result:
+    - moref id of the resource name and type given.
+    '''
     try:
         content = establish_vcenter_connection(module, vCenter_host, username, password)
         if resource_type == 'host':
@@ -69,6 +84,12 @@ def get_resource_id_from_name(module, vCenter_host, username, password,
 
 def get_data_network_id_from_name(module, vCenter_host, username, password, 
                                  data_network_name_list):
+    '''
+    params:
+    - data_network_name_list: List of data network names
+    result:
+    list of data network ids. 
+    '''
     try:
         content = establish_vcenter_connection(module, vCenter_host, username, password)
         objview = content.viewManager.CreateContainerView(content.rootFolder,
