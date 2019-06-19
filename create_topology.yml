@@ -120,7 +120,24 @@
           username: "{{username}}"
           password: "{{password}}"
           validate_certs: "{{validate_certs}}"
-          backup_state: absent
+          backup_state: present
+      with_items:
+        - "{{backup_servers}}"
+
+    - name: Configure Restore Server
+      nsxt_configure_restore_server:
+          restore_server: "{{item.backup_server}}"
+          restore_server_port: "{{item.backup_server_port}}"
+          restore_protocol_name: "{{item.backup_protocol_name}}"
+          restore_ssh_fingerprint: "{{item.backup_ssh_fingerprint}}"
+          restore_username: "{{item.backup_username}}"
+          restore_password: "{{item.backup_password}}"
+          restore_directory_path: "{{item.backup_directory_path}}"
+          restore_passphrase: "{{item.backup_passphrase}}"
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
       with_items:
         - "{{backup_servers}}"
 
@@ -157,6 +174,7 @@
         validate_certs: "{{validate_certs}}"
         destination_ip: "{{destination_ip}}"
         state: present
+
 
     - name: Remove Password Expiration Limit
       nsxt_remove_password_expiration:

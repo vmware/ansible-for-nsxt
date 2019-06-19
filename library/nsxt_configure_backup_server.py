@@ -66,7 +66,7 @@ def main():
                          backup_passphrase=dict(required=True, type='str', no_log=True),
                          backup_inventory_summary_interval=dict(required=True, type='int'),
                          validate_certs=dict(required=True, type='bool'),
-                         backup_state=dict(reauired=True, choices=['present', 'absent']))
+                         backup_state=dict(required=True, choices=['present', 'absent']))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
