@@ -4,6 +4,10 @@ from ansible.module_utils.policy_communicator import DuplicateRequestError
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+import sys
+if sys.version_info[0] < 3:
+    raise Exception("Must be using Python 3")
+
 from abc import ABC, abstractmethod
 
 import time
