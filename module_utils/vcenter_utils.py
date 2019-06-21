@@ -10,6 +10,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import ssl
+import requests
 import atexit
 
 from pyVim import connect
@@ -25,25 +26,33 @@ def establish_vcenter_connection(module, vCenter_host, username, password):
     result:
     Retrieves vCenter information from service instance and returns as content object. 
     '''
-    sslContext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    sslContext.verify_mode = ssl.CERT_NONE
-
     try:
         service_instance = connect.SmartConnect(host=vCenter_host,
                                                 user=username,
                                                 pwd=password,
-                                                port=443,
-                                                sslContext=sslContext)
+                                                port=443)
         if not service_instance:
-            module.fail_json(msg="Could not connect to the specified vCenter host using specified "
-                  "username and password")
+            module.fail_json(msg="Could not connect to the specified vCenter "
+                  "host using specified username and password")
 
         atexit.register(connect.Disconnect, service_instance)
+    except (requests.ConnectionError, ssl.SSLError):
+        try:
+            sslContext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            sslContext.verify_mode = ssl.CERT_NONE
+            service_instance = connect.SmartConnect(host=vCenter_host,
+                                                user=username,
+                                                pwd=password,
+                                                port=443,
+                                                sslContext=sslContext)
+            if not service_instance:
+                module.fail_json(msg="Could not connect to the specified vCenter "
+                      "host using specified username and password")
 
-        content = service_instance.RetrieveContent()
-        return content
-    except vmodl.MethodFault as error:
-        module.fail_json(msg="Caught vmodl fault while connecting to vCenter: " + error.msg)
+            atexit.register(connect.Disconnect, service_instance)
+        except vmodl.MethodFault as error:
+            module.fail_json(msg="Caught vmodl fault while connecting to vCenter: " + error.msg)
+    return service_instance.RetrieveContent()
 
 def get_resource_id_from_name(module, vCenter_host, username, password, 
                               resource_type, resource_name):
