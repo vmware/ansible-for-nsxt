@@ -181,6 +181,13 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
       return
 
 def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, node_params):
+  '''
+  params:
+  - transport_node_params: These are the transport node parameters passed from playbook file
+  result:
+  - takes the vecenter parameters accepted by playbook and converts it into the form accepted
+    by cluster node deployment api using pyvmomi functions.
+  '''
   for deployment_request in node_params['deployment_requests']:
     deployment_config = deployment_request['deployment_config']
     if deployment_config.__contains__('vc_username') and deployment_config.__contains__('vc_password'):

@@ -12,6 +12,12 @@
 from ansible.module_utils.vmware_nsxt import request
 
 def check_if_valid_ip(ip_address):
+    '''
+    params:
+    - ip_address: IP Address in string format
+    result:
+    checks if the IP address is valid or not.
+    '''
     try:
         ip_octets = ip_address.split('.')
         valid_ip_octets = [int(ip_octet) for ip_octet in ip_octets]
@@ -21,6 +27,13 @@ def check_if_valid_ip(ip_address):
         return False
 
 def get_attribute_from_endpoint(module, manager_url, endpoint, mgr_username, mgr_password, validate_certs, attribute_name):
+    '''
+    params:
+    - endpoint: API endpoint.
+    - attribute_name: Name of attribute whose value is required
+    result:
+    attribute value of the attribute name provided.
+    '''
     try:
         (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
