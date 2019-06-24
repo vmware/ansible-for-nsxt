@@ -205,8 +205,11 @@ class NSXTBaseRealizableResource(ABC):
             for arg, spec in self._arg_spec.items():
                 spec["required"] = False
 
-            # ... then update it with top most resource spec ..
+            # ... then update it with top most resource spec ...
             self._update_arg_spec_with_resource(self.resource_class)
+            # ... then update it with vmware arg spec ...
+            self._arg_spec.update(
+                PolicyCommunicator.get_vmware_argument_spec())
 
             # ... then create a local Ansible Module ...
             module = AnsibleModule(argument_spec=self._arg_spec)
