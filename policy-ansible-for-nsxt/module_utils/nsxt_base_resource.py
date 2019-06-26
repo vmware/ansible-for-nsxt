@@ -46,18 +46,16 @@ class NSXTBaseRealizableResource(ABC):
             mgr_username, mgr_hostname, mgr_password)
 
         self.validate_certs = self.module.params['validate_certs']
-        self._state = self._getAttribute('state')
-        self.id = self._getAttribute('id')
+        self._state = self._get_attribute('state')
+        self.id = self._get_attribute('id')
 
         # Extract the resource params from module
-        self.resource_params = self._extract_resource_params(
-            self.module.params.copy())
+        self.resource_params = self._extract_resource_params()
 
         # parent_info is passed to subresources of a resource automatically
         if not hasattr(self, "_parent_info"):
             self._parent_info = {}
         self.update_parent_info(self._parent_info)
-        self._update_parent_info()
 
         try:
             # get existing resource schema
@@ -109,7 +107,7 @@ class NSXTBaseRealizableResource(ABC):
         return True
 
     def achieve_subresource_state_if_del_parent(self):
-        # return True if the resource is to be realized with its own specified
+        # return True if this resource is to be realized with its own specified
         # state irrespective of the state of its parent resource.
         return False
 
@@ -138,7 +136,13 @@ class NSXTBaseRealizableResource(ABC):
             sub_resource = sub_resource_class()
             sub_resource._arg_spec = self._arg_spec
             sub_resource._parent_info = self._parent_info
-            sub_resource.realize(successful_resource_exec_logs)
+            # Update the parent pointer
+            my_parent = self._parent_info.get('_parent', '')
+            self._update_parent_info()
+            sub_resource.realize(
+                successful_resource_exec_logs=successful_resource_exec_logs)
+            # Restore the parent pointer
+            self._parent_info['_parent'] = my_parent
 
     def update_resource_params(self):
         # Can be used to updates the params of resource before making
@@ -178,7 +182,6 @@ class NSXTBaseRealizableResource(ABC):
         # By default, parent's id is passed
         parent_info[self.get_unique_arg_identifier() + "_id"] = self.id
 
-    # ----------------------- Private Methods Begin -----------------------
     def _update_parent_info(self):
         # This update is always performed and should not be overriden by the
         # subresource's class
@@ -226,19 +229,20 @@ class NSXTBaseRealizableResource(ABC):
         # If the resource identified by resource_class is specified by the
         # user, this method updates the _arg_spec with the resources
         # arg_spec
-        if (ansible_module.params[resource_class.get_unique_arg_identifier() +
+        resource = resource_class()
+        if (ansible_module.params[resource.get_unique_arg_identifier() +
                                   "_id"]) is not None:
             # This resource is specified so update the `required` fields of
             # this resource.
             resource_arg_spec = resource_class.get_resource_spec()
             for key, value in resource_arg_spec.items():
-                arg_key = (resource_class.get_unique_arg_identifier() + "_" +
+                arg_key = (resource.get_unique_arg_identifier() + "_" +
                            key)
                 self._arg_spec[arg_key]["required"] = resource_arg_spec[
                     key].get("required", False)
             base_arg_spec = self._get_base_arg_spec_of_resource()
             for key, value in base_arg_spec.items():
-                arg_key = (resource_class.get_unique_arg_identifier() + "_" +
+                arg_key = (resource.get_unique_arg_identifier() + "_" +
                            key)
                 self._arg_spec[arg_key]["required"] = base_arg_spec[
                     key].get("required", False)
@@ -276,7 +280,7 @@ class NSXTBaseRealizableResource(ABC):
             return
         arg_spec = {}
         for key, value in resource_arg_spec.items():
-            key = resource_class.get_unique_arg_identifier() + "_" + key
+            key = resource_class().get_unique_arg_identifier() + "_" + key
             arg_spec[key] = value
         resource_arg_spec.clear()
         resource_arg_spec.update(arg_spec)
@@ -318,7 +322,7 @@ class NSXTBaseRealizableResource(ABC):
         )
         return resource_base_arg_spec
 
-    def _getAttribute(self, attribute):
+    def _get_attribute(self, attribute):
         """
             attribute: String
 
@@ -338,7 +342,7 @@ class NSXTBaseRealizableResource(ABC):
                 # state if . So, irrespective of what user specifies, if parent
                 # is to be deleted, the child resources will be deleted.
                 # override achieve_subresource_state_if_del_parent
-                # in resource class to change this behabior
+                # in resource class to change this behavior
                 if (self._parent_info["_parent"].get_state() == "absent" and
                         not self.achieve_subresource_state_if_del_parent()):
                     return "absent"
@@ -346,7 +350,7 @@ class NSXTBaseRealizableResource(ABC):
                 self.get_unique_arg_identifier() + "_" + attribute,
                 self.INCORRECT_ARGUMENT_NAME_VALUE)
 
-    def _extract_resource_params(self, args=None):
+    def _extract_resource_params(self):
         # extract the params belonging to this resource only.
         unwanted_resource_params = ["state", "id"]
         if self.get_resource_name() not in BASE_RESOURCES:
@@ -373,7 +377,6 @@ class NSXTBaseRealizableResource(ABC):
         self.update_resource_params()
         is_resource_updated = self.check_for_update(
             self.existing_resource, self.resource_params)
-
         if not is_resource_updated:
             # Either the resource does not exist or it exists but was not
             # updated in the YAML.
@@ -397,10 +400,9 @@ class NSXTBaseRealizableResource(ABC):
                     })
                     return
                 # Create a new resource
-                resp = self._send_request_to_API(suffix="/" + self.id,
-                                                 method='PATCH',
-                                                 data=self.resource_params)
-
+                _, resp = self._send_request_to_API(suffix="/" + self.id,
+                                                    method='PATCH',
+                                                    data=self.resource_params)
                 if self.do_wait_till_create() and not self._wait_till_create():
                     raise Exception
 
@@ -434,9 +436,9 @@ class NSXTBaseRealizableResource(ABC):
             self.resource_params['_revision'] = \
                 self.existing_resource['_revision']
             try:
-                resp = self._send_request_to_API(suffix="/"+self.id,
-                                                 method="PATCH",
-                                                 data=self.resource_params)
+                _, resp = self._send_request_to_API(suffix="/"+self.id,
+                                                    method="PATCH",
+                                                    data=self.resource_params)
                 successful_resource_exec_logs.append({
                     "changed": True,
                     "id": self.id,
@@ -472,7 +474,7 @@ class NSXTBaseRealizableResource(ABC):
             })
             return
         try:
-            _ = self._send_request_to_API("/" + self.id, method='DELETE')
+            self._send_request_to_API("/" + self.id, method='DELETE')
             self._wait_till_delete()
             successful_resource_exec_logs.append({
                 "changed": True,
@@ -502,7 +504,6 @@ class NSXTBaseRealizableResource(ABC):
             return (rc, resp)
         except Exception as e:
             raise e
-        return (400, None)
 
     def _achieve_state(self, successful_resource_exec_logs=[]):
         """
@@ -527,7 +528,8 @@ class NSXTBaseRealizableResource(ABC):
 
         if self._state == "present" and not (
                 self.create_or_update_subresource_first()):
-            self.achieve_subresource_state(successful_resource_exec_logs)
+            self.achieve_subresource_state(
+                successful_resource_exec_logs=successful_resource_exec_logs)
 
         if self._state == "absent" and not self.delete_subresource_first():
             self.achieve_subresource_state(successful_resource_exec_logs)
@@ -623,4 +625,3 @@ class NSXTBaseRealizableResource(ABC):
                 resource_params[k] = v
             elif type(v).__name__ == 'dict':
                 self._fill_missing_resource_params(v, resource_params[k])
-    # ----------------------- Private Methods End -----------------------
