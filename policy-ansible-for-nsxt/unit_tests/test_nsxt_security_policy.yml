@@ -1,0 +1,19 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Segment
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create Security Policy
+      nsxt_security_policy:
+        hostname: "10.160.84.49"
+        username: "admin"
+        password: "Admin!23Admin"
+        validate_certs: False
+        id: test-sec-pol
+        display_name: test-sec-pol
+        state: "present"
+        domain_id: "default"
