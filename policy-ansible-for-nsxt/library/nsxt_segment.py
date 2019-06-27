@@ -227,13 +227,15 @@ class NSXTSegment(NSXTBaseRealizableResource):
             subnets=dict(
                 required=False,
                 type='list',
-                dhcp_ranges=dict(
-                    required=False,
-                    type='list'
-                ),
-                gateway_address=dict(
-                    required=True,
-                    type='str'
+                options=dict(
+                    dhcp_ranges=dict(
+                        required=False,
+                        type='list'
+                    ),
+                    gateway_address=dict(
+                        required=True,
+                        type='str'
+                    )
                 )
             ),
             tier_0_id=dict(
@@ -270,7 +272,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
         return segment_arg_spec
 
     @staticmethod
-    def get_resource_base_url():
+    def get_resource_base_url(baseline_args=None):
         return '/infra/segments'
 
     def update_resource_params(self):

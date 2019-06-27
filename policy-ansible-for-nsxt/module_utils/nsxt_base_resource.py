@@ -37,7 +37,8 @@ import inspect
 
 # Add all the base resources that can be configured in the
 # Policy API here. Required to infer base resource params.
-BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1"}
+BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
+                  "NSXTSecurityPolicy"}
 
 
 class NSXTBaseRealizableResource(ABC):
@@ -45,16 +46,20 @@ class NSXTBaseRealizableResource(ABC):
     INCORRECT_ARGUMENT_NAME_VALUE = "error_invalid_parameter"
 
     def realize(self, supports_check_mode=True,
-                successful_resource_exec_logs=[]):
+                successful_resource_exec_logs=[],
+                baseline_arg_names=[]):
         # must call this method to realize the creation, update, or deletion of
         # resource
         self.resource_class = self.__class__
 
         if not hasattr(self, "_arg_spec"):
+            # Base resource
             self._make_ansible_arg_spec()
 
         self.module = AnsibleModule(argument_spec=self._arg_spec,
                                     supports_check_mode=supports_check_mode)
+
+        self.set_baseline_args(baseline_arg_names)
 
         # Infer manager credentials
         mgr_hostname = self.module.params['hostname']
@@ -66,8 +71,8 @@ class NSXTBaseRealizableResource(ABC):
             mgr_username, mgr_hostname, mgr_password)
 
         self.validate_certs = self.module.params['validate_certs']
-        self._state = self._get_attribute('state')
-        self.id = self._get_attribute('id')
+        self._state = self.get_attribute('state')
+        self.id = self.get_attribute('id')
 
         # Extract the resource params from module
         self.resource_params = self._extract_resource_params()
@@ -201,6 +206,41 @@ class NSXTBaseRealizableResource(ABC):
         # to the sub-resource
         # By default, parent's id is passed
         parent_info[self.get_unique_arg_identifier() + "_id"] = self.id
+
+    def get_attribute(self, attribute):
+        """
+            attribute: String
+
+            Returns the attribute from module params if specified.
+            - If it's a sub-resource, the param name must have its
+              unique_arg_identifier as a prefix.
+            - There is no prefix for base resource.
+        """
+        if self.get_resource_name() in BASE_RESOURCES:
+            return self.module.params.get(
+                attribute, self.module.params.get(
+                    self.get_resource_name() + "_" + attribute,
+                    self.INCORRECT_ARGUMENT_NAME_VALUE))
+        else:
+            if attribute == "state":
+                # if parent has absent state, subresources should have absent
+                # state if . So, irrespective of what user specifies, if parent
+                # is to be deleted, the child resources will be deleted.
+                # override achieve_subresource_state_if_del_parent
+                # in resource class to change this behavior
+                if (self._parent_info["_parent"].get_state() == "absent" and
+                        not self.achieve_subresource_state_if_del_parent()):
+                    return "absent"
+            return self.module.params.get(
+                self.get_unique_arg_identifier() + "_" + attribute,
+                self.INCORRECT_ARGUMENT_NAME_VALUE)
+
+    def set_baseline_args(self, baseline_arg_names):
+        # Can be overriden in subclass
+        self.baseline_args = {}
+        for baseline_arg_name in baseline_arg_names:
+            self.baseline_args[baseline_arg_name] = self.module.params[
+                baseline_arg_name]
 
     def _update_parent_info(self):
         # This update is always performed and should not be overriden by the
@@ -342,37 +382,10 @@ class NSXTBaseRealizableResource(ABC):
         )
         return resource_base_arg_spec
 
-    def _get_attribute(self, attribute):
-        """
-            attribute: String
-
-            Returns the attribute from module params if specified.
-            - If it's a sub-resource, the param name must have its
-              unique_arg_identifier as a prefix.
-            - There is no prefix for base resource.
-        """
-        if self.get_resource_name() in BASE_RESOURCES:
-            return self.module.params.get(
-                attribute, self.module.params.get(
-                    self.get_resource_name() + "_" + attribute,
-                    self.INCORRECT_ARGUMENT_NAME_VALUE))
-        else:
-            if attribute == "state":
-                # if parent has absent state, subresources should have absent
-                # state if . So, irrespective of what user specifies, if parent
-                # is to be deleted, the child resources will be deleted.
-                # override achieve_subresource_state_if_del_parent
-                # in resource class to change this behavior
-                if (self._parent_info["_parent"].get_state() == "absent" and
-                        not self.achieve_subresource_state_if_del_parent()):
-                    return "absent"
-            return self.module.params.get(
-                self.get_unique_arg_identifier() + "_" + attribute,
-                self.INCORRECT_ARGUMENT_NAME_VALUE)
-
     def _extract_resource_params(self):
         # extract the params belonging to this resource only.
         unwanted_resource_params = ["state", "id"]
+        unwanted_resource_params += self.baseline_args.keys()
         if self.get_resource_name() not in BASE_RESOURCES:
             unwanted_resource_params = set([self.get_unique_arg_identifier() +
                                            "_" + unwanted_resource_param for
@@ -516,7 +529,8 @@ class NSXTBaseRealizableResource(ABC):
                 resource_base_url = self.resource_class.get_resource_base_url(
                     parent_info=self._parent_info)
             else:
-                resource_base_url = self.resource_class.get_resource_base_url()
+                resource_base_url = self.resource_class.get_resource_base_url(
+                    baseline_args=self.baseline_args)
 
             (rc, resp) = self.policy_communicator.request(
                 resource_base_url + suffix, validate_certs=self.validate_certs,

@@ -395,7 +395,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
         return tier1_arg_spec
 
     @staticmethod
-    def get_resource_base_url():
+    def get_resource_base_url(baseline_args=None):
         return '/infra/tier-1s'
 
     def update_resource_params(self):
