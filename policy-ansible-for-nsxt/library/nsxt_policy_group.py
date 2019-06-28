@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+#
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = '''
+---
+module: nsxt_security_policy
+short_description: Create or Delete a Policy Policy Group
+description:
+    Creates or deletes a Policy Policy Group.
+    Required attributes include id and display_name.
+version_added: "2.8"
+author: Gautam Verma
+extends_documentation_fragment: vmware_nsxt
+options:
+    id:
+        description: The id of the Policy Policy Group.
+        required: true
+        type: str
+    description:
+        description: Policy Group description.
+        type: str
+'''
+
+EXAMPLES = '''
+- name: create Policy Group
+  nsxt_policy_group:
+  hostname: "10.160.84.49"
+  username: "admin"
+  password: "Admin!23Admin"
+  validate_certs: False
+  id: test-lb-service
+  display_name: test-lb-service
+  state: "present"
+  domain_id: "default"
+  expression:
+    - member_type: "VirtualMachine"
+      value: "webvm"
+      key: "Tag"
+      operator: "EQUALS"
+      resource_type: "Condition"
+'''
+
+RETURN = '''# '''
+
+import json
+import time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible.module_utils._text import to_native
+
+
+class NSXTPolicyGroup(NSXTBaseRealizableResource):
+    @staticmethod
+    def get_resource_spec():
+        policy_group_arg_spec = {}
+        policy_group_arg_spec.update(
+            domain_id=dict(
+                required=True,
+                type='str'
+            ),
+            expression=dict(
+                required=True,
+                type='list'
+            )
+        )
+        return policy_group_arg_spec
+
+    @staticmethod
+    def get_resource_base_url(baseline_args):
+        return '/infra/domains/{}/groups/'.format(
+            baseline_args["domain_id"]
+        )
+
+
+if __name__ == '__main__':
+    policy_group = NSXTPolicyGroup()
+    policy_group.realize(baseline_arg_names=["domain_id"])
