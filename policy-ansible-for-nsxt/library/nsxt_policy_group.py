@@ -42,6 +42,27 @@ options:
     description:
         description: Policy Group description.
         type: str
+    domain_id:
+        description: Domain ID.
+        type: str
+    expression:
+        description:
+            - The expression list must follow below criteria:
+                - 1. A non-empty expression list, must be of odd size.
+                  In a list, with indices starting from 0, all
+                  non-conjunction expressions must be at
+                  even indices, separated by a conjunction expression
+                  at odd indices.
+                - 2. The total of ConditionExpression and
+                  NestedExpression in a list should not exceed 5.
+                - 3. The total of IPAddressExpression,
+                  MACAddressExpression, external IDs in an
+                  ExternalIDExpression and paths in a PathExpression
+                  must not exceed 500.
+                - 4. Each expression must be a valid Expression. See
+                  the definition of the Expression type for more
+                  information. 
+        type: str
 '''
 
 EXAMPLES = '''
