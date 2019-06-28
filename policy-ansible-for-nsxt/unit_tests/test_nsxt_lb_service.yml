@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 ---
 #
-# Playbook to test Segment
+# Playbook to test Load Balancer Service
 #
 - hosts: localhost
   become: yes
   tasks:
-    - name: create Security Policy
-      nsxt_security_policy:
+    - name: create Load Balancer Service
+      nsxt_lb_service:
         hostname: "default"
         username: "default"
         password: "default"
         validate_certs: False
-        id: test-sec-pol
-        display_name: test-sec-pol
+        id: test-lb-service
+        display_name: test-lb-service
         state: "present"
-        domain_id: "default"
+        
