@@ -42,7 +42,6 @@ options:
     description:
         description: Security Policy description.
         type: str
-<<<<<<< HEAD
     domain_id:
         description: The domain id where the Security Policy is realized.
         type: str
@@ -166,13 +165,10 @@ options:
                              to the source groups
                 type: bool
                 default: false
-=======
->>>>>>> 6f38a9745b7fac79433acbb97ebc0ed2b16dbe84
 '''
 
 EXAMPLES = '''
 - name: create Security Policy
-<<<<<<< HEAD
   nsxt_security_policy:
   hostname: "10.160.84.49"
   username: "admin"
@@ -191,25 +187,6 @@ EXAMPLES = '''
       source_groups: ["/infra/domains/vmc/groups/dbgroup"]
       destination_groups: ["/infra/domains/vmc/groups/appgroup"]
       services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
-=======
-  nsxt_Security Policy:
-    hostname: "10.178.14.49"
-    username: "uname"
-    password: "password"
-    state: "present"
-    validate_certs: False
-    id: test-seg1
-    display_name: test-seg3
-    tier_1_id: "k8s-node-lr"
-    domain_name: "dn1"
-    transport_zone_id: "5f0ea34b-7549-4303-be1e-2ef7ea3155e2"
-    subnets:
-    - gateway_address: "40.1.1.1/16"
-      dhcp_ranges: [ "40.1.2.0/24" ]
-    segp_id: "test-sp"
-    segp_display_name: "test-sp"
-    segp_state: "present"
->>>>>>> 6f38a9745b7fac79433acbb97ebc0ed2b16dbe84
 '''
 
 RETURN = '''# '''
@@ -220,11 +197,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 from ansible.module_utils._text import to_native
 
-<<<<<<< HEAD
-=======
-from ansible.module_utils.logger import Logger
-logger=Logger.getInstance()
->>>>>>> 6f38a9745b7fac79433acbb97ebc0ed2b16dbe84
 
 if __name__ == '__main__':
     from ansible.module_utils.nsxt_policy_transport_zone import (
