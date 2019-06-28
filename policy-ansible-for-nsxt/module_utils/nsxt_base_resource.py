@@ -39,7 +39,7 @@ import inspect
 # Policy API here. Required to infer base resource params.
 BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
                   "NSXTSecurityPolicy", "NSXTLoadBalancerService",
-                  "NSXTLoadBalancerVirtualServer"}
+                  "NSXTLoadBalancerVirtualServer", "NSXTPolicyGroup"}
 
 
 class NSXTBaseRealizableResource(ABC):
