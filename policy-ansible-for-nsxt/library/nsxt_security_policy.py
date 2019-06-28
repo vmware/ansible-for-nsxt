@@ -198,18 +198,6 @@ from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 from ansible.module_utils._text import to_native
 
 
-if __name__ == '__main__':
-    from ansible.module_utils.nsxt_policy_transport_zone import (
-        NSXTPolicyTransportZone)
-
-    import os
-    import sys
-    sys.path.append(os.getcwd())
-
-    from library.nsxt_tier0 import NSXTTier0
-    from library.nsxt_tier1 import NSXTTier1
-
-
 class NSXTSecurityPolicy(NSXTBaseRealizableResource):
     @staticmethod
     def get_resource_spec():
