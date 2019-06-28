@@ -38,7 +38,8 @@ import inspect
 # Add all the base resources that can be configured in the
 # Policy API here. Required to infer base resource params.
 BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
-                  "NSXTSecurityPolicy", "NSXTLoadBalancerService"}
+                  "NSXTSecurityPolicy", "NSXTLoadBalancerService",
+                  "NSXTLoadBalancerVirtualServer"}
 
 
 class NSXTBaseRealizableResource(ABC):

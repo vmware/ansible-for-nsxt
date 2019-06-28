@@ -137,7 +137,7 @@ class NSXTLoadBalancerService(NSXTBaseRealizableResource):
         return loadbalancer_service_arg_spec
 
     @staticmethod
-    def get_resource_base_url(baseline_args):
+    def get_resource_base_url(baseline_args=None):
         return '/infra/lb-services'
 
     def update_resource_params(self):

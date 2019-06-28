@@ -1,0 +1,21 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Segment
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create LB Virtual Server
+      nsxt_lb_virtual_server:
+        hostname: "default"
+        username: "default"
+        password: "default"
+        validate_certs: False
+        id: test-vs
+        display_name: test-vs
+        state: "present"
+        ip_address: "30.1.1.1"
+        ports: ["1019"]
+        application_profile_id: "default-tcp-lb-app-profile"
