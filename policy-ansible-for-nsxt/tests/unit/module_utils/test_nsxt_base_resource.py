@@ -48,9 +48,10 @@ class SimpleDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     def __init__(self):
         self.resource_class = self.__class__
         self.validate_certs = False
+        self.baseline_args = {}
 
     @staticmethod
-    def get_resource_base_url():
+    def get_resource_base_url(baseline_args=None):
         return 'dummy'
 
     @staticmethod
@@ -66,11 +67,12 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     def __init__(self):
         self.resource_class = self.__class__
         self.validate_certs = False
+        self.baseline_args = {}
         self.do_create_or_update_subresource_first = False
         self.do_delete_subresource_first = True
 
     @staticmethod
-    def get_resource_base_url():
+    def get_resource_base_url(baseline_args=None):
         return 'dummy'
 
     @staticmethod
@@ -592,15 +594,15 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 "SimpleDummyNSXTResource_dummy1": "dummy"
             }
             expected_value = "dummy"
-            observed_value = simple_dummy_resource._get_attribute("dummy")
+            observed_value = simple_dummy_resource.get_attribute("dummy")
             self.assertEqual(expected_value, observed_value)
 
-            observed_value = simple_dummy_resource._get_attribute("dummy1")
+            observed_value = simple_dummy_resource.get_attribute("dummy1")
             self.assertEqual(expected_value, observed_value)
 
             expected_value = (nsxt_base_resource.NSXTBaseRealizableResource.
                               INCORRECT_ARGUMENT_NAME_VALUE)
-            observed_value = simple_dummy_resource._get_attribute("dummy2")
+            observed_value = simple_dummy_resource.get_attribute("dummy2")
             self.assertEqual(expected_value, observed_value)
 
             nsxt_base_resource.BASE_RESOURCES = init_base_resources
@@ -613,15 +615,15 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 "SimpleDummyNSXTResource_dummy1": "dummy"
             }
             expected_value = "dummy"
-            observed_value = simple_dummy_resource._get_attribute("dummy1")
+            observed_value = simple_dummy_resource.get_attribute("dummy1")
             self.assertEqual(expected_value, observed_value)
 
             expected_value = (nsxt_base_resource.NSXTBaseRealizableResource.
                               INCORRECT_ARGUMENT_NAME_VALUE)
-            observed_value = simple_dummy_resource._get_attribute("dummy")
+            observed_value = simple_dummy_resource.get_attribute("dummy")
             self.assertEqual(expected_value, observed_value)
 
-            observed_value = simple_dummy_resource._get_attribute("dummy2")
+            observed_value = simple_dummy_resource.get_attribute("dummy2")
             self.assertEqual(expected_value, observed_value)
 
         test_when_resource_in_base()
