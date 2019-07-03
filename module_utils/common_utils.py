@@ -26,6 +26,19 @@ def check_if_valid_ip(ip_address):
     except:
         return False
 
+def traverse_and_retrieve_value(module, object , attribute_list):
+    '''
+    params:
+    - object: Object where value is to be searched from attribute list
+    - attribute_list: List to be used for searching attribute value
+    '''
+    for attribute in attribute_list:
+        if object.__contains__(attribute):
+            object = object[attribute]
+        else:
+            module.fail_json(msg='Error while  traversing and retrieving value. Attribute named %s was not found.'% attribute)
+    return object
+
 def get_attribute_from_endpoint(module, manager_url, endpoint, mgr_username, mgr_password, validate_certs, attribute_name):
     '''
     params:
@@ -38,7 +51,26 @@ def get_attribute_from_endpoint(module, manager_url, endpoint, mgr_username, mgr
         (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-        module.fail_json(msg='Error while retrieving existing IP address. Error [%s]' % to_native(err))
+        module.fail_json(msg='Error while retrieving %s. Error [%s]' % (attribute_name, to_native(err)))
     if resp.__contains__(attribute_name):
         return resp[attribute_name]
     return None
+
+def get_id_from_display_name_results(module, manager_url, endpoint, mgr_username, mgr_password, validate_certs, search_attribute_list, return_attribute_list, display_name):
+    '''
+    params:
+    - endpoint: API endpoint.
+    - search_attribute_list: List of name attribute the depth to be searched in the result object
+    - return_attribute_list: List of name attribute the depth to be returned in the result object
+    - display_name: The name to be matched
+    - id_attribute: id_attribute whose value is to be returned
+    '''
+    try:
+        (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+        module.fail_json(msg='Error while converting the passed name to ID. Error [%s]' % to_native(err))
+    for result in resp['results']:
+        if traverse_and_retrieve_value(module, result, search_attribute_list) == display_name:
+            return traverse_and_retrieve_value(module, result, return_attribute_list)
+    module.fail_json(msg='No id exist with display name %s' % display_name)
