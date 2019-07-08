@@ -61,7 +61,7 @@ options:
                   must not exceed 500.
                 - 4. Each expression must be a valid Expression. See
                   the definition of the Expression type for more
-                  information. 
+                  information.
         type: str
 '''
 
