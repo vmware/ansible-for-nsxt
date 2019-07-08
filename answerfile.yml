@@ -22,6 +22,13 @@ lldp_profile_name_1: "LLDP [Send Packet Enabled]"
 uplink_name_1: "test-uplink-1"
 device_name_1: "vmnic1"
 
+vidm_enabled: True
+lb_enabled: True
+vidm_server: "vidm2.corp.local"
+vidm_thumbprint: "A8294342A2C70FC5E4267F8D994FEAAC4EE2BC731E9BB8B18D913D5486D3CC30"
+vidm_client_id: "nsx-server"
+vidm_client_secret: "WNJCrzAqanGOxRGEy6kjlc1EDL2KvHZhnku2QEHIUD9rLvOV"
+
 deploy_ova:
 - display_name: "nsxm-1"
   master_node: True
@@ -43,7 +50,7 @@ deploy_ova:
   netmask: "255.255.0.0"
 
 ovftool_path: "/usr/bin"
-path_to_ova: "/mnt/files/"
+path_to_ova: "/root"
 ova_file: "nsx-unified-appliance-2.4.1.0.0.13716579.ova"
 
 vcenter_prod_name: "vc-l-01a"
