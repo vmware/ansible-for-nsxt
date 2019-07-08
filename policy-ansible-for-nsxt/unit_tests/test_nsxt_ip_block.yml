@@ -1,0 +1,19 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Segment
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create IP Block
+      nsxt_ip_block:
+        hostname: "default"
+        username: "default"
+        password: "default"
+        validate_certs: False
+        id: test-ip-blk
+        display_name: test-ip-blk
+        state: "absent"
+        cidr: "192.168.0.0/16"

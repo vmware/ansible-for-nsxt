@@ -1,0 +1,26 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test IP Pool
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create IP Pool
+      nsxt_ip_pool:
+        hostname: "default"
+        username: "default"
+        password: "default"
+        validate_certs: False
+        id: test-ip-pool
+        display_name: test-ip-pool
+        state: "present"
+        tags:
+        - tag: "a"
+          scope: "b"
+        ip_subnet_id: test-ip-subnet
+        ip_subnet_display_name: test-ip-subnet
+        ip_subnet_state: "present"
+        ip_subnet_ip_block_id: "test-ip-blk"
+        ip_subnet_size: 16
