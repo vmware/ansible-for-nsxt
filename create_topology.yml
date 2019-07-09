@@ -141,6 +141,20 @@
       with_items:
         - "{{syslog_servers}}"
 
+    - name: Configure vIDM Server
+      nsxt_configure_vidm_server:
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          vidm_enabled: "{{vidm_enabled}}"
+          lb_enabled: "{{lb_enabled}}"
+          vidm_server: "{{vidm_server}}"
+          vidm_thumbprint: "{{vidm_thumbprint}}"
+          vidm_client_id: "{{vidm_client_id}}"
+          vidm_client_secret: "{{vidm_client_secret}}"
+          validate_certs: "{{validate_certs}}"
+          state: present
+
     - name: Add Default Firewall Rule
       nsxt_add_default_firewall_rule:
         hostname: "{{hostname}}"
@@ -160,6 +174,14 @@
 
     - name: Remove Password Expiration Limit
       nsxt_remove_password_expiration:
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          state: present
+
+    - name: Remove Maximum Authentication Failures Limit
+      nsxt_remove_max_auth_failures_limit:
           hostname: "{{hostname}}"
           username: "{{username}}"
           password: "{{password}}"
@@ -257,3 +279,14 @@
       with_items:
         - "{{transport_node_profiles}}"
 
+    # - name: Port Rebinding
+    #   nsxt_port-rebinding:
+    #       hostname: "http://10.29.27.82:9696"
+    #       auth_url: "http://10.29.27.82:3080/identity/v3/auth/tokens?nocatalog"
+    #       username: "admin"
+    #       password: "password"
+    #       domain: "default"
+    #       project_name: "demo"
+    #       validate_certs: True
+    #       bb: "bb93"
+    #       state: present
