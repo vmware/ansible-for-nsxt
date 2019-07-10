@@ -154,12 +154,12 @@ options:
         suboptions:
             site_id:
                 description: site_id where edge cluster is located
-                required: true
+                default: default
                 type: str
             enforcementpoint_id:
                 description: enforcementpoint_id where edge cluster is
                              located
-                required: true
+                default: default
                 type: str
             edge_cluster_id:
                 description: ID of the edge cluster
@@ -174,12 +174,12 @@ options:
         suboptions:
             site_id:
                 description: site_id where edge node is located
-                required: true
+                default: default
                 type: str
             enforcementpoint_id:
                 description: enforcementpoint_id where edge node is
                              located
-                required: true
+                default: default
                 type: str
             edge_cluster_id:
                 description: edge_cluster_id where edge node is
@@ -268,12 +268,12 @@ options:
         suboptions:
             site_id:
                 description: site_id where edge node is located
-                required: true
+                default: default
                 type: str
             enforcementpoint_id:
                 description: enforcementpoint_id where edge node is
                              located
-                required: true
+                default: default
                 type: str
             edge_cluster_id:
                 description: edge_cluster_id where edge node is
@@ -318,9 +318,7 @@ EXAMPLES = '''
       enforcementpoint_id: "nsx"
       edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
     t0ls_preferred_edge_nodes_info:
-      - site_id: "default"
-        enforcementpoint_id: "nsx"
-        edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
+      - edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
         edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
     t0iface_id: "test-t0-t0ls-iface"
     t0iface_display_name: "test-t0-t0ls-iface"
@@ -330,8 +328,6 @@ EXAMPLES = '''
         prefix_len: 24
     t0iface_segment_id: "sg-uplink"
     t0iface_edge_node_info:
-      site_id: "default"
-      enforcementpoint_id: "nsx"
       edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
       edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
 '''
@@ -512,8 +508,9 @@ class NSXTTier0(NSXTBaseRealizableResource):
             if "edge_cluster_info" in self.resource_params:
                 edge_cluster_info = self.resource_params.pop(
                     "edge_cluster_info")
-                site_id = edge_cluster_info["site_id"]
-                enforcementpoint_id = edge_cluster_info["enforcementpoint_id"]
+                site_id = edge_cluster_info.get("site_id", "default")
+                enforcementpoint_id = edge_cluster_info.get(
+                    "enforcementpoint_id", "default")
                 edge_cluster_id = edge_cluster_info["edge_cluster_id"]
                 self.resource_params["edge_cluster_path"] = (
                     PolicyEdgeCluster.get_resource_base_url(site_id,
@@ -526,9 +523,10 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     "preferred_edge_nodes_info")
                 self.resource_params["preferred_edge_paths"] = []
                 for preferred_edge_node_info in preferred_edge_nodes_info:
-                    site_id = preferred_edge_node_info["site_id"]
-                    enforcementpoint_id = preferred_edge_node_info[
-                        "enforcementpoint_id"]
+                    site_id = preferred_edge_node_info.get(
+                        "site_id", "default")
+                    enforcementpoint_id = preferred_edge_node_info.get(
+                        "enforcementpoint_id", "default")
                     edge_cluster_id = preferred_edge_node_info[
                         "edge_cluster_id"]
                     edge_id = preferred_edge_node_info["edge_id"]
@@ -608,8 +606,9 @@ class NSXTTier0(NSXTBaseRealizableResource):
 
                 # edge_node_info is a required attr
                 edge_node_info = self.resource_params.pop("edge_node_info")
-                site_id = edge_node_info["site_id"]
-                enforcementpoint_id = edge_node_info["enforcementpoint_id"]
+                site_id = edge_node_info.get("site_id", "default")
+                enforcementpoint_id = edge_node_info.get(
+                    "enforcementpoint_id", "default")
                 edge_cluster_id = edge_node_info["edge_cluster_id"]
                 edge_id = edge_node_info["edge_id"]
                 self.resource_params["edge_path"] = (
