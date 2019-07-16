@@ -13,7 +13,6 @@
         username: "default"
         password: "default"
         validate_certs: False
-        id: test-ip-blk
         display_name: test-ip-blk
         state: "absent"
         cidr: "192.168.0.0/16"

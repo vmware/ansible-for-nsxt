@@ -13,14 +13,12 @@
         username: "default"
         password: "default"
         validate_certs: False
-        id: test-seg
         display_name: test-seg
         state: "present"
-        tier_1_id: "test-tier1"
+        tier1_display_name: "test-tier11"
         domain_name: "dn1"
-        transport_zone_id: "5f0ea34b-7549-4303-be1e-2ef7ea3155e2"
+        transport_zone_display_name: "1-transportzone-184"
         subnets:
         - gateway_address: "40.1.1.1/16"
-        segp_id: "test-sp"
         segp_display_name: "test-sp"
         segp_state: "present"

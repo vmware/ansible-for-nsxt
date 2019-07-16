@@ -34,7 +34,9 @@ options:
         required: true
         type: str
     display_name:
-        description: Display name.
+        description:
+            - Display name.
+            - If resource ID is not specified, display_name will be used as ID.
         required: true
         type: str
     state:
@@ -61,4 +63,30 @@ options:
                 description: Tag value.
                 required: true
                 type: str
+    create_or_update_subresource_first:
+        type: bool
+        default: false
+        description:
+            - Can be used to create subresources first.
+            - Can be specified for each subresource.
+    delete_subresource_first:
+        type: bool
+        default: false
+        description:
+            - Can be used to delete subresources first.
+            - Can be specified for each subresource.
+    achieve_subresource_state_if_del_parent:
+        type: bool
+        default: false
+        description:
+            - Can be used to achieve the state of subresources even if
+              the parent(base) resource's state is absent.
+            - Can be specified for each subresource.
+    do_wait_till_create:
+        type: bool
+        default: false
+        description:
+            - Can be used to wait for the realization of subresource before the
+              request to create the next resource is sent to the Manager.
+            - Can be specified for each subresource.
     """

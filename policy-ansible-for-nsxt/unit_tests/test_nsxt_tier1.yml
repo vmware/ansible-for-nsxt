@@ -13,7 +13,6 @@
         username: "default"
         password: "default"
         validate_certs: False
-        id: test-tier11
         display_name: test-tier11
         state: "present"
         failover_mode: "PREEMPTIVE"
@@ -27,8 +26,7 @@
             route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED']
             subnets: ["35.1.1.1/23"]
         route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED', 'TIER1_NAT']
-        tier0_id: "test-tier00"
-        t1ls_id: test-t1ls
+        tier0_display_name: "test-tier00"
         t1ls_state: "present"
         t1ls_display_name: "test-t1ls"
         t1ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]

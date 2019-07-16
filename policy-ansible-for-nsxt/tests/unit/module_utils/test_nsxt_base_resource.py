@@ -184,9 +184,18 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def my_get(id, default):
             return my_params.get(id, default)
 
+        def my_pop(id):
+            return my_params.pop(id)
+
+        def my_contains(id):
+            return id in my_params
+
         mock_ansible_module.return_value.params.__getitem__.side_effect = (
             my_getitem)
+        mock_ansible_module.return_value.params.__contains__.side_effect = (
+            my_contains)
         mock_ansible_module.return_value.params.get.side_effect = my_get
+        mock_ansible_module.return_value.params.pop.side_effect = my_pop
 
         mock_ansible_module.return_value.check_mode = False
 
@@ -212,7 +221,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 "SubDummyResource1_state": "present",
                 "SubDummyResource1_id": "dummy1",
                 "sub_dummy_res_2_state": "present",
-                "sub_dummy_res_2_id": "dummy1",
+                "sub_dummy_res_2_id": "dummy2",
             }
             expected_exec_logs = [
                 {
@@ -233,8 +242,9 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 {
                     'body': 'OK',
                     'resource_type': 'SubDummyResource2',
-                    'message': 'SubDummyResource2 with id dummy1 created.',
-                    'changed': True, 'id': 'dummy1'
+                    'message': 'SubDummyResource2 with id dummy2 created.',
+                    'changed': True,
+                    'id': 'dummy2'
                 }
             ]
 
@@ -246,13 +256,17 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 self.assertCountEqual(exec_logs[1:], expected_exec_logs[1:])
 
             def test_create_sub_resource_first():
+                nonlocal my_params
+                my_params['id'] = 'dummy'
+                my_params["SubDummyResource1_id"] = "dummy1"
+                my_params["sub_dummy_res_2_display_name"] = "dummy2"
                 nested_dummy_resource.do_create_or_update_subresource_first = (
                     True)
                 exec_logs = []
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
-                self.assertEqual(exec_logs[2], expected_exec_logs[0])
                 self.assertCountEqual(exec_logs[:2], expected_exec_logs[1:])
+                self.assertEqual(exec_logs[2], expected_exec_logs[0])
 
             test_create_base_resource_first()
             test_create_sub_resource_first()
@@ -270,11 +284,11 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 "SubDummyResource1_state": "absent",
                 "SubDummyResource1_id": "dummy1",
                 "sub_dummy_res_2_state": "absent",
-                "sub_dummy_res_2_id": "dummy1",
+                "sub_dummy_res_2_id": "dummy2",
             }
             expected_exec_logs = [
                 {
-                    'msg': 'No SubDummyResource2 exist with id dummy1',
+                    'msg': 'No SubDummyResource2 exist with id dummy2',
                     'changed': False,
                     'resource_type': 'SubDummyResource2'
                 },
@@ -299,6 +313,14 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 self.assertCountEqual(exec_logs[1:], expected_exec_logs[:2])
 
             def test_delete_sub_resource_first():
+                nonlocal my_params
+                my_params['id'] = 'dummy'
+                # SubDummyResource1_id and sub_dummy_res_2_display_name are
+                # deleted from params. Specify them using display_name.
+                # This also tests that user can specify either id or
+                # display_name to identify resource.
+                my_params["SubDummyResource1_display_name"] = "dummy1"
+                my_params["sub_dummy_res_2_display_name"] = "dummy2"
                 nested_dummy_resource.do_delete_subresource_first = True
                 exec_logs = []
                 nested_dummy_resource.realize(
@@ -322,11 +344,11 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 "SubDummyResource1_state": "present",
                 "SubDummyResource1_id": "dummy1",
                 "sub_dummy_res_2_state": "present",
-                "sub_dummy_res_2_id": "dummy1",
+                "sub_dummy_res_2_id": "dummy2",
             }
             expected_exec_logs = [
                 {
-                    'msg': 'No SubDummyResource2 exist with id dummy1',
+                    'msg': 'No SubDummyResource2 exist with id dummy2',
                     'changed': False,
                     'resource_type': 'SubDummyResource2'
                 },
@@ -362,11 +384,11 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 "password": "dummy",
                 "validate_certs": False,
                 "state": "present",
-                "id": "dummy",
+                "display_name": "dummy",
                 "SubDummyResource1_state": "absent",
                 "SubDummyResource1_id": "dummy1",
                 "sub_dummy_res_2_state": "present",
-                "sub_dummy_res_2_id": "dummy1",
+                "sub_dummy_res_2_id": "dummy2",
             }
             expected_exec_logs = [
                 {
@@ -375,11 +397,11 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'msg': 'No SubDummyResource1 exist with id dummy1'
                 },
                 {
-                    'message': 'SubDummyResource2 with id dummy1 created.',
+                    'message': 'SubDummyResource2 with id dummy2 created.',
                     'changed': True,
                     'body': 'OK',
                     'resource_type': 'SubDummyResource2',
-                    'id': 'dummy1'
+                    'id': 'dummy2'
                 },
                 {
                     'message': ('NestedDummyNSXTResource with id dummy'
@@ -439,7 +461,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             existing_params = {"dummy": ["dummy1", "dummy2"]}
             resource_params = {"dummy": ["dummy2", "dummy1"]}
 
-            self.assertTrue(simple_dummy_resource.check_for_update(
+            self.assertFalse(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
         def test_with_same_params_single_dict():
@@ -790,6 +812,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                             simple_dummy_resource.__class__.__name__)
                     }
                 ]
+                print(exec_logs)
                 self.assertEqual(exec_logs, expected_exec_logs)
 
             def test_when_policy_request_fails():

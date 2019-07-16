@@ -87,7 +87,11 @@ class NSXTLoadBalancerVirtualServer(NSXTBaseRealizableResource):
         loadbalancer_vs_arg_spec = {}
         loadbalancer_vs_arg_spec.update(
             application_profile_id=dict(
-                required=True,
+                required=False,
+                type='str'
+            ),
+            application_profile_display_name=dict(
+                required=False,
                 type='str'
             ),
             access_log_enabled=dict(
@@ -108,7 +112,15 @@ class NSXTLoadBalancerVirtualServer(NSXTBaseRealizableResource):
                 rquired=False,
                 type='str'
             ),
+            lb_persistence_profile_display_name=dict(
+                rquired=False,
+                type='str'
+            ),
             lb_service_id=dict(
+                rquired=False,
+                type='str'
+            ),
+            lb_service_display_name=dict(
                 rquired=False,
                 type='str'
             ),
@@ -136,24 +148,36 @@ class NSXTLoadBalancerVirtualServer(NSXTBaseRealizableResource):
         return '/infra/lb-virtual-servers'
 
     def update_resource_params(self):
-        application_profile_id = self.resource_params.pop(
-            "application_profile_id")
+        # application_profile is a required attr
+        application_profile_url = (
+            PolicyApplicationProfile.get_resource_base_url())
+        application_profile_id = self.get_id_using_attr_name_else_fail(
+            "application_profile", self.resource_params,
+            application_profile_url, "Application Profile")
         self.resource_params["application_profile_path"] = (
-            PolicyApplicationProfile.get_resource_base_url() + "/" +
-            application_profile_id)
+            application_profile_url + "/" + application_profile_id)
 
-        if "lb_persistence_profile_id" in self.resource_params:
-            lb_persistence_profile_id = self.resource_params.pop(
-                "lb_persistence_profile_id")
-            self.resource_params["lb_persistence_profile_path"] = (
-                PolicyLBPersistenceProfile.get_resource_base_url() + "/"
-                + lb_persistence_profile_id)
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                        "lb_persistence_profile"):
+            lb_persistence_profile_url = (
+                PolicyLBPersistenceProfile.get_resource_base_url())
+            lb_persistence_profile_id = (
+                self.get_id_using_attr_name_else_fail(
+                    "lb_persistence_profile", self.resource_params,
+                    lb_persistence_profile_url, "LB Persistence Profile"))
+            self.resource_params["ipv6_profile_paths"] = [
+                lb_persistence_profile_url + "/" + lb_persistence_profile_id]
 
-        if "lb_service_id" in self.resource_params:
-            lb_service_id = self.resource_params.pop("lb_service_id")
-            self.resource_params["lb_service_path"] = (
-                NSXTLoadBalancerService.get_resource_base_url() + "/"
-                + lb_service_id)
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                        "lb_service"):
+            lb_service_url = (
+                NSXTLoadBalancerService.get_resource_base_url())
+            lb_service_id = (
+                self.get_id_using_attr_name_else_fail(
+                    "lb_service", self.resource_params,
+                    lb_service_url, "LB Persistence Profile"))
+            self.resource_params["lb_service_path"] = [
+                lb_service_url + "/" + lb_service_id]
 
 
 if __name__ == '__main__':

@@ -70,11 +70,20 @@ options:
             - "MEDIUM"
             - "LARGE"
             - "DLB"
-    tier_1_id:
+    tier1_id:
         description:
             - Tier1 UUID.
             - LBS could be instantiated (or created) on the Tier-1,
               etc. For now, only the Tier-1 object is supported.
+        type: str
+        required: false
+    tier1_display_name:
+        description:
+            - Tier1 UUID.
+            - LBS could be instantiated (or created) on the Tier-1,
+              etc. For now, only the Tier-1 object is supported.
+            - Either this or tier1_display_name must be specified. If both are
+              specified, tier1_id takes precedence.
         type: str
 '''
 
@@ -88,7 +97,7 @@ EXAMPLES = '''
   id: test-lb-service
   display_name: test-lb-service
   state: "present"
-  tier_1_id: "test-tier1"
+  tier1_id: "test-tier1"
   size: "SMALL"
 '''
 
@@ -129,7 +138,11 @@ class NSXTLoadBalancerService(NSXTBaseRealizableResource):
                 type='str',
                 default="SMALL"
             ),
-            tier_1_id=dict(
+            tier1_id=dict(
+                required=False,
+                type='str'
+            ),
+            tier1_display_name=dict(
                 required=False,
                 type='str'
             )
@@ -141,10 +154,14 @@ class NSXTLoadBalancerService(NSXTBaseRealizableResource):
         return '/infra/lb-services'
 
     def update_resource_params(self):
-        if "tier_1_id" in self.resource_params:
-            tier_1_id = self.resource_params.pop("tier_1_id")
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "tier1"):
+            tier1_base_url = NSXTTier1.get_resource_base_url()
+            tier1_id = self.get_id_using_attr_name_else_fail(
+                "tier1", self.resource_params,
+                tier1_base_url, "Tier1")
             self.resource_params["connectivity_path"] = (
-                NSXTTier1.get_resource_base_url() + "/" + tier_1_id)
+                tier1_base_url + "/" + tier1_id)
 
 
 if __name__ == '__main__':

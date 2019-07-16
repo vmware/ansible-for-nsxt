@@ -43,19 +43,34 @@ options:
     description:
         description: Segment description.
         type: str
-    tier_0_id:
+    tier0_id:
         description: The Uplink of the Policy Segment.
                      Mutually exclusive with tier_1_id.
         type: str
-    tier_1_id:
+    tier0_display_name:
+        description: Same as tier_0_id. Either one can be specified.
+                     If both are specified, tier_0_id takes
+                     precedence.
+        type: str
+    tier1_id:
         description: The Uplink of the Policy Segment.
                      Mutually exclusive with tier_0_id but takes precedence.
+        type: str
+    tier1_display_name:
+        description: Same as tier_1_id. Either one can be specified.
+                     If both are specified, tier_1_id takes
+                     precedence.
         type: str
     domain_name:
         description: Domain name associated with the Policy Segment.
         type: str
     transport_zone_id:
         description: The TZ associated with the Policy Segment.
+        type: str
+    transport_zone_display_name:
+        description: Same as transport_zone_id. Either one can be specified.
+                     If both are specified, transport_zone_id takes
+                     precedence.
         type: str
     enforcementpoint_id:
         description: The EnforcementPoint ID where the TZ is located.
@@ -93,11 +108,15 @@ options:
                 required: True
                 type: str
     segp_id:
-        description: The id of the Policy Segment.
+        description: The id of the Policy Segment Port.
+        required: false
         type: str
     segp_display_name:
         description:
-            - Display name.
+            - Segment Port display name.
+            - Either this or segp_id must be specified. If both are specified,
+              segp_id takes precedence.
+        required: false
         type: str
     segp_description:
         description:
@@ -188,7 +207,7 @@ EXAMPLES = '''
     validate_certs: False
     id: test-seg1
     display_name: test-seg3
-    tier_1_id: "k8s-node-lr"
+    tier1_id: "k8s-node-lr"
     domain_name: "dn1"
     transport_zone_id: "5f0ea34b-7549-4303-be1e-2ef7ea3155e2"
     subnets:
@@ -238,11 +257,19 @@ class NSXTSegment(NSXTBaseRealizableResource):
                     )
                 )
             ),
-            tier_0_id=dict(
+            tier0_id=dict(
                 required=False,
                 type='str'
             ),
-            tier_1_id=dict(
+            tier0_display_name=dict(
+                required=False,
+                type='str'
+            ),
+            tier1_id=dict(
+                required=False,
+                type='str'
+            ),
+            tier1_display_name=dict(
                 required=False,
                 type='str'
             ),
@@ -255,6 +282,10 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 type='list'
             ),
             transport_zone_id=dict(
+                required=False,
+                type='str'
+            ),
+            transport_zone_display_name=dict(
                 required=False,
                 type='str'
             ),
@@ -276,23 +307,36 @@ class NSXTSegment(NSXTBaseRealizableResource):
         return '/infra/segments'
 
     def update_resource_params(self):
-        if "tier_0_id" in self.resource_params:
-            tier_0_id = self.resource_params.pop("tier_0_id")
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "tier0"):
+            tier0_base_url = NSXTTier0.get_resource_base_url()
+            tier0_id = self.get_id_using_attr_name_else_fail(
+                "tier0", self.resource_params,
+                tier0_base_url, "Tier0")
             self.resource_params["connectivity_path"] = (
-                NSXTTier0.get_resource_base_url() + "/" + tier_0_id)
-        elif "tier_1_id" in self.resource_params:
-            tier_1_id = self.resource_params.pop("tier_1_id")
+                tier0_base_url + "/" + tier0_id)
+        elif self.do_resource_params_have_attr_with_id_or_display_name(
+                "tier1"):
+            tier1_base_url = NSXTTier1.get_resource_base_url()
+            tier1_id = self.get_id_using_attr_name_else_fail(
+                "tier1", self.resource_params,
+                tier1_base_url, "Tier1")
             self.resource_params["connectivity_path"] = (
-                NSXTTier1.get_resource_base_url() + "/" + tier_1_id)
+                tier1_base_url + "/" + tier1_id)
 
-        if "transport_zone_id" in self.resource_params:
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "transport_zone"):
             site_id = self.resource_params.pop("site_id")
             enforcementpoint_id = self.resource_params.pop(
                 "enforcementpoint_id")
-            transport_zone_id = self.resource_params.pop("transport_zone_id")
-            self.resource_params["transport_zone_path"] = (
+            transport_zone_base_url = (
                 NSXTPolicyTransportZone.get_resource_base_url(
-                    site_id, enforcementpoint_id) + "/" + transport_zone_id)
+                    site_id, enforcementpoint_id))
+            transport_zone_id = self.get_id_using_attr_name_else_fail(
+                "transport_zone", self.resource_params,
+                transport_zone_base_url, "Transport Zone")
+            self.resource_params["transport_zone_path"] = (
+                transport_zone_base_url + "/" + transport_zone_id)
 
     def update_parent_info(self, parent_info):
         parent_info["segment_id"] = self.id
