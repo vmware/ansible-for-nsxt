@@ -18,7 +18,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-class PolicDhcpRelayConfig(object):
+class PolicyDhcpRelayConfig(object):
     @staticmethod
     def get_resource_base_url():
         return '/infra/dhcp-relay-configs'

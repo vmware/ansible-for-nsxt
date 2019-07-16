@@ -46,6 +46,13 @@ options:
         description: The ID of the IpAddressBlock from which the subnet is to
                      be created.
         type: str
+        required=false
+    ip_block_display_name:
+        description: Same as ip_block_id. Either one must be specified.
+                     If both are specified, ip_block_id takes
+                     precedence.
+        required: false
+        type: str
     auto_assign_gateway:
         description:
             - Indicate whether default gateway is to be reserved from the range
@@ -77,7 +84,7 @@ EXAMPLES = '''
       ip_subnet_id: test-ip-subnet
       ip_subnet_display_name: test-ip-subnet
       ip_subnet_state: "present"
-      ip_subnet_ip_block_id: "test-ip-blk"
+      ip_subnet_ip_block_display_neme: "test-ip-blk"
       ip_subnet_size: 16
 '''
 
@@ -125,7 +132,11 @@ class NSXTIpPool(NSXTBaseRealizableResource):
             ip_addr_pool_blk_subnet_arg_spec = {}
             ip_addr_pool_blk_subnet_arg_spec.update(
                 ip_block_id=dict(
-                    required=True,
+                    required=False,
+                    type='str'
+                ),
+                ip_block_display_name=dict(
+                    required=False,
                     type='str'
                 ),
                 auto_assign_gateway=dict(
@@ -146,11 +157,13 @@ class NSXTIpPool(NSXTBaseRealizableResource):
             )
 
         def update_resource_params(self):
-            ip_block_id = self.resource_params.pop(
-                "ip_block_id")
+            # ip_block is a required attr
+            ip_block_base_url = NSXTIpBlock.get_resource_base_url()
+            ip_block_id = self.get_id_using_attr_name_else_fail(
+                "ip_block", self.resource_params,
+                ip_block_base_url, "IP Block")
             self.resource_params["ip_block_path"] = (
-                NSXTIpBlock.get_resource_base_url() + "/" + ip_block_id
-            )
+                ip_block_base_url + "/" + ip_block_id)
 
             self.resource_params["resource_type"] = "IpAddressPoolBlockSubnet"
 

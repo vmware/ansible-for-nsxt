@@ -13,7 +13,7 @@
         username: "default"
         password: "default"
         validate_certs: False
-        id: test-ip-pool
+        id: my-unique-ip-pool-id
         display_name: test-ip-pool
         state: "present"
         tags:

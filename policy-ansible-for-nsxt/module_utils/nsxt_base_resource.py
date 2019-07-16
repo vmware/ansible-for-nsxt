@@ -74,7 +74,18 @@ class NSXTBaseRealizableResource(ABC):
 
         self.validate_certs = self.module.params['validate_certs']
         self._state = self.get_attribute('state')
-        self.id = self.get_attribute('id')
+        if self.get_resource_name() in BASE_RESOURCES:
+            self.id = self._get_id_using_attr_name(
+                None, self.module.params,
+                self.get_resource_base_url(self.baseline_args),
+                self.get_unique_arg_identifier())
+        else:
+            self.id = self._get_id_using_attr_name(
+                None, self.module.params,
+                self.get_resource_base_url(self._parent_info),
+                self.get_unique_arg_identifier())
+        if self.id is None:
+            return
 
         # Extract the resource params from module
         self.resource_params = self._extract_resource_params()
@@ -103,7 +114,7 @@ class NSXTBaseRealizableResource(ABC):
         # Can be overriden in the subclass to provide different
         # unique_arg_identifier. It is used to infer which args belong to which
         # subresource.
-        # By default, class name is used.
+        # By default, class name is used for subresources.
         return self.get_resource_name()
 
     def get_state(self):
@@ -127,24 +138,40 @@ class NSXTBaseRealizableResource(ABC):
     def create_or_update_subresource_first(self):
         # return True if subresource should be created/updated before parent
         # resource
-        return False
+        if self.get_resource_name() in BASE_RESOURCES:
+            return self.module.params.get("create_or_update_subresource_first",
+                                          False)
+        return self.module.params.get(self.get_unique_arg_identifier() +
+                                      "_create_or_update_subresource_first",
+                                      False)
 
     def delete_subresource_first(self):
         # return True if subresource should be deleted before parent resource
-        return True
+        if self.get_resource_name() in BASE_RESOURCES:
+            return self.module.params.get("delete_subresource_first", True)
+        return self.module.params.get(self.get_unique_arg_identifier() +
+                                      "_delete_subresource_first", True)
 
     def achieve_subresource_state_if_del_parent(self):
         # return True if this resource is to be realized with its own specified
         # state irrespective of the state of its parent resource.
-        return False
+        if self.get_resource_name() in BASE_RESOURCES:
+            return self.module.params.get(
+                "achieve_subresource_state_if_del_parent", False)
+        return self.module.params.get(
+            self.get_unique_arg_identifier() +
+            "_achieve_subresource_state_if_del_parent", False)
 
     def do_wait_till_create(self):
         # By default, we do not wait for the parent resource to be created or
         # updated before its subresource is to be realized.
-        return False
+        if self.get_resource_name() in BASE_RESOURCES:
+            return self.module.params.get("do_wait_till_create", False)
+        return self.module.params.get(self.get_unique_arg_identifier() +
+                                      "_do_wait_till_create", False)
 
     @staticmethod
-    def get_resource_creation_priority():
+    def get_resource_update_priority():
         # this priority can be used to create/delete subresources
         # at the same level in a particular order.
         # by default, it returns 1 so the resources are created/updated/
@@ -200,6 +227,20 @@ class NSXTBaseRealizableResource(ABC):
                 if self.check_for_update(existing_params[k], v):
                     return True
             elif v != existing_params[k]:
+                def compare_lists(list1, list2):
+                    # Returns True if list1 and list2 differ
+                    try:
+                        # If the lists can be converted into sets, do so and
+                        # compare lists as sets.
+                        set1 = set(list1)
+                        set2 = set(list2)
+                        return set1 != set2
+                    except Exception:
+                        return True
+                if type(v).__name__ == 'list':
+                    if compare_lists(v, existing_params[k]):
+                        return True
+                    continue
                 return True
         return False
 
@@ -243,6 +284,74 @@ class NSXTBaseRealizableResource(ABC):
         for baseline_arg_name in baseline_arg_names:
             self.baseline_args[baseline_arg_name] = self.module.params[
                 baseline_arg_name]
+
+    def do_resource_params_have_attr_with_id_or_display_name(self, attr):
+        if (attr + "_id" in self.resource_params or
+                attr + "_display_name" in self.resource_params):
+            return True
+        return False
+
+    def get_id_using_attr_name_else_fail(self, attr_name, params,
+                                         resource_base_url, resource_type):
+        resource_id = self._get_id_using_attr_name(
+            attr_name, params, resource_base_url, resource_type)
+        if resource_id is not None:
+            return resource_id
+        # Incorrect usage of Ansible Module
+        self.module.fail_json(msg="Please specify either {} id or display_name"
+                              " for the resource {}".format(
+                                  attr_name, str(resource_type)))
+
+    def _get_id_using_attr_name(self, attr_name, params,
+                                resource_base_url, resource_type):
+        # Pass attr_name '' or None to infer base resource's ID
+        id_identifier = 'id'
+        display_name_identifier = 'display_name'
+        if attr_name:
+            id_identifier = attr_name + "_id"
+            display_name_identifier = attr_name + "_display_name"
+        elif self.get_resource_name() not in BASE_RESOURCES:
+            id_identifier = self.get_unique_arg_identifier() + "_id"
+            display_name_identifier = (
+                self.get_unique_arg_identifier() + "_display_name")
+        if id_identifier in params and params[id_identifier]:
+            return params.pop(id_identifier)
+        if (display_name_identifier in params and
+                params[display_name_identifier]):
+            resource_display_name = params.pop(display_name_identifier)
+            # Use display_name as ID if ID is not specified.
+            return (self._get_id_from_display_name(
+                resource_base_url, resource_display_name, resource_type) or
+                resource_display_name)
+
+    def _get_id_from_display_name(self, resource_base_url,
+                                  resource_display_name,
+                                  resource_type):
+        try:
+            (_, resp) = self._send_request_to_API(
+                resource_base_url=resource_base_url)
+            matched_resource = None
+            for resource in resp['results']:
+                if (resource.__contains__('display_name') and
+                        resource['display_name'] == resource_display_name):
+                    if matched_resource is None:
+                        matched_resource = resource
+                    else:
+                        # Multiple resources with same display_name!
+                        # Ask the user to specify ID instead.
+                        self.module.fail_json(
+                            msg="Multiple {} found with display_name {}. "
+                                "Please specify the resource using id in "
+                                "the playbook.".format(resource_type,
+                                                       resource_display_name))
+            if matched_resource is not None:
+                return matched_resource['id']
+            else:
+                return None
+        except Exception:
+            self.module.fail_json(msg="Failed to retrieve list of %s "
+                                      "from the Manager. Please try again."
+                                      % (resource_type))
 
     def _update_parent_info(self):
         # This update is always performed and should not be overriden by the
@@ -293,7 +402,9 @@ class NSXTBaseRealizableResource(ABC):
         # arg_spec
         resource = resource_class()
         if (ansible_module.params[resource.get_unique_arg_identifier() +
-                                  "_id"]) is not None:
+                                  "_id"] is not None or
+                ansible_module.params[resource.get_unique_arg_identifier() +
+                                      "_display_name"]) is not None:
             # This resource is specified so update the `required` fields of
             # this resource.
             resource_arg_spec = resource_class.get_resource_spec()
@@ -352,7 +463,7 @@ class NSXTBaseRealizableResource(ABC):
         resource_base_arg_spec.update(
             # these are the base args for any NSXT Resource
             id=dict(
-                required=True,
+                required=False,
                 type='str'
             ),
             display_name=dict(
@@ -380,13 +491,36 @@ class NSXTBaseRealizableResource(ABC):
             state=dict(
                 required=True,
                 choices=['present', 'absent']
+            ),
+            create_or_update_subresource_first=dict(
+                required=False,
+                default=False,
+                type='bool'
+            ),
+            delete_subresource_first=dict(
+                required=False,
+                default=True,
+                type='bool'
+            ),
+            achieve_subresource_state_if_del_parent=dict(
+                required=False,
+                default=False,
+                type='bool'
+            ),
+            do_wait_till_create=dict(
+                required=False,
+                default=False,
+                type='bool'
             )
         )
         return resource_base_arg_spec
 
     def _extract_resource_params(self):
         # extract the params belonging to this resource only.
-        unwanted_resource_params = ["state", "id"]
+        unwanted_resource_params = [
+            "state", "id", "create_or_update_subresource_first",
+            "delete_subresource_first", "do_wait_till_create",
+            "achieve_subresource_state_if_del_parent"]
         unwanted_resource_params += self.baseline_args.keys()
         if self.get_resource_name() not in BASE_RESOURCES:
             unwanted_resource_params = set([self.get_unique_arg_identifier() +
@@ -525,14 +659,18 @@ class NSXTBaseRealizableResource(ABC):
                                   successfully_updated_resources=srel)
 
     def _send_request_to_API(self, suffix="", ignore_error=True,
-                             method='GET', data=None):
+                             method='GET', data=None,
+                             resource_base_url=None):
         try:
-            if self.get_resource_name() not in BASE_RESOURCES:
-                resource_base_url = self.resource_class.get_resource_base_url(
-                    parent_info=self._parent_info)
-            else:
-                resource_base_url = self.resource_class.get_resource_base_url(
-                    baseline_args=self.baseline_args)
+            if not resource_base_url:
+                if self.get_resource_name() not in BASE_RESOURCES:
+                    resource_base_url = (self.resource_class.
+                                         get_resource_base_url(
+                                             parent_info=self._parent_info))
+                else:
+                    resource_base_url = (self.resource_class.
+                                         get_resource_base_url(
+                                             baseline_args=self.baseline_args))
 
             (rc, resp) = self.policy_communicator.request(
                 resource_base_url + suffix, validate_certs=self.validate_certs,
@@ -588,11 +726,11 @@ class NSXTBaseRealizableResource(ABC):
                 subresources.append(attr)
         if hasattr(self, "_state") and self._state == "present":
             subresources.sort(key=lambda subresource:
-                              subresource.get_resource_creation_priority(),
+                              subresource().get_resource_update_priority(),
                               reverse=True)
         else:
             subresources.sort(key=lambda subresource:
-                              subresource.get_resource_creation_priority(),
+                              subresource().get_resource_update_priority(),
                               reverse=False)
         for subresource in subresources:
             yield subresource

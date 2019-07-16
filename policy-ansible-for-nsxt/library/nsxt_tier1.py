@@ -78,26 +78,43 @@ options:
                      Either or both NDRA and/or DAD profiles can be
                      configured. Related attribute ipv6_dad_profile_id.
         type: str
+    ipv6_ndra_profile_display_name:
+        description: Same as ipv6_ndra_profile_id. Either one can be specified.
+                     If both are specified, ipv6_ndra_profile_id takes
+                     precedence.
+        type: str
     ipv6_dad_profile_id:
         description: IPv6 DRA profile configuration on Tier1.
                      Either or both NDRA and/or DAD profiles can be
                      configured. Related attribute ipv6_ndra_profile_id.
         type: str
+    ipv6_dad_profile_display_name:
+        description: Same as ipv6_dad_profile_id. Either one can be specified.
+                     If both are specified, ipv6_dad_profile_id takes
+                     precedence.
+        type: str
     dhcp_config_id:
         description: DHCP configuration for Segments connected to
                      Tier-1. DHCP service is configured in relay mode.
+        type: str
+    dhcp_config_display_name:
+        description: Same as dhcp_config_id. Either one can be specified.
+                     If both are specified, dhcp_config_id takes precedence.
         type: str
     t1ls_id:
         description: Tier-1 Locale Service ID
         required: false
         type: str
+    t1ls_display_name:
+        description:
+            - Tier-1 Locale Service display name.
+            - Either this or t1ls_id must be specified. If both are specified,
+              t1ls_id takes precedence.
+        required: false
+        type: str
     t1ls_description:
         description: Tier-1 Locale Service  description
         type: str
-    t1ls_display_name:
-        description: Tier-1 Locale Service display name
-        type: str
-        default: t1ls_id
     t1ls_state:
         description:
             - "State can be either 'present' or 'absent'. 'present' is used to
@@ -137,6 +154,12 @@ options:
                 description: ID of the edge cluster
                 required: true
                 type: str
+            edge_cluster_display_name:
+                description:
+                    - display name of the edge cluster.
+                    - Either this or edge_cluster_id must be specified. If
+                      both are specified, edge_cluster_id takes precedence
+                type: str
     t1ls_preferred_edge_nodes_info:
         description: Used to create paths to edge nodes. Specified edge
                      is used as preferred edge cluster member when
@@ -158,9 +181,20 @@ options:
                              located
                 required: true
                 type: str
-            edge_id:
+            edge_cluster_display_name:
+                description:
+                    - display name of the edge cluster.
+                    - either this or edge_cluster_id must be specified. If
+                      both are specified, edge_cluster_id takes precedence
+                type: str
+            edge_node_id:
                 description: ID of the edge node
-                required: true
+                type: str
+            edge_node_display_name:
+                description:
+                    - Display name of the edge node.
+                    - either this or edge_node_id must be specified. If
+                      both are specified, edge_node_id takes precedence.
                 type: str
     t1ls_route_redistribution_types:
         description: Enable redistribution of different types of routes
@@ -193,10 +227,13 @@ options:
     t1iface_description:
         description: Tier-1 Interface  description
         type: str
-    t1iface_display_name:
-        description: Tier-1 Interface display name
+    t0iface_display_name:
+        description:
+            - Tier-1 Interface display name
+            - Either this or t1iface_id must be specified. If both are
+              specified, t1iface_id takes precedence.
+        required: false
         type: str
-        default: t1iface_id
     t1iface_state:
         description:
             - "State can be either 'present' or 'absent'. 'present' is used to
@@ -227,6 +264,12 @@ options:
         description:
             - Specify Segment to which this interface is connected to.
             - Required if I(t1iface_id != null).
+        type: str
+    t0iface_segment_display_name:
+        description:
+            - Same as t1iface_segment_id
+            - Either this or t1iface_segment_id must be specified. If
+              both are specified, t1iface_segment_id takes precedence.
         type: str
     t1iface_subnets:
         description:
@@ -282,7 +325,7 @@ if __name__ == '__main__':
     from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
     from ansible.module_utils.policy_ipv6_profiles import (
         PolicyIpv6NdraProfiles)
-    from ansible.module_utils.policy_dhcp import PolicDhcpRelayConfig
+    from ansible.module_utils.policy_dhcp import PolicyDhcpRelayConfig
     from ansible.module_utils.policy_edge_cluster import PolicyEdgeCluster
     from ansible.module_utils.policy_edge_node import PolicyEdgeNode
 
@@ -304,6 +347,10 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 type='bool'
             ),
             dhcp_config_id=dict(
+                required=False,
+                type='str'
+            ),
+            dhcp_config_display_name=dict(
                 required=False,
                 type='str'
             ),
@@ -332,7 +379,15 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 required=False,
                 type='str'
             ),
+            ipv6_ndra_profile_display_name=dict(
+                required=False,
+                type='str'
+            ),
             ipv6_dad_profile_id=dict(
+                required=False,
+                type='str'
+            ),
+            ipv6_dad_profile_display_name=dict(
                 required=False,
                 type='str'
             ),
@@ -381,6 +436,10 @@ class NSXTTier1(NSXTBaseRealizableResource):
             tier0_id=dict(
                 required=False,
                 type='str'
+            ),
+            tier0_display_name=dict(
+                required=False,
+                type='str'
             )
         )
         return tier1_arg_spec
@@ -391,31 +450,45 @@ class NSXTTier1(NSXTBaseRealizableResource):
 
     def update_resource_params(self):
         ipv6_profile_paths = []
-        if "ipv6_ndra_profile_id" in self.resource_params:
-            ipv6_ndra_profile_id = self.resource_params.pop(
-                "ipv6_ndra_profile_id")
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "ipv6_ndra_profile"):
+            ipv6_ndra_profile_base_url = (PolicyIpv6NdraProfiles.
+                                          get_resource_base_url())
+            ipv6_ndra_profile_id = self.get_id_using_attr_name_else_fail(
+                    "ipv6_ndra_profile", self.resource_params,
+                    ipv6_ndra_profile_base_url, "Ipv6NdraProfile")
             ipv6_profile_paths.append(
-                PolicyIpv6NdraProfiles.get_resource_base_url() +
-                "/" + ipv6_ndra_profile_id)
-        if "ipv6_dad_profile_id" in self.resource_params:
-            ipv6_dad_profile_id = self.resource_params.pop(
-                "ipv6_dad_profile_id")
+                ipv6_ndra_profile_base_url + "/" + ipv6_ndra_profile_id)
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "ipv6_dad_profile"):
+            ipv6_dad_profile_base_url = (PolicyIpv6DadProfiles.
+                                         get_resource_base_url())
+            ipv6_dad_profile_id = self.get_id_using_attr_name_else_fail(
+                    "ipv6_dad_profile", self.resource_params,
+                    ipv6_dad_profile_base_url, "Ipv6DadProfile")
             ipv6_profile_paths.append(
-                PolicyIpv6DadProfiles.get_resource_base_url() +
-                "/" + ipv6_dad_profile_id)
+                ipv6_dad_profile_base_url + "/" + ipv6_dad_profile_id)
         if ipv6_profile_paths:
             self.resource_params["ipv6_profile_paths"] = ipv6_profile_paths
 
-        if "dhcp_config_id" in self.resource_params:
-            dhcp_config_id = self.resource_params.pop("dhcp_config_id")
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "dhcp_config"):
+            dhcp_config_base_url = (
+                PolicyDhcpRelayConfig.get_resource_base_url())
+            dhcp_config_id = self.get_id_using_attr_name_else_fail(
+                "dhcp_config", self.resource_params,
+                dhcp_config_base_url, "DhcpRelayConfig")
             self.resource_params["dhcp_config_paths"] = [
-                PolicDhcpRelayConfig.get_resource_base_url() + "/" +
-                dhcp_config_id]
+                dhcp_config_base_url + "/" + dhcp_config_id]
 
-        if "tier0_id" in self.resource_params:
-            tier0_id = self.resource_params.pop("tier0_id")
+        if self.do_resource_params_have_attr_with_id_or_display_name(
+                "tier0"):
+            tier0_base_url = NSXTTier0.get_resource_base_url()
+            tier0_id = self.get_id_using_attr_name_else_fail(
+                "tier0", self.resource_params,
+                tier0_base_url, "Tier0")
             self.resource_params["tier0_path"] = (
-                NSXTTier0.get_resource_base_url() + "/" + tier0_id)
+                tier0_base_url + "/" + tier0_id)
 
     def update_parent_info(self, parent_info):
         parent_info["tier1_id"] = self.id
@@ -436,16 +509,20 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     required=False,
                     type='dict',
                     options=dict(
+                        # Note that only default site_id and
+                        # enforcementpoint_id are used
                         site_id=dict(
-                            required=True,
-                            type='str'
+                            type='str',
+                            default="default"
                         ),
                         enforcementpoint_id=dict(
-                            required=True,
-                            type='str'
+                            type='str',
+                            default="default"
                         ),
                         edge_cluster_id=dict(
-                            required=True,
+                            type='str'
+                        ),
+                        edge_cluster_display_name=dict(
                             type='str'
                         )
                     )
@@ -454,20 +531,26 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     required=False,
                     type='list',
                     options=dict(
+                        # Note that only default site_id and
+                        # enforcementpoint_id are used
                         site_id=dict(
-                            required=True,
-                            type='str'
+                            type='str',
+                            default="default"
                         ),
                         enforcementpoint_id=dict(
-                            required=True,
-                            type='str'
+                            type='str',
+                            default="default"
                         ),
                         edge_cluster_id=dict(
-                            required=True,
                             type='str'
                         ),
-                        edge_id=dict(
-                            required=True,
+                        edge_cluster_display_name=dict(
+                            type='str'
+                        ),
+                        edge_node_id=dict(
+                            type='str'
+                        ),
+                        edge_node_display_name=dict(
                             type='str'
                         )
                     )
@@ -488,14 +571,16 @@ class NSXTTier1(NSXTBaseRealizableResource):
             if "edge_cluster_info" in self.resource_params:
                 edge_cluster_info = self.resource_params.pop(
                     "edge_cluster_info")
-                site_id = edge_cluster_info.get("site_id", "default")
-                enforcementpoint_id = edge_cluster_info.get(
-                    "enforcementpoint_id", "default")
-                edge_cluster_id = edge_cluster_info["edge_cluster_id"]
-                self.resource_params["edge_cluster_path"] = (
+                site_id = edge_cluster_info["site_id"]
+                enforcementpoint_id = edge_cluster_info["enforcementpoint_id"]
+                edge_cluster_base_url = (
                     PolicyEdgeCluster.get_resource_base_url(
-                        site_id, enforcementpoint_id)
-                    + "/" + edge_cluster_id)
+                        site_id, enforcementpoint_id))
+                edge_cluster_id = self.get_id_using_attr_name(
+                    "edge_cluster", edge_cluster_info, edge_cluster_base_url,
+                    PolicyEdgeCluster.__name__)
+                self.resource_params["edge_cluster_path"] = (
+                    edge_cluster_base_url + "/" + edge_cluster_id)
 
             if "preferred_edge_nodes_info" in self.resource_params:
                 preferred_edge_nodes_info = self.resource_params.pop(
@@ -506,13 +591,19 @@ class NSXTTier1(NSXTBaseRealizableResource):
                         "site_id", "default")
                     enforcementpoint_id = preferred_edge_node_info.get(
                         "enforcementpoint_id", "default")
-                    edge_cluster_id = preferred_edge_node_info[
-                        "edge_cluster_id"]
-                    edge_id = preferred_edge_node_info["edge_id"]
+                    edge_cluster_base_url = (
+                        PolicyEdgeCluster.get_resource_base_url(
+                            site_id, enforcementpoint_id))
+                    edge_cluster_id = self.get_id_using_attr_name(
+                        "edge_cluster", preferred_edge_node_info,
+                        edge_cluster_base_url, PolicyEdgeCluster.__name__)
+                    edge_node_base_url = PolicyEdgeNode.get_resource_base_url(
+                        site_id, enforcementpoint_id, edge_cluster_id)
+                    edge_node_id = self.get_id_using_attr_name(
+                        "edge_node", preferred_edge_node_info,
+                        edge_node_base_url, PolicyEdgeNode.__name__)
                     self.resource_params["preferred_edge_paths"].append(
-                        PolicyEdgeNode.get_resource_base_url(
-                            site_id, enforcementpoint_id, edge_cluster_id)
-                        + "/" + edge_id)
+                        edge_node_base_url + "/" + edge_node_id)
 
         def update_parent_info(self, parent_info):
             parent_info["t1ls_id"] = self.id
@@ -535,7 +626,11 @@ class NSXTTier1(NSXTBaseRealizableResource):
                         type='str'
                     ),
                     segment_id=dict(
-                        required=True,
+                        required=False,
+                        type='str'
+                    ),
+                    segment_display_name=dict(
+                        required=False,
                         type='str'
                     ),
                     subnets=dict(
@@ -553,18 +648,25 @@ class NSXTTier1(NSXTBaseRealizableResource):
                         .format(tier1_id, locale_service_id))
 
             def update_resource_params(self):
-                if "ipv6_ndra_profile_id" in self.resource_params:
-                    ipv6_ndra_profile_id = self.resource_params.pop(
-                        "ipv6_ndra_profile_id")
-                    self.resource_params["ipv6_profile_paths"] = [
-                        PolicyIpv6NdraProfiles.get_resource_base_url() +
-                        "/" + ipv6_ndra_profile_id
-                    ]
-
                 # segment_id is a required attr
-                segment_id = self.resource_params.pop("segment_id")
+                segment_base_url = NSXTSegment.get_resource_base_url()
+                segment_id = self.get_id_using_attr_name_else_fail(
+                    "segment", self.resource_params,
+                    segment_base_url,
+                    "Segment")
                 self.resource_params["segment_path"] = (
-                    NSXTSegment.get_resource_base_url() + "/" + segment_id)
+                    segment_base_url + "/" + segment_id)
+
+                if self.do_resource_params_have_attr_with_id_or_display_name(
+                        "ipv6_ndra_profile"):
+                    ipv6_ndra_profile_url = (
+                        PolicyIpv6NdraProfiles.get_resource_base_url())
+                    ipv6_ndra_profile_id = (
+                        self.get_id_using_attr_name_else_fail(
+                            "ipv6_ndra_profile", self.resource_params,
+                            ipv6_ndra_profile_url, "Ipv6 NDRA Profile"))
+                    self.resource_params["ipv6_profile_paths"] = [
+                        ipv6_ndra_profile_url + "/" + ipv6_ndra_profile_id]
 
 
 if __name__ == '__main__':
