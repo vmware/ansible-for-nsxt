@@ -22,10 +22,7 @@ Please note that you must specify the correct vmware args in order to successful
    1. Segment Port
 4. Policy Group
 5. Security Policy and Firewall rules
-6. Load Balancer
-   1. Virtual Servers
-   2. Service
-7. IP Pools
-8. IP Blocks
+6. IP Pools
+7. IP Blocks
 
 Note that to add a new modules, it's base class name should be added in the BASE_RESOURCES in modules/nsxt_base_resource.py
