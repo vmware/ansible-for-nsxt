@@ -73,16 +73,17 @@ class NSXTBaseRealizableResource(ABC):
 
         self.validate_certs = self.module.params['validate_certs']
         self._state = self.get_attribute('state')
-        if self.get_resource_name() in BASE_RESOURCES:
-            self.id = self._get_id_using_attr_name(
-                None, self.module.params,
-                self.get_resource_base_url(self.baseline_args),
-                self.get_unique_arg_identifier())
-        else:
-            self.id = self._get_id_using_attr_name(
-                None, self.module.params,
-                self.get_resource_base_url(self._parent_info),
-                self.get_unique_arg_identifier())
+        if not (hasattr(self, 'id') and self.id):
+            if self.get_resource_name() in BASE_RESOURCES:
+                self.id = self._get_id_using_attr_name(
+                    None, self.module.params,
+                    self.get_resource_base_url(self.baseline_args),
+                    self.get_unique_arg_identifier())
+            else:
+                self.id = self._get_id_using_attr_name(
+                    None, self.module.params,
+                    self.get_resource_base_url(self._parent_info),
+                    self.get_unique_arg_identifier())
         if self.id is None:
             return
 
@@ -403,7 +404,8 @@ class NSXTBaseRealizableResource(ABC):
         if (ansible_module.params[resource.get_unique_arg_identifier() +
                                   "_id"] is not None or
                 ansible_module.params[resource.get_unique_arg_identifier() +
-                                      "_display_name"]) is not None:
+                                      "_display_name"] is not None or
+                (hasattr(resource, 'id') and resource.id)):
             # This resource is specified so update the `required` fields of
             # this resource.
             resource_arg_spec = resource_class.get_resource_spec()
@@ -414,6 +416,9 @@ class NSXTBaseRealizableResource(ABC):
                     key].get("required", False)
             base_arg_spec = self._get_base_arg_spec_of_resource()
             for key, value in base_arg_spec.items():
+                if (hasattr(resource, 'id') and resource.id and
+                        key == "display_name"):
+                    continue
                 arg_key = (resource.get_unique_arg_identifier() + "_" +
                            key)
                 self._arg_spec[arg_key]["required"] = base_arg_spec[
