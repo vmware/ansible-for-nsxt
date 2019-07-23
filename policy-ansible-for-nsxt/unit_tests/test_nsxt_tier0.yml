@@ -13,7 +13,6 @@
         username: "default"
         password: "default"
         validate_certs: False
-        id: test-tier0
         display_name: test-tier0
         state: "present"
         ha_mode: "ACTIVE_STANDBY"
@@ -23,19 +22,29 @@
         tags:
           - scope: "a"
             tag: "b"
-        t0ls_id: test-t0ls
         t0ls_state: "present"
         t0ls_display_name: "test-t0ls"
         t0ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
         t0ls_edge_cluster_info:
-          site_id: "default"
-          enforcementpoint_id: "nsx"
           edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
         t0ls_preferred_edge_nodes_info:
-          - site_id: "default"
-            enforcementpoint_id: "nsx"
-            edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
+          - edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
             edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
+        t0ls_bgp_state: "present"
+        t0ls_bgp_local_as_num: 1211
+        t0ls_bgp_inter_sr_ibgp: False
+        t0ls_bgp_graceful_restart_config:
+          mode: "GR_AND_HELPER"
+          timer:
+            restart_timer: 12
+        t0ls_bgp_route_aggregations:
+            - prefix: "10.1.1.0/24"
+            - prefix: "11.1.0.0/16"
+              summary_only: False
+        t0ls_bgp_neighbor_display_name: "neigh1"
+        t0ls_bgp_neighbor_neighbor_address: "1.2.3.4"
+        t0ls_bgp_neighbor_remote_as_num: "12"
+        t0ls_bgp_neighbor_state: "absent"
         t0iface_id: "test-t0-t0ls-iface"
         t0iface_display_name: "test-t0-t0ls-iface"
         t0iface_state: "present"
@@ -44,7 +53,5 @@
             prefix_len: 24
         t0iface_segment_id: "sg-uplink"
         t0iface_edge_node_info:
-          site_id: "default"
-          enforcementpoint_id: "nsx"
           edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
           edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
