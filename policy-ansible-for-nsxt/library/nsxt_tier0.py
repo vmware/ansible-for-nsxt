@@ -246,6 +246,212 @@ options:
             - TIER0_IPSEC_LOCAL_IP: Redistribute IPSec subnets.
             - TIER0_NAT: Redistribute NAT IPs owned by Tier-0.
         type: list
+    t0ls_bgp_ecmp:
+        description: Flag to enable ECMP.
+        type: bool
+        required: False
+        default: True
+    t0ls_bgp_enabled:
+        description: Flag to enable BGP configuration. Disabling will stop
+                     feature and BGP peering.
+        type: bool
+        required: False
+        default: True
+    t0ls_bgp_graceful_restart_config:
+        description: Configuration field to hold BGP Restart mode and timer.
+        type: dict
+        required: False
+        suboptions:
+            mode:
+                description: BGP Graceful Restart Configuration Mode
+                    - If mode is DISABLE, then graceful restart and helper
+                      modes are disabled.
+                    - If mode is GR_AND_HELPER, then both graceful restart and
+                      helper modes are enabled.
+                    - If mode is HELPER_ONLY, then helper mode is enabled.
+                      HELPER_ONLY mode is the ability for a BGP speaker to
+                      indicate its ability to preserve forwarding state during
+                      BGP restart.
+                    - GRACEFUL_RESTART mode is the ability of a BGP speaker to
+                      advertise its restart to its peers.
+                type: str
+                required: False
+                default: 'HELPER_ONLY'
+                choices:
+                    - DISABLE
+                    - GR_AND_HELPER
+                    - HELPER_ONLY
+            timer:
+                description: BGP Graceful Restart Timer
+                type: dict
+                required: False
+                suboptions:
+                    restart_timer:
+                        description:
+                            - BGP Graceful Restart Timer
+                            - Maximum time taken (in seconds) for a BGP session
+                              to be established after a restart. This can be
+                              used to speed up routing convergence by its peer
+                              in case the BGP speaker does not come back up
+                              after a restart. If the session is not
+                              re-established within this timer, the receiving
+                              speaker will delete all the stale routes from
+                              that peer. Min 1 and Max 3600
+                        type: int
+                        default: 180
+                    stale_route_timer:
+                        description:
+                            - BGP Stale Route Timer
+                            - Maximum time (in seconds) before stale routes are
+                              removed from the RIB (Routing Information Base)
+                              when BGP restarts. Min 1 and Max 3600
+                        type: int
+                        default: 600
+    t0ls_bgp_inter_sr_ibgp:
+        description: Flag to enable inter SR IBGP configuration. When not
+                     specified, inter SR IBGP is automatically enabled if
+                     Tier-0 is created in ACTIVE_ACTIVE ha_mode.
+        type: bool
+        required: False
+    t0ls_bgp_local_as_num:
+        description:
+            - BGP AS number in ASPLAIN/ASDOT Format.
+            - Specify BGP AS number for Tier-0 to advertize to BGP peers.
+              AS number can be specified in ASPLAIN (e.g., "65546") or
+              ASDOT (e.g., "1.10") format. Empty string disables BGP feature.
+        type: str
+        required: True
+    t0ls_bgp_multipath_relax:
+        description: Flag to enable BGP multipath relax option.
+        type: bool
+        default: True
+    t0ls_bgp_route_aggregations:
+        description: List of routes to be aggregated
+        type: dict
+        required: False
+        suboptions:
+            prefix:
+                description: CIDR of aggregate address
+                type: str
+                required: True
+            summary_only:
+                description:
+                    - Send only summarized route.
+                    - Summarization reduces number of routes advertised by
+                      representing multiple related routes with prefix
+                      property.
+                type: bool
+                default: True
+    t0ls_bgp_neighbor_allow_as_in:
+        description: Flag to enable allowas_in option for BGP neighbor
+        type: bool
+        default: False
+    t0ls_bgp_neighbor_bfd:
+        description:
+            - BFD configuration for failure detection.
+            - BFD is enabled with default values when not configured.
+        type: dict
+        required: False
+        suboptions:
+            enabled:
+                description: Flag to enable BFD cofiguration
+                type: bool
+                required: False
+            interval:
+                description: Time interval between heartbeat packets in
+                             milliseconds. Min 300 and Max 60000
+                type: int
+                default: 1000
+            multiple:
+                description:
+                    - Declare dead multiple.
+                    - Number of times heartbeat packet is missed before BFD
+                      declares the neighbor is down. Min 2 and Max 16
+                type: int
+                default: 3
+    t0ls_bgp_neighbor_graceful_restart_mode:
+        description:
+            - BGP Graceful Restart Configuration Mode
+            - If mode is DISABLE, then graceful restart and helper modes are
+              disabled.
+            - If mode is GR_AND_HELPER, then both graceful restart and helper
+              modes are enabled.
+            - If mode is HELPER_ONLY, then helper mode is enabled. HELPER_ONLY
+              mode is the ability for a BGP speaker to indicate its ability
+              to preserve forwarding state during BGP restart.
+            - GRACEFUL_RESTART mode is the ability of a BGP speaker to
+              advertise its restart to its peers.
+        type: str
+        choices:
+            - DISABLE
+            - GR_AND_HELPER
+            - HELPER_ONLY
+    t0ls_bgp_neighbor_hold_down_time:
+        description: Wait time in seconds before declaring peer dead. Min 1 and
+                     Max 65535
+        type: int
+        default: 180
+    t0ls_bgp_neighbor_keep_alive_time:
+        description: Interval between keep alive messages sent to peer. Min 1
+                     and Max 65535.
+        type: int
+        default: 60
+    t0ls_bgp_neighbor_maximum_hop_limit:
+        description: Maximum number of hops allowed to reach BGP neighbor.
+                     Min 1 and Max 255
+        type: int
+        default: 1
+    t0ls_bgp_neighbor_neighbor_address:
+        description: Neighbor IP Address
+        type: str
+        required: True
+    t0ls_bgp_neighbor_remote_as_num:
+        description: 4 Byte ASN of the neighbor in ASPLAIN Format
+        type: str
+        required: True
+    t0ls_bgp_neighbor_route_filtering:
+        description: Enable address families and route filtering in each
+                     direction
+        type: dict
+        required: False
+        suboptions:
+            address_family:
+                description:
+                type: str
+                required: False
+                choices:
+                    - 'IPV4'
+                    - 'IPV6'
+                    - 'VPN'
+            enabled:
+                description: Flag to enable address family.
+                type: bool
+                default: True
+            in_route_filters:
+                description:
+                    - Prefix-list or route map path for IN direction
+                    - Specify path of prefix-list or route map to filter routes
+                      for IN direction.
+                type: list
+                required: False
+            out_route_filters:
+                description:
+                    - Prefix-list or route map path for OUT direction
+                    - Specify path of prefix-list or route map to filter routes
+                      for OUT direction. When not specified, a built-in
+                      prefix-list named 'prefixlist-out-default' is
+                      automatically applied.
+                type: list
+                required: False
+    t0ls_bgp_neighbor_source_addresses:
+        description:
+            - Source IP Addresses for BGP peering
+            - Source addresses should belong to Tier0 external or loopback
+              interface IP Addresses. BGP peering is formed from all these
+              addresses. This property is mandatory when maximum_hop_limit is
+              greater than 1.
+        type: list
+        required: False
     t0iface_id:
         description: Tier-0 Interface ID
         type: str
@@ -367,6 +573,21 @@ EXAMPLES = '''
     t0ls_preferred_edge_nodes_info:
       - edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
         edge_node_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
+    t0ls_bgp_state: "present"
+    t0ls_bgp_local_as_num: 1211
+    t0ls_bgp_inter_sr_ibgp: False
+    t0ls_bgp_graceful_restart_config:
+      mode: "GR_AND_HELPER"
+      timer:
+        restart_timer: 12
+    t0ls_bgp_route_aggregations:
+      - prefix: "10.1.1.0/24"
+      - prefix: "11.1.0.0/16"
+        summary_only: False
+    t0ls_bgp_neighbor_display_name: "neigh1"
+    t0ls_bgp_neighbor_neighbor_address: "1.2.3.4"
+    t0ls_bgp_neighbor_remote_as_num: "12"
+    t0ls_bgp_neighbor_state: "absent"
     t0iface_id: "test-t0-t0ls-iface"
     t0iface_display_name: "test-t0-t0ls-iface"
     t0iface_state: "present"
@@ -720,6 +941,210 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     PolicyEdgeNode.__name__)
                 self.resource_params["edge_path"] = (
                     edge_node_base_url + "/" + edge_node_id)
+
+        class NSXTTier0LocaleServiceBGP(NSXTBaseRealizableResource):
+            def __init__(self):
+                self.id = 'bgp'
+                super().__init__()
+
+            def get_unique_arg_identifier(self):
+                return (
+                    NSXTTier0.NSXTTier0LocaleService.NSXTTier0LocaleServiceBGP.
+                    get_unique_arg_identifier())
+
+            @staticmethod
+            def get_unique_arg_identifier():
+                return "t0ls_bgp"
+
+            @staticmethod
+            def get_resource_spec():
+                tier0_ls_bgp_arg_spec = {}
+                tier0_ls_bgp_arg_spec.update(
+                    ecmp=dict(
+                        required=False,
+                        default=True,
+                        type='bool'
+                    ),
+                    enabled=dict(
+                        required=False,
+                        default=True,
+                        type='bool'
+                    ),
+                    graceful_restart_config=dict(
+                        required=False,
+                        type='dict',
+                        options=dict(
+                            mode=dict(
+                                required=False,
+                                type='str',
+                                choices=['DISABLE', 'GR_AND_HELPER',
+                                         'HELPER_ONLY'],
+                                default='HELPER_ONLY'
+                            ),
+                            timer=dict(
+                                required=False,
+                                type='dict',
+                                options=dict(
+                                    restart_timer=dict(
+                                        required=False,
+                                        type='int',
+                                        default=180
+                                    ),
+                                    stale_route_timer=dict(
+                                        required=False,
+                                        type='int',
+                                        default=600
+                                    ),
+                                )
+                            )
+                        )
+                    ),
+                    inter_sr_ibgp=dict(
+                        required=False,
+                        type='bool'
+                    ),
+                    local_as_num=dict(
+                        required=True,
+                        type='str'
+                    ),
+                    multipath_relax=dict(
+                        required=False,
+                        type='bool',
+                        default=True
+                    ),
+                    route_aggregations=dict(
+                        required=False,
+                        type='list',
+                        options=dict(
+                            prefix=dict(
+                                required=True,
+                                type='str'
+                            ),
+                            summary_only=dict(
+                                required=False,
+                                type='bool',
+                                default=True
+                            )
+                        )
+                    )
+                )
+                return tier0_ls_bgp_arg_spec
+
+            @staticmethod
+            def get_resource_base_url(parent_info):
+                tier0_id = parent_info.get("tier0_id", 'default')
+                locale_service_id = parent_info.get("t0ls_id", 'default')
+                return ('/infra/tier-0s/{}/locale-services/{}'
+                        .format(tier0_id, locale_service_id))
+
+            class NSXTTier0LocaleServiceBGPNeighbor(
+                    NSXTBaseRealizableResource):
+                def get_unique_arg_identifier(self):
+                    return (
+                        NSXTTier0.NSXTTier0LocaleService.
+                        NSXTTier0LocaleServiceBGP.
+                        get_unique_arg_identifier())
+
+                @staticmethod
+                def get_unique_arg_identifier():
+                    return "t0ls_bgp_neighbor"
+
+                @staticmethod
+                def get_resource_spec():
+                    tier0_ls_bgp_neighbor_arg_spec = {}
+                    tier0_ls_bgp_neighbor_arg_spec.update(
+                        allow_as_in=dict(
+                            required=False,
+                            default=False,
+                            type='bool'
+                        ),
+                        bfd=dict(
+                            type='dict',
+                            required=False,
+                            options=dict(
+                                enabled=dict(
+                                    required=False,
+                                    default=False,
+                                    type='bool'
+                                ),
+                                interval=dict(
+                                    required=False,
+                                    type='int',
+                                    default=1000
+                                ),
+                                multiple=dict(
+                                    required=False,
+                                    type='int',
+                                    default=3
+                                )
+                            )
+                        ),
+                        graceful_restart_mode=dict(
+                            type='str',
+                            required=False,
+                            choices=['DISABLE', 'GR_AND_HELPER', 'HELPER_ONLY']
+                        ),
+                        hold_down_time=dict(
+                            required=False,
+                            type='int',
+                            default=180
+                        ),
+                        keep_alive_time=dict(
+                            required=False,
+                            type='int',
+                            default=60
+                        ),
+                        maximum_hop_limit=dict(
+                            required=False,
+                            type='int',
+                            default=1
+                        ),
+                        neighbor_address=dict(
+                            required=True,
+                            type='str'
+                        ),
+                        remote_as_num=dict(
+                            required=True,
+                            type='str'
+                        ),
+                        route_filtering=dict(
+                            required=False,
+                            type=dict,
+                            options=dict(
+                                address_family=dict(
+                                    required=False,
+                                    type='str',
+                                    choices=['IPV4', 'IPV6', 'VPN']
+                                ),
+                                enabled=dict(
+                                    type='bool',
+                                    default=True,
+                                    required=False
+                                ),
+                                in_route_filters=dict(
+                                    type='list',
+                                    required=False
+                                ),
+                                out_route_filters=dict(
+                                    type='list',
+                                    required=False
+                                )
+                            )
+                        ),
+                        source_addresses=dict(
+                            required=False,
+                            type='list'
+                        )
+                    )
+                    return tier0_ls_bgp_neighbor_arg_spec
+
+                @staticmethod
+                def get_resource_base_url(parent_info):
+                    tier0_id = parent_info.get("tier0_id", 'default')
+                    locale_service_id = parent_info.get("t0ls_id", 'default')
+                    return ('/infra/tier-0s/{}/locale-services/{}'
+                            '/bgp/neighbors'.format(tier0_id,
+                                                    locale_service_id))
 
 
 if __name__ == '__main__':
