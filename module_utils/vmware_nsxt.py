@@ -36,7 +36,8 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         force_basic_auth = False
         client_cert = get_certificate_file_path('NSX_MANAGER_CERT_PATH')
         if client_cert is None:
-            raise Exception("It seems that either you have not passed your username password correctly or your path for NSX_MANAGER_CERT_PATH is not set correctly.")
+            raise Exception('It seems that either you have not passed your username password correctly or '
+                'your path for NSX_MANAGER_CERT_PATH is not set correctly.')
     else:
         client_cert = None
 
@@ -51,7 +52,10 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     try:
         raw_data = r.read()
         if raw_data:
-            data = json.loads(raw_data)
+            if is_json(raw_data):
+                data = json.loads(raw_data)
+            else:
+                data = raw_data
         else:
             raw_data = None
     except:
@@ -145,3 +149,16 @@ def get_vc_ip_from_display_name(module, manager_url, mgr_username, mgr_password,
     if exit_if_not_found:
         module.fail_json(msg='vCenter with display name %s doesn\'t exist.' % display_name)
         return -1
+
+def is_json(myjson):
+    '''
+    Param:
+    myjson: String to be checked
+    result:
+    Checks if the string is valid json or not.
+    '''
+    try:
+        json_object = json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
