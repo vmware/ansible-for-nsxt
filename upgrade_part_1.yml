@@ -68,9 +68,18 @@
           pause_on_error: True
           pause_after_each_group: True
 
+    - name: Get Upgrade Units Groups
+      upgrade_get_upgrade_units_groups:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "HOST"
+      register: upgrade_units
+
     - name: Create Upgrade Units Group 1
       upgrade_create_upgrade_units_groups:
-          hostname: "{{result.ip_address}}"
+          hostname: "{{upgrade_ip_address}}"
           username: "{{username}}"
           password: "{{password}}"
           validate_certs: "{{validate_certs}}"
@@ -83,7 +92,7 @@
 
     - name: Create Upgrade Units Group 2
       upgrade_create_upgrade_units_groups:
-          hostname: "{{result.ip_address}}"
+          hostname: "{{upgrade_ip_address}}"
           username: "{{username}}"
           password: "{{password}}"
           validate_certs: "{{validate_certs}}"
@@ -108,3 +117,23 @@
           password: "{{password}}"
           validate_certs: "{{validate_certs}}"
 
+
+
+#  ################# Upgrade Hosts Phase #################
+
+#  #############  Upgrade Host Unite Group 1 #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"

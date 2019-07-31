@@ -1,0 +1,223 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile-upgrade.yml
+  tasks:
+
+#  #############  PREPARE FOR UPGRADE  #############
+
+    - name: Upload MUB
+      upgrade_upload_mub:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          url: "{{url}}"
+      register: result
+
+    - name: Check Upload Status
+      upgrade_check_upload_status:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          bundle_id: "{{result.response.bundle_id}}"
+
+    - name: Accept EULA
+      upgrade_accept_eula:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+    - name: Upgrade UC
+      upgrade_uc:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+    - name: UC Upgrade Status
+      upgrade_uc_upgrade_status:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+    - name: Set Hosts Upgrade Plan
+      upgrade_set_upgrade_plan:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "HOST"
+          parallel: False
+          pause_on_error: True
+          pause_after_each_group: False
+
+    - name: Set MP Upgrade Plan
+      upgrade_set_upgrade_plan:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "MP"
+          parallel: True
+          pause_on_error: True
+          pause_after_each_group: True
+
+    - name: Get Upgrade Units Groups
+      upgrade_get_upgrade_units_groups:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "HOST"
+      register: upgrade_units
+
+    - name: Create Upgrade Units Group 1
+      upgrade_create_upgrade_units_groups:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "HOST"
+          display_name: "UnitGroup_1"
+          parallel: False
+          upgrade_units: "{{upgrade_units.response.results}}"
+          esx_list:
+            - "esx-03a"
+
+
+    - name: Create Upgrade Units Group 2
+      upgrade_create_upgrade_units_groups:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "HOST"
+          display_name: "UnitGroup_2"
+          parallel: False
+          upgrade_units: "{{upgrade_units.response.results}}"
+          esx_list:
+            - "esx-04a"
+
+    - name: Run Pre-check
+      upgrade_run_pre_check:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+    - name: Aggregate Hosts Info
+      upgrade_aggregate_info:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+
+
+#  ################# Upgrade Hosts Phase #################
+
+#  #############  Upgrade Host Unite Group 1 #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Upgrade Host Unite Group 2 #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Upgrade Edge Pahse #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Upgrade MP Phase #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  ###########  Upgrade Finalization Phase ############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Run Post-check #############
+
+   - name: Run Post-check
+     run_post_check:
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "MP"

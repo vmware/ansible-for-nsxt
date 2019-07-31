@@ -1,0 +1,81 @@
+#  #############  Upgrade Host Unite Group 2 #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Upgrade Edge Phase #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Upgrade MP Phase #############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  ###########  Upgrade Finalization Phase ############
+
+    - name: Start Upgrade
+      upgrade_start_upgrade:
+          hostname: "{{upgrade_ip_address}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+
+   - name: Upgrade Status
+     upgrade_status:
+         hostname: "{{hostname}}"
+         username: "{{username}}"
+         password: "{{password}}"
+         validate_certs: "{{validate_certs}}"
+         component_type: "HOST"
+
+
+#  #############  Run Post-check #############
+
+   - name: Run Post-check
+     run_post_check:
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: "{{validate_certs}}"
+          component_type: "MP"

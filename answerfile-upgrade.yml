@@ -173,7 +173,7 @@ component_types:
 #   pause_on_error: True
 #   pause_after_each_group: True
 
-url: "http://192.168.205.174/VMware-NSX-upgrade-bundle-2.4.0.0.0.12250668.mub" # URL of MUB file location
+url: "http://192.168.0.253/VMware-NSX-upgrade-bundle-2.4.1.0.0.12989136.mub" # URL of MUB file location
 upgrade_ip_address: "192.168.100.1"
 # bundle_id: 2400012250668  # bundle_id is the version of the bundle withouth the dots
 # result: {"ip_address": "192.168.100.1"}  # TODO Remove when not needed

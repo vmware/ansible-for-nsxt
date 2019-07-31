@@ -1,0 +1,75 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Remove transport nodes
+      nsxt_transport_nodes:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "{{item.display_name}}"
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches:
+          - host_switch_profiles:
+            - name: "{{item.uplink_profile_name}}"
+              type: UplinkHostSwitchProfile
+            host_switch_name: "{{item.host_switch_name}}"
+            pnics:
+            - device_name: "{{item.device_name}}"
+              uplink_name: "{{item.uplink_name}}"
+        transport_zone_endpoints:
+        - transport_zone_name: "{{item.transport_zone_name}}"
+        node_deployment_info:
+          resource_type: "HostNode"
+          display_name: "{{item.display_name}}"
+          ip_addresses:
+          - "{{item.ip_address}}"
+          os_type: "{{item.os_type}}"
+          os_version: "{{item.os_version}}"
+          host_credential:
+            username: "{{item.username}}"
+            password: "{{item.password}}"
+            thumbprint: "{{item.thumbprint}}"
+        state: absent
+      with_items:
+        - "{{transport_nodes}}"
+
+    - name: Delete NSX-T Manager VM
+      nsxt_deploy_ova:
+        ovftool_path: "{{ovftool_path}}"
+        #folder: 'folder-os-datacenter'
+        datacenter: "{{datacenter}}"
+        datastore: "{{datastore}}"
+        portgroup: "{{portgroup}}"
+        cluster: "{{cluster}}"
+        dns_server: "{{dns_server}}"
+        dns_domain: "{{dns_domain}}"
+        ntp_server: "{{ntp_server}}"
+        gateway: "{{gateway}}"
+        admin_password: "{{password}}"
+        cli_password: "{{password}}"
+        path_to_ova: "{{path_to_ova}}"
+        ova_file: "{{ova_file}}"
+        vcenter: "{{vcenter_prod}}"
+        vcenter_user: "{{vcenter_user}}"
+        vcenter_passwd: "{{vcenter_passwd}}"
+        deployment_size: "{{appliance_size}}"
+        role: "{{appliance_role}}"
+        ip_address: "{{item.ip_address}}"
+        netmask: "{{item.netmask}}"
+        vmname: "{{item.vmname}}"
+        hostname: "{{item.hostname}}"
+        validate_certs: "{{validate_certs}}"
+        mgr_username: "{{username}}"
+        service_boot_timeout: "{{service_boot_timeout}}"
+        force_redeploy: "{{force_redeploy}}"
+        ssh_enabled: "{{ssh_enabled}}"
+        allow_ssh_root_login: "{{allow_ssh_root_login}}"
+        state: absent
+      with_items:
+        - "{{deploy_ova}}"
