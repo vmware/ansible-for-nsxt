@@ -947,6 +947,9 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 self.id = 'bgp'
                 super().__init__()
 
+            def skip_delete(self):
+                return True
+
             def get_unique_arg_identifier(self):
                 return (
                     NSXTTier0.NSXTTier0LocaleService.NSXTTier0LocaleServiceBGP.
