@@ -302,6 +302,14 @@ class NSXTBaseRealizableResource(ABC):
                               " for the resource {}".format(
                                   attr_name, str(resource_type)))
 
+    def skip_delete(self):
+        """
+            Override in subclass if this resource is skipped to be deleted.
+            Note that the children of this resource will still be deleted unless
+            they override this method as well.
+        """
+        return False
+
     def _get_id_using_attr_name(self, attr_name, params,
                                 resource_base_url, resource_type):
         # Pass attr_name '' or None to infer base resource's ID
@@ -405,7 +413,9 @@ class NSXTBaseRealizableResource(ABC):
                                   "_id"] is not None or
                 ansible_module.params[resource.get_unique_arg_identifier() +
                                       "_display_name"] is not None or
-                (hasattr(resource, 'id') and resource.id)):
+                (hasattr(resource, 'id') and resource.id) and
+                ansible_module.params[resource.get_unique_arg_identifier() +
+                                      "_state"] is not None):
             # This resource is specified so update the `required` fields of
             # this resource.
             resource_arg_spec = resource_class.get_resource_spec()
@@ -630,6 +640,8 @@ class NSXTBaseRealizableResource(ABC):
                                       successfully_updated_resources=srel)
 
     def _achieve_absent_state(self, successful_resource_exec_logs):
+        if self.skip_delete():
+            return
         if self.existing_resource is None:
             successful_resource_exec_logs.append({
                 "changed": False,
