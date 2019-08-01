@@ -576,7 +576,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 edge_cluster_base_url = (
                     PolicyEdgeCluster.get_resource_base_url(
                         site_id, enforcementpoint_id))
-                edge_cluster_id = self.get_id_using_attr_name(
+                edge_cluster_id = self.get_id_using_attr_name_else_fail(
                     "edge_cluster", edge_cluster_info, edge_cluster_base_url,
                     PolicyEdgeCluster.__name__)
                 self.resource_params["edge_cluster_path"] = (
@@ -594,12 +594,12 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     edge_cluster_base_url = (
                         PolicyEdgeCluster.get_resource_base_url(
                             site_id, enforcementpoint_id))
-                    edge_cluster_id = self.get_id_using_attr_name(
+                    edge_cluster_id = self.get_id_using_attr_name_else_fail(
                         "edge_cluster", preferred_edge_node_info,
                         edge_cluster_base_url, PolicyEdgeCluster.__name__)
                     edge_node_base_url = PolicyEdgeNode.get_resource_base_url(
                         site_id, enforcementpoint_id, edge_cluster_id)
-                    edge_node_id = self.get_id_using_attr_name(
+                    edge_node_id = self.get_id_using_attr_name_else_fail(
                         "edge_node", preferred_edge_node_info,
                         edge_node_base_url, PolicyEdgeNode.__name__)
                     self.resource_params["preferred_edge_paths"].append(
