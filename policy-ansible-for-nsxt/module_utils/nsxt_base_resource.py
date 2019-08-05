@@ -304,9 +304,9 @@ class NSXTBaseRealizableResource(ABC):
 
     def skip_delete(self):
         """
-            Override in subclass if this resource is skipped to be deleted.
-            Note that the children of this resource will still be deleted unless
-            they override this method as well.
+        Override in subclass if this resource is skipped to be deleted.
+        Note that the children of this resource will still be deleted unless
+        they override this method as well.
         """
         return False
 

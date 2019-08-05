@@ -101,6 +101,74 @@ options:
         description: Same as dhcp_config_id. Either one can be specified.
                      If both are specified, dhcp_config_id takes precedence.
         type: str
+    route_advertisement_rules:
+        description: Route advertisement rules and filtering
+        type: list
+        suboptions:
+            action:
+                description:
+                    - Action to advertise filtered routes to the connected
+                      Tier0 gateway.
+                choices:
+                    - PERMIT: Enables the advertisment
+                    - DENY: Disables the advertisement
+                type: str
+                required: true
+            name:
+                description: Display name for rule
+                type: str
+                required: true
+            prefix_operator:
+                description:
+                    - Prefix operator to filter subnets.
+                    - GE prefix operator filters all the routes with prefix
+                      length greater than or equal to the subnets configured.
+                    - EQ prefix operator filter all the routes with prefix
+                      length equal to the subnets configured.
+                type: str
+                choices:
+                    - GE
+                    - EQ
+            route_advertisement_types:
+                description:
+                    - Enable different types of route advertisements.
+                    - By default, Routes to IPSec VPN local-endpoint subnets
+                      (TIER1_IPSEC_LOCAL_ENDPOINT) are advertised if no value
+                      is supplied here.
+                type: list
+                choices:
+                    - 'TIER1_STATIC_ROUTES'
+                    - 'TIER1_CONNECTED'
+                    - 'TIER1_NAT'
+                    - 'TIER1_LB_VIP'
+                    - 'TIER1_LB_SNAT'
+                    - 'TIER1_DNS_FORWARDER_IP'
+                    - 'TIER1_IPSEC_LOCAL_ENDPOINT'
+            subnets:
+                description: Network CIDRs to be routed.
+                type: list
+    route_advertisement_types:
+        description:
+            - Enable different types of route advertisements.
+            - By default, Routes to IPSec VPN local-endpoint subnets
+              (TIER1_IPSEC_LOCAL_ENDPOINT) are advertised if no value is
+              supplied here.
+        type: list
+        choices:
+            - 'TIER1_STATIC_ROUTES'
+            - 'TIER1_CONNECTED'
+            - 'TIER1_NAT'
+            - 'TIER1_LB_VIP'
+            - 'TIER1_LB_SNAT'
+            - 'TIER1_DNS_FORWARDER_IP'
+            - 'TIER1_IPSEC_LOCAL_ENDPOINT'
+    tier0_id:
+        description: Tier-1 connectivity to Tier-0
+        type: str
+    tier0_display_name:
+        description: Same as tier0_id. Either one can be specified.
+                     If both are specified, tier0_id takes precedence.
+        type: str
     t1ls_id:
         description: Tier-1 Locale Service ID
         required: false
@@ -355,11 +423,6 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 type='str'
             ),
             disable_firewall=dict(
-                required=False,
-                type='bool',
-                default=False
-            ),
-            enable_standby_relocation=dict(
                 required=False,
                 type='bool',
                 default=False
