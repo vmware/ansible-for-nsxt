@@ -111,7 +111,7 @@ class NSXTPolicyGroup(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args):
-        return '/infra/domains/{}/groups/'.format(
+        return '/infra/domains/{}/groups'.format(
             baseline_args["domain_id"]
         )
 
