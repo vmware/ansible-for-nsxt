@@ -151,7 +151,7 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result['id']
     if exit_if_not_found:
-        module.fail_json(msg='No id exist with display name %s' % display_name)
+        module.fail_json(msg='No id exists with display name %s' % display_name)
 
 def get_tnp_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     transport_node_profiles = get_transport_node_profiles(module, manager_url, mgr_username, mgr_password, validate_certs)
@@ -168,7 +168,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         for host_switch_profile in host_switch_profiles:
             profile_obj = {}
             profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                    "/host-switch-profiles", host_switch_profile['name'])
+                                                    "/host-switch-profiles?include_system_owned=true", host_switch_profile['name'])
             profile_obj['key'] = host_switch_profile['type']
             host_switch_profile_ids.append(profile_obj)
         host_switch['host_switch_profile_ids'] = host_switch_profile_ids
@@ -287,7 +287,7 @@ def main():
     # delete the array
     id = transport_node_profile_id
     if id is None:
-        module.exit_json(changed=False, msg='No transport node profile exist with display name %s' % display_name)
+        module.exit_json(changed=False, msg='No transport node profile exists with display name %s' % display_name)
     if module.check_mode:
         module.exit_json(changed=True, debug_out=str(json.dumps(transport_node_profile_params)), id=id)
     try:
