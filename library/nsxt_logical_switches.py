@@ -206,7 +206,7 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
     for result in resp['results']:
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result['id']
-    module.fail_json(msg='No id existe with display name %s' % display_name)
+    module.fail_json(msg='No id exists with display name %s' % display_name)
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_switch_params ):
     if 'ip_pool_name' in logical_switch_params:
