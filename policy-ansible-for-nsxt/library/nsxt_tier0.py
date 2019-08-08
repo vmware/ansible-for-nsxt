@@ -245,6 +245,21 @@ options:
                                       subnets.
             - TIER0_IPSEC_LOCAL_IP: Redistribute IPSec subnets.
             - TIER0_NAT: Redistribute NAT IPs owned by Tier-0.
+            - TIER1_NAT: Redistribute NAT IPs advertised by Tier-1 instances.
+            - TIER1_LB_VIP: Redistribute LB VIP IPs advertised by Tier-1
+              instances.
+            - TIER1_LB_SNAT: Redistribute LB SNAT IPs advertised by Tier-1
+              instances.
+            - TIER1_DNS_FORWARDER_IP: Redistribute DNS forwarder subnets on
+              Tier-1 instances.
+            - TIER1_CONNECTED: Redistribute all subnets configured on Segments
+              and Service Interfaces.
+            - TIER1_SERVICE_INTERFACE: Redistribute Tier1 service interface
+              subnets.
+            - TIER1_SEGMENT: Redistribute subnets configured on Segments
+              connected to Tier1.
+            - TIER1_IPSEC_LOCAL_ENDPOINT: Redistribute IPSec VPN local-endpoint
+              subnets advertised by TIER1.
         type: list
     t0ls_bgp_ecmp:
         description: Flag to enable ECMP.
