@@ -726,7 +726,6 @@ class NSXTBaseRealizableResource(ABC):
 
         if self.get_resource_name() in BASE_RESOURCES:
             changed = False
-            logger.log(str(successful_resource_exec_logs))
             for successful_resource_exec_log in successful_resource_exec_logs:
                 if successful_resource_exec_log["changed"]:
                     changed = True
