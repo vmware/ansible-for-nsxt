@@ -1,0 +1,267 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+#
+# Variables file to deploy a simple topology
+
+{
+    "nsx_manager" : "10.114.200.11",
+    "nsx_username": "admin",
+    "nsx_password": "VMware1!VMware1!",
+    "validate_certs": "false",
+
+    "state": "present",
+
+    "tier0_gateways": [
+      {
+        "display_name": "Tier-0",
+        "ha_mode": "ACTIVE_STANDBY",
+        "tags": [
+          {
+            "tag": "ansible",
+            "scope": "demo"
+          }
+        ]
+      }
+    ],
+
+    "tier1_gateways": [
+      {
+        "display_name": "Tier-1",
+        "tier0_display_name": "Tier-0",
+        "tags": [
+          {
+            "tag": "ansible",
+            "scope": "demo"
+          }
+        ]
+      }
+    ],
+
+    "segments": [
+        {
+            "display_name": "Web-Segment",
+            "tier1_display_name": "Tier-1",
+            "tz": "Overlay-TZ",
+            "domain_name": "mylab.net",
+            "subnets": [
+                {
+                  "gateway_address": "192.168.10.1/24"
+                }
+            ],
+            "tags": [
+                {
+                  "tag": "ansible",
+                  "scope": "demo"
+                },
+                {
+                  "tag": "web",
+                  "scope": "east"
+                }
+            ]
+        },
+        {
+            "display_name": "App-Segment",
+            "tier1_display_name": "Tier-1",
+            "tz": "Overlay-TZ",
+            "domain_name": "mylab.net",
+            "subnets": [
+                {
+                  "gateway_address": "192.168.20.1/24"
+                }
+            ],
+            "tags": [
+                {
+                  "tag": "ansible",
+                  "scope": "demo"
+                },
+                {
+                  "tag": "app",
+                  "scope": "east"
+                }
+            ]
+        },
+        {
+            "display_name": "DB-Segment",
+            "tier1_display_name": "Tier-1",
+            "tz": "Overlay-TZ",
+            "domain_name": "mylab.net",
+            "subnets": [
+                {
+                  "gateway_address": "192.168.30.1/24"
+                }
+            ],
+            "tags": [
+                {
+                  "tag": "ansible",
+                  "scope": "demo"
+                },
+                {
+                  "tag": "db",
+                  "scope": "east"
+                }
+            ]
+        }
+    ],
+
+# Note: 'group' is a reserved key. Cant use it here.
+    "mygroups": [
+        {
+            "display_name": "web-VMs",
+            "domain_id": "default",
+            "expression": [
+                {
+                    "member_type": "VirtualMachine",
+                    "value": "web",
+                    "key": "Tag",
+                    "operator": "EQUALS",
+                    "resource_type": "Condition"
+                }
+            ],
+            "tags": [
+                {
+                  "tag": "ansible",
+                  "scope": "demo"
+                },
+                {
+                  "tag": "web",
+                  "scope": "east"
+                }
+            ]
+        },
+        {
+            "display_name": "app-VMs",
+            "domain_id": "default",
+            "expression": [
+                {
+                    "member_type": "VirtualMachine",
+                    "value": "app",
+                    "key": "Tag",
+                    "operator": "EQUALS",
+                    "resource_type": "Condition"
+                }
+            ],
+            "tags": [
+                {
+                  "tag": "ansible",
+                  "scope": "demo"
+                },
+                {
+                  "tag": "app",
+                  "scope": "east"
+                }
+            ]
+        },
+        {
+            "display_name": "db-VMs",
+            "domain_id": "default",
+            "expression": [
+                {
+                    "member_type": "VirtualMachine",
+                    "value": "web",
+                    "key": "Tag",
+                    "operator": "EQUALS",
+                    "resource_type": "Condition"
+                }
+            ],
+            "tags": [
+                {
+                  "tag": "ansible",
+                  "scope": "demo"
+                },
+                {
+                  "tag": "db",
+                  "scope": "east"
+                }
+            ]
+        }
+    ],
+
+    "security_policies" : [
+        {
+            "display_name": "web-to-app",
+            "domain_id": "default",
+            "category": "Application",
+            "rules": [
+                {
+                    "display_name": "app-port",
+                    "description": "Rule for Application port",
+                    "sequence_number": 1,
+                    "source_groups": [
+                            "/infra/domains/default/groups/web-VMs"
+                        ],
+                    "destination_groups": [
+                            "/infra/domains/default/groups/app-VMs"
+                        ],
+                    "services": [
+                            "/infra/services/AD_Server"
+                        ],
+                    "action": "ALLOW"
+                },
+                {
+                    "display_name": "Catch-All",
+                    "description": "Catch All rule",
+                    "sequence_number": 2,
+                    "source_groups": [
+                            "any"
+                        ],
+                    "destination_groups": [
+                            "any"
+                        ],
+                    "services": [
+                            "any"
+                        ],
+                    "action": "DROP"
+                },
+            ],
+            "tags": [
+                {
+                    "tag": "ansible",
+                    "scope": "demo"
+                }
+            ]
+        },
+        {
+            "display_name": "db",
+            "domain_id": "default",
+            "category": "Infrastructure",
+            "rules": [
+                {
+                    "display_name": "MySQL",
+                    "description": "Rule for Application port",
+                    "sequence_number": 1,
+                    "source_groups": [
+                            "any"
+                        ],
+                    "destination_groups": [
+                            "any"
+                        ],
+                    "services": [
+                            "/infra/services/MySQL"
+                        ],
+                    "action": "ALLOW"
+                },
+                {
+                    "display_name": "Catch-All",
+                    "description": "Catch All rule",
+                    "sequence_number": 2,
+                    "source_groups": [
+                            "any"
+                        ],
+                    "destination_groups": [
+                            "any"
+                        ],
+                    "services": [
+                            "any"
+                        ],
+                    "action": "DROP"
+                },
+            ],
+            "tags": [
+                {
+                    "tag": "ansible",
+                    "scope": "demo"
+                }
+            ]
+        }
+    ]
+}
