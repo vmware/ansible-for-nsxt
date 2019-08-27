@@ -34,7 +34,6 @@ import time
 import json
 
 import inspect
-
 # Add all the base resources that can be configured in the
 # Policy API here. Required to infer base resource params.
 BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
@@ -336,6 +335,7 @@ class NSXTBaseRealizableResource(ABC):
                                   resource_display_name,
                                   resource_type):
         try:
+            # Get the id from the Manager
             (_, resp) = self._send_request_to_API(
                 resource_base_url=resource_base_url)
             matched_resource = None
@@ -356,10 +356,10 @@ class NSXTBaseRealizableResource(ABC):
                 return matched_resource['id']
             else:
                 return None
-        except Exception:
-            self.module.fail_json(msg="Failed to retrieve list of %s "
-                                      "from the Manager. Please try again."
-                                      % (resource_type))
+        except Exception as e:
+            # Manager replied with invalid URL. It means that the resource
+            # does not exist on the Manager. So, return the display_name
+            return resource_display_name
 
     def _update_parent_info(self):
         # This update is always performed and should not be overriden by the
@@ -642,6 +642,7 @@ class NSXTBaseRealizableResource(ABC):
     def _achieve_absent_state(self, successful_resource_exec_logs):
         if self.skip_delete():
             return
+
         if self.existing_resource is None:
             successful_resource_exec_logs.append({
                 "changed": False,
@@ -707,7 +708,6 @@ class NSXTBaseRealizableResource(ABC):
         if (self._state == "present" and
                 self.create_or_update_subresource_first()):
             self.achieve_subresource_state(successful_resource_exec_logs)
-
         if self._state == "absent" and self.delete_subresource_first():
             self.achieve_subresource_state(successful_resource_exec_logs)
 
