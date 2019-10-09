@@ -34,6 +34,8 @@
         vcenter_user: "{{ compute_managers[0]['username'] }}"
         vcenter_passwd: "{{ compute_managers[0]['password'] }}"
         deployment_size: "small"
+# Note: In case of deploying NSX 2.5, the role should be "NSX Manager". The below
+#       is valid for NSX 2.4 release
         role: "nsx-manager nsx-controller"
 
     - name: Check manager status
