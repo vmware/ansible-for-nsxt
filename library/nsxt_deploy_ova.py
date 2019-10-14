@@ -212,8 +212,8 @@ def connect_to_api(vchost, vc_user, vc_pwd):
         service_instance = SmartConnect(host=vchost, user=vc_user, pwd=vc_pwd)
     except (requests.ConnectionError, ssl.SSLError):
         try:
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            context.verify_mode = ssl.CERT_NONE
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            context.load_default_certs()
             service_instance = SmartConnect(host=vchost, user=vc_user, pwd=vc_pwd, sslContext=context)
         except Exception as e:
             raise Exception(e)
