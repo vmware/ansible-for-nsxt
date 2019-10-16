@@ -50,11 +50,13 @@ class NSXTBaseRealizableResource(ABC):
                 baseline_arg_names=[]):
         # must call this method to realize the creation, update, or deletion of
         # resource
+
         self.resource_class = self.__class__
 
         if not hasattr(self, "_arg_spec"):
             # Base resource
-            self._make_ansible_arg_spec()
+            self._make_ansible_arg_spec(
+                supports_check_mode=supports_check_mode)
 
         self.module = AnsibleModule(argument_spec=self._arg_spec,
                                     supports_check_mode=supports_check_mode)
@@ -366,7 +368,7 @@ class NSXTBaseRealizableResource(ABC):
         # subresource's class
         self._parent_info["_parent"] = self
 
-    def _make_ansible_arg_spec(self):
+    def _make_ansible_arg_spec(self, supports_check_mode=True):
         """
             We read the arg_spec of all the resources associated that
             are associated with this resource and create one complete
@@ -394,7 +396,13 @@ class NSXTBaseRealizableResource(ABC):
                 PolicyCommunicator.get_vmware_argument_spec())
 
             # ... then create a local Ansible Module ...
-            module = AnsibleModule(argument_spec=self._arg_spec)
+            module = AnsibleModule(argument_spec=self._arg_spec,
+                                   supports_check_mode=supports_check_mode)
+
+            if not (module.params['id'] and module.params['display_name']):
+                module.fail_json(
+                    msg="Please specify either id or display_name of the "
+                        "resource")
 
             # ... then infer which subresources are specified by the user and
             # update their arg_spec with appropriate `required` fields.
@@ -433,6 +441,12 @@ class NSXTBaseRealizableResource(ABC):
                            key)
                 self._arg_spec[arg_key]["required"] = base_arg_spec[
                     key].get("required", False)
+        elif (ansible_module.params[resource.get_unique_arg_identifier() +
+              "_state"] is not None):
+            ansible_module.fail_json(
+                msg="Please specify either id or display_name for {}".format(
+                    resource.get_unique_arg_identifier()))
+
         # Do this for all the subresources of this resource also
         for sub_resources_class in self._get_sub_resources_class_of(
                 resource_class):
@@ -481,7 +495,7 @@ class NSXTBaseRealizableResource(ABC):
                 type='str'
             ),
             display_name=dict(
-                required=True,
+                required=False,
                 type='str'
             ),
             description=dict(
@@ -566,7 +580,7 @@ class NSXTBaseRealizableResource(ABC):
             if self.module.check_mode:
                 successful_resource_exec_logs.append({
                     "changed": True,
-                    "debug_out": str(json.dumps(self.resource_params)),
+                    "debug_out": self.resource_params,
                     "id": '12345',
                     "resource_type": self.get_resource_name()
                 })
@@ -611,7 +625,7 @@ class NSXTBaseRealizableResource(ABC):
             if self.module.check_mode:
                 successful_resource_exec_logs.append({
                     "changed": True,
-                    "debug_out": str(json.dumps(self.resource_params)),
+                    "debug_out": self.resource_params,
                     "id": self.id,
                     "resource_type": self.get_resource_name()
                 })
@@ -654,7 +668,7 @@ class NSXTBaseRealizableResource(ABC):
         if self.module.check_mode:
             successful_resource_exec_logs.append({
                 "changed": True,
-                "debug_out": str(json.dumps(self.resource_params)),
+                "debug_out": self.resource_params,
                 "id": self.id,
                 "resource_type": self.get_resource_name()
             })
