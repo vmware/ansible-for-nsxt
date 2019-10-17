@@ -107,115 +107,125 @@ options:
                              and IPv6.
                 required: True
                 type: str
-    segp_id:
-        description: The id of the Policy Segment Port.
-        required: false
-        type: str
-    segp_display_name:
+    segment_ports:
+        type: list
         description:
-            - Segment Port display name.
-            - Either this or segp_id must be specified. If both are specified,
-              segp_id takes precedence.
-        required: false
-        type: str
-    segp_description:
-        description:
-            - Segment description.
-        type: str
-    segp_tags:
-        description: Opaque identifiers meaningful to the API user.
-        type: dict
+            - Add the Segment Ports to be create, updated, or deleted in this
+              section
+        element: dict
         suboptions:
-            scope:
-                description: Tag scope.
-                required: true
-                type: str
-            tag:
-                description: Tag value.
-                required: true
-                type: str
-    segp_state:
-        choices:
-            - present
-            - absent
-        description:
-            - "State can be either 'present' or 'absent'. 'present' is used to
-              create or update resource. 'absent' is used to delete resource."
-            - Required if I(segp_id != null)."
-        required: true
-    segp_address_bindings:
-        description: Static address binding used for the port.
-        type: dict
-        suboptions:
-            ip_address:
-                description: IP Address for port binding.
-                type: str
-            mac_address:
-                description: Mac address for port binding.
-                type: str
-            vlan_id:
-                description: VLAN ID for port binding.
-                type: str
-    segp_attachment:
-        description: VIF attachment.
-        type: dict
-        suboptions:
-            allocate_addresses:
-                description: Indicate how IP will be
-                             allocated for the port.
-                type: str
-                choices:
-                    - IP_POOL
-                    - MAC_POOL
-                    - BOTH
-                    - NONE
-            app_id:
-                description: ID used to identify/look up a
-                             child attachment behind a
-                             parent attachment.
-                type: str
-            context_id:
-                description: Parent VIF ID if type is CHILD,
-                             Transport node ID if type is
-                             INDEPENDENT.
-                type: str
             id:
-                description: VIF UUID on NSX Manager.
+                description: The id of the Policy Segment Port.
+                required: false
                 type: str
-            traffic_tag:
-                description: VLAN ID
-                             Not valid when type is INDEPENDENT, mainly used to
-                             identify traffic from different ports in container
-                             use case.
-                type: int
-            type:
-                description: Type of port attachment.
+            display_name:
+                description:
+                    - Segment Port display name.
+                    - Either this or     id must be specified. If both are
+                      specified,     id takes precedence.
+                required: false
                 type: str
+            description:
+                description:
+                    - Segment description.
+                type: str
+            tags:
+                description: Opaque identifiers meaningful to the API user.
+                type: dict
+            suboptions:
+                scope:
+                    description: Tag scope.
+                    required: true
+                    type: str
+                tag:
+                    description: Tag value.
+                    required: true
+                    type: str
+            state:
                 choices:
-                    - PARENT
-                    - CHILD
-                    - INDEPENDENT
+                    - present
+                    - absent
+                description:
+                    - State can be either 'present' or 'absent'. 'present' is
+                      used to create or update resource. 'absent' is used to
+                      delete resource
+                    - Required if I(id != null)
+                required: true
+            address_bindings:
+                description: Static address binding used for the port.
+                type: dict
+                suboptions:
+                ip_address:
+                    description: IP Address for port binding.
+                    type: str
+                mac_address:
+                    description: Mac address for port binding.
+                    type: str
+                vlan_id:
+                    description: VLAN ID for port binding.
+                    type: str
+            attachment:
+                description: VIF attachment.
+                type: dict
+                suboptions:
+                    allocate_addresses:
+                        description: Indicate how IP will be
+                                    allocated for the port.
+                        type: str
+                        choices:
+                            - IP_POOL
+                            - MAC_POOL
+                            - BOTH
+                            - NONE
+                    app_id:
+                        description: ID used to identify/look up a
+                                     child attachment behind a
+                                     parent attachment.
+                        type: str
+                    context_id:
+                        description: Parent VIF ID if type is CHILD,
+                                    Transport node ID if type is
+                                    INDEPENDENT.
+                        type: str
+                    id:
+                        description: VIF UUID on NSX Manager.
+                        type: str
+                    traffic_tag:
+                        description:
+                            - VLAN ID
+                            - Not valid when type is INDEPENDENT, mainly
+                              used to identify traffic from different ports
+                              in container use case
+                        type: int
+                    type:
+                        description: Type of port attachment.
+                        type: str
+                        choices:
+                            - PARENT
+                            - CHILD
+                            - INDEPENDENT
 '''
 
 EXAMPLES = '''
 - name: create Segment
   nsxt_segment:
-    hostname: "10.178.14.49"
-    username: "uname"
+    hostname: "10.10.10.10"
+    username: "username"
     password: "password"
-    state: "present"
     validate_certs: False
-    id: test-seg1
-    display_name: test-seg3
-    tier1_id: "k8s-node-lr"
-    domain_name: "dn1"
-    transport_zone_id: "5f0ea34b-7549-4303-be1e-2ef7ea3155e2"
+    display_name: test-seg-4
+    state: present
+    domain_name: dn1
+    transport_zone_display_name: "1-transportzone-730"
     subnets:
-    - gateway_address: "40.1.1.1/16"
-      dhcp_ranges: [ "40.1.2.0/24" ]
-    segp_id: "test-sp"
-    segp_display_name: "test-sp"
-    segp_state: "present"
+      - gateway_address: "40.1.1.1/16"
+    segment_ports:
+      - display_name: test-sp-1
+        state: present
+      - display_name: test-sp-2
+        state: present
+      - display_name: test-sp-3
+        state: present
 '''
 
 RETURN = '''# '''
@@ -306,48 +316,48 @@ class NSXTSegment(NSXTBaseRealizableResource):
     def get_resource_base_url(baseline_args=None):
         return '/infra/segments'
 
-    def update_resource_params(self):
+    def update_resource_params(self, nsx_resource_params):
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "tier0"):
             tier0_base_url = NSXTTier0.get_resource_base_url()
             tier0_id = self.get_id_using_attr_name_else_fail(
-                "tier0", self.resource_params,
+                "tier0", nsx_resource_params,
                 tier0_base_url, "Tier0")
-            self.resource_params["connectivity_path"] = (
+            nsx_resource_params["connectivity_path"] = (
                 tier0_base_url + "/" + tier0_id)
         elif self.do_resource_params_have_attr_with_id_or_display_name(
                 "tier1"):
             tier1_base_url = NSXTTier1.get_resource_base_url()
             tier1_id = self.get_id_using_attr_name_else_fail(
-                "tier1", self.resource_params,
+                "tier1", nsx_resource_params,
                 tier1_base_url, "Tier1")
-            self.resource_params["connectivity_path"] = (
+            nsx_resource_params["connectivity_path"] = (
                 tier1_base_url + "/" + tier1_id)
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "transport_zone"):
-            site_id = self.resource_params.pop("site_id")
-            enforcementpoint_id = self.resource_params.pop(
+            site_id = nsx_resource_params.pop("site_id")
+            enforcementpoint_id = nsx_resource_params.pop(
                 "enforcementpoint_id")
             transport_zone_base_url = (
                 NSXTPolicyTransportZone.get_resource_base_url(
                     site_id, enforcementpoint_id))
             transport_zone_id = self.get_id_using_attr_name_else_fail(
-                "transport_zone", self.resource_params,
+                "transport_zone", nsx_resource_params,
                 transport_zone_base_url, "Transport Zone")
-            self.resource_params["transport_zone_path"] = (
+            nsx_resource_params["transport_zone_path"] = (
                 transport_zone_base_url + "/" + transport_zone_id)
 
     def update_parent_info(self, parent_info):
         parent_info["segment_id"] = self.id
 
     class NSXTSegmentPort(NSXTBaseRealizableResource):
-        def get_unique_arg_identifier(self):
-            return NSXTSegment.NSXTSegmentPort.get_unique_arg_identifier()
+        def get_spec_identifier(self):
+            return NSXTSegment.NSXTSegmentPort.get_spec_identifier()
 
-        @staticmethod
-        def get_unique_arg_identifier():
-            return "segp"
+        @classmethod
+        def get_spec_identifier(cls):
+            return "segment_ports"
 
         @staticmethod
         def get_resource_spec():

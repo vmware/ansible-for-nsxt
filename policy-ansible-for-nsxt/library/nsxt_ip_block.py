@@ -56,14 +56,14 @@ options:
 EXAMPLES = '''
 - name: create IP Block
   nsxt_ip_block:
-    hostname: "10.160.84.49"
-      username: "admin"
-      password: "Admin!23Admin"
-      validate_certs: False
-      id: test-ip-blk
-      display_name: test-ip-blk
-      state: "present"
-      cidr: "192.168.0.0/16"
+    hostname: "10.10.10.10"
+    username: "username"
+    password: "password"
+    validate_certs: False
+    id: test-ip-blk
+    display_name: test-ip-blk
+    state: "present"
+    cidr: "192.168.0.0/16"
 '''
 
 RETURN = '''# '''

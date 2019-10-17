@@ -16,5 +16,6 @@
         display_name: "{{ item.display_name }}"
         ha_mode: "{{ item.ha_mode }}"
         tags: "{{ item.tags }}"
+        locale_services: "{{ item.locale_services }}"
       with_items:
         - "{{ tier0_gateways }}"

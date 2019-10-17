@@ -4,12 +4,12 @@
 # Variables file to deploy a simple topology
 
 {
-    "nsx_manager" : "10.114.200.11",
-    "nsx_username": "admin",
-    "nsx_password": "VMware1!VMware1!",
+    "nsx_manager": "nsx_manager_IP",
+    "nsx_username": "nsx_username",
+    "nsx_password": "nsx_password",
     "validate_certs": "false",
 
-    "state": "present",
+    "state": "absent",
 
     "tier0_gateways": [
       {
@@ -19,6 +19,26 @@
           {
             "tag": "ansible",
             "scope": "demo"
+          }
+        ],
+        "locale_services": [
+          {
+            "state": "present",
+            "id": "test-t0ls",
+            "route_redistribution_types": ["TIER0_STATIC", "TIER0_NAT"],
+            "edge_cluster_info": {
+              "edge_cluster_id": "7ef91a10-c780-4f48-a279-a5662db4ffa3"
+            },
+            "preferred_edge_nodes_info": [
+              {
+                "edge_cluster_id": "7ef91a10-c780-4f48-a279-a5662db4ffa3",
+                "edge_node_id": "e10c42dc-db27-11e9-8cd0-000c291af7ee"
+              }
+            ],
+            "BGP": {
+              "state": "present",
+              "local_as_num": '1211'
+            }
           }
         ]
       }

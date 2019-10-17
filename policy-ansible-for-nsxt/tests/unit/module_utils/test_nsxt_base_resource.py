@@ -25,23 +25,26 @@ from unittest.mock import Mock, patch
 from shutil import copyfile
 import ansible.module_utils.basic as ansible_basic
 
+import sys
+
 # Copy policy_communicator.py to ansibles' module_utils to test.
 import os
 path_policy_ansible_lib = os.getcwd()
+sys.path.append(path_policy_ansible_lib)
+
 path_ansible_lib = os.path.dirname(
-    os.path.abspath(ansible_basic.__file__)) + "/../"
+    os.path.abspath(ansible_basic.__file__)) + "/"
 policy_communicator_file = (
     path_policy_ansible_lib + "/module_utils/policy_communicator.py")
-
 copyfile(policy_communicator_file,
-         path_ansible_lib + "module_utils/policy_communicator.py")
+         path_ansible_lib + "policy_communicator.py")
 
 # now import it
 import module_utils.nsxt_base_resource as nsxt_base_resource
 from ansible.module_utils.policy_communicator import PolicyCommunicator
 
 # then delete it from ansible's module_utils
-os.remove(path_ansible_lib + "module_utils/policy_communicator.py")
+os.remove(path_ansible_lib + "policy_communicator.py")
 
 
 class SimpleDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
@@ -68,8 +71,6 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
         self.resource_class = self.__class__
         self.validate_certs = False
         self.baseline_args = {}
-        self.do_create_or_update_subresource_first = False
-        self.do_delete_subresource_first = True
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
@@ -83,19 +84,15 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
             )
         }
 
-    def create_or_update_subresource_first(self):
-        # return True if subresource should be created/updated before parent
-        # resource
-        return self.do_create_or_update_subresource_first
-
-    def delete_subresource_first(self):
-        # return True if subresource should be deleted before parent resource
-        return self.do_delete_subresource_first
-
     class SubDummyResource1(nsxt_base_resource.NSXTBaseRealizableResource):
-        # This one does not override get_unique_arg_identifier
+        # This one does not override get_spec_identifier
         def __init__(self):
             NestedDummyNSXTResource.__init__(self)
+
+        @staticmethod
+        def get_resource_update_priority():
+            # Will be updated first
+            return 3
 
         @staticmethod
         def get_resource_base_url():
@@ -121,17 +118,22 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
             return True
 
     class SubDummyResource2(nsxt_base_resource.NSXTBaseRealizableResource):
-        # This one overrides get_unique_arg_identifier
+        # This one overrides get_spec_identifier
         def __init__(self):
             NestedDummyNSXTResource.__init__(self)
 
-        def get_unique_arg_identifier(self):
+        @staticmethod
+        def get_resource_update_priority():
+            # Will be updated second
+            return 2
+
+        def get_spec_identifier(self):
             return (
                 NestedDummyNSXTResource.SubDummyResource2.
-                get_unique_arg_identifier())
+                get_spec_identifier())
 
-        @staticmethod
-        def get_unique_arg_identifier():
+        @classmethod
+        def get_spec_identifier(cls):
             return "sub_dummy_res_2"
 
         @staticmethod
@@ -148,6 +150,44 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
                 )
             }
 
+    class SubDummyResource3(nsxt_base_resource.NSXTBaseRealizableResource):
+        # This one overrides get_spec_identifier
+        # and supports creation of only 1 instance per parent resource
+        def __init__(self):
+            NestedDummyNSXTResource.__init__(self)
+
+        @staticmethod
+        def get_resource_update_priority():
+            # Will be updated third
+            return 1
+
+        def get_spec_identifier(self):
+            return (
+                NestedDummyNSXTResource.SubDummyResource2.
+                get_spec_identifier())
+
+        @classmethod
+        def get_spec_identifier(cls):
+            return "sub_dummy_res_3"
+
+        @classmethod
+        def allows_multiple_resource_spec(cls):
+            return False
+
+        @staticmethod
+        def get_resource_base_url(parent_info):
+            parent_id = parent_info.get(
+                "NestedDummyNSXTResource_id", 'default')
+            return '{}-sub_dummy3'.format(parent_id)
+
+        @staticmethod
+        def get_resource_spec():
+            return {
+                "sub_dummy3": dict(
+                    required=True
+                )
+            }
+
 
 class MockAnsible(object):
     def __init__(self, params={}, check_mode=False):
@@ -155,6 +195,9 @@ class MockAnsible(object):
         self.check_mode = check_mode
 
     def fail_json(self, *args, **kwargs):
+        pass
+
+    def exit_json(self, *args, **kwargs):
         pass
 
 
@@ -168,38 +211,12 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         return super().tearDown()
 
     @patch('module_utils.nsxt_base_resource.PolicyCommunicator')
-    @patch('module_utils.nsxt_base_resource.AnsibleModule')
-    def test_realize(self, mock_ansible_module, mock_policy_communicator):
+    def test_realize(self, mock_policy_communicator):
         init_base_resources = nsxt_base_resource.BASE_RESOURCES
         nsxt_base_resource.BASE_RESOURCES = {"NestedDummyNSXTResource"}
 
         nested_dummy_resource = NestedDummyNSXTResource()
         nested_dummy_resource.resource_class = nested_dummy_resource.__class__
-
-        my_params = None
-
-        def my_getitem(id):
-            return my_params[id]
-
-        def my_get(id, default):
-            return my_params.get(id, default)
-
-        def my_pop(id):
-            return my_params.pop(id)
-
-        def my_contains(id):
-            return id in my_params
-
-        mock_ansible_module.return_value.params.__getitem__.side_effect = (
-            my_getitem)
-        mock_ansible_module.return_value.params.__contains__.side_effect = (
-            my_contains)
-        mock_ansible_module.return_value.params.get.side_effect = my_get
-        mock_ansible_module.return_value.params.pop.side_effect = my_pop
-
-        mock_ansible_module.return_value.check_mode = False
-
-        nested_dummy_resource.module = mock_ansible_module
 
         mock_policy_communicator_instance = Mock()
 
@@ -208,21 +225,42 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
 
         mock_policy_communicator_instance.request.return_value = (200, "OK")
 
+        my_params = {}
+        mock_ansible_module = MockAnsible(params=my_params)
+        nested_dummy_resource.module = mock_ansible_module
+
         def test_create():
             # when all resources state is present
             nonlocal my_params
-            my_params = {
+            my_params.clear()
+            my_params.update({
                 "hostname": "dummy",
                 "username": "dummy",
                 "password": "dummy",
                 "validate_certs": False,
                 "state": "present",
                 "id": "dummy",
-                "SubDummyResource1_state": "present",
-                "SubDummyResource1_id": "dummy1",
-                "sub_dummy_res_2_state": "present",
-                "sub_dummy_res_2_id": "dummy2",
-            }
+                "SubDummyResource1": [
+                    {
+                        "state": "present",
+                        "id": "dummy1"
+                    }
+                ],
+                "sub_dummy_res_2": [
+                    {
+                        "state": "present",
+                        "id": "dummy2-1",
+                    },
+                    {
+                        "state": "present",
+                        "id": "dummy2-2",
+                    }
+                ],
+                "sub_dummy_res_3": {
+                    "state": "present",
+                    "id": "dummy3",
+                },
+            })
             expected_exec_logs = [
                 {
                     'body': 'OK',
@@ -242,9 +280,23 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 {
                     'body': 'OK',
                     'resource_type': 'SubDummyResource2',
-                    'message': 'SubDummyResource2 with id dummy2 created.',
+                    'message': 'SubDummyResource2 with id dummy2-1 created.',
                     'changed': True,
-                    'id': 'dummy2'
+                    'id': 'dummy2-1'
+                },
+                {
+                    'body': 'OK',
+                    'resource_type': 'SubDummyResource2',
+                    'message': 'SubDummyResource2 with id dummy2-2 created.',
+                    'changed': True,
+                    'id': 'dummy2-2'
+                },
+                {
+                    'body': 'OK',
+                    'resource_type': 'SubDummyResource3',
+                    'message': 'SubDummyResource3 with id dummy3 created.',
+                    'changed': True,
+                    'id': 'dummy3'
                 }
             ]
 
@@ -253,20 +305,25 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
                 self.assertEqual(exec_logs[0], expected_exec_logs[0])
-                self.assertCountEqual(exec_logs[1:], expected_exec_logs[1:])
+                self.assertEqual(exec_logs[1], expected_exec_logs[1])
+                self.assertCountEqual(exec_logs[2:4], expected_exec_logs[2:4])
+                self.assertEqual(exec_logs[4], expected_exec_logs[4])
 
             def test_create_sub_resource_first():
                 nonlocal my_params
                 my_params['id'] = 'dummy'
-                my_params["SubDummyResource1_id"] = "dummy1"
-                my_params["sub_dummy_res_2_display_name"] = "dummy2"
-                nested_dummy_resource.do_create_or_update_subresource_first = (
-                    True)
+                my_params['create_or_update_subresource_first'] = True
+                my_params["SubDummyResource1"][0]["id"] = "dummy1"
+                my_params["sub_dummy_res_2"][0]["display_name"] = "dummy2-1"
+                my_params["sub_dummy_res_2"][1]["display_name"] = "dummy2-2"
+                my_params["sub_dummy_res_3"]["display_name"] = "dummy3"
                 exec_logs = []
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
-                self.assertCountEqual(exec_logs[:2], expected_exec_logs[1:])
-                self.assertEqual(exec_logs[2], expected_exec_logs[0])
+                self.assertEqual(exec_logs[0], expected_exec_logs[1])
+                self.assertCountEqual(exec_logs[1:3], expected_exec_logs[2:4])
+                self.assertEqual(exec_logs[3], expected_exec_logs[4])
+                self.assertEqual(exec_logs[4], expected_exec_logs[0])
 
             test_create_base_resource_first()
             test_create_sub_resource_first()
@@ -274,28 +331,55 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_delete():
             # when all resources state is absent
             nonlocal my_params
-            my_params = {
+            my_params.clear()
+            my_params.update({
                 "hostname": "dummy",
                 "username": "dummy",
                 "password": "dummy",
                 "validate_certs": False,
                 "state": "absent",
                 "id": "dummy",
-                "SubDummyResource1_state": "absent",
-                "SubDummyResource1_id": "dummy1",
-                "sub_dummy_res_2_state": "absent",
-                "sub_dummy_res_2_id": "dummy2",
-            }
+                "SubDummyResource1": [
+                    {
+                        "state": "absent",
+                        "id": "dummy1"
+                    }
+                ],
+                "sub_dummy_res_2": [
+                    {
+                        "state": "absent",
+                        "id": "dummy2-1"
+                    },
+                    {
+                        "state": "absent",
+                        "id": "dummy2-2"
+                    },
+                ],
+                "sub_dummy_res_3": {
+                    "state": "absent",
+                    "id": "dummy3"
+                }
+            })
             expected_exec_logs = [
-                {
-                    'msg': 'No SubDummyResource2 exist with id dummy2',
-                    'changed': False,
-                    'resource_type': 'SubDummyResource2'
-                },
                 {
                     'msg': 'No SubDummyResource1 exist with id dummy1',
                     'changed': False,
                     'resource_type': 'SubDummyResource1'
+                },
+                {
+                    'msg': 'No SubDummyResource2 exist with id dummy2-1',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource2'
+                },
+                {
+                    'msg': 'No SubDummyResource2 exist with id dummy2-2',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource2'
+                },
+                {
+                    'msg': 'No SubDummyResource3 exist with id dummy3',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource3'
                 },
                 {
                     'msg': 'No NestedDummyNSXTResource exist with id dummy',
@@ -305,28 +389,35 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             ]
 
             def test_delete_base_resource_first():
-                nested_dummy_resource.do_delete_subresource_first = False
+                nonlocal my_params
+                my_params['delete_subresource_first'] = False
                 exec_logs = []
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
-                self.assertEqual(exec_logs[0], expected_exec_logs[2])
-                self.assertCountEqual(exec_logs[1:], expected_exec_logs[:2])
+                self.assertEqual(exec_logs[0], expected_exec_logs[4])
+                self.assertEqual(exec_logs[1], expected_exec_logs[3])
+                self.assertEqual(exec_logs[2:4], expected_exec_logs[1:3])
+                self.assertEqual(exec_logs[4], expected_exec_logs[0])
 
             def test_delete_sub_resource_first():
                 nonlocal my_params
-                my_params['id'] = 'dummy'
+                my_params['display_name'] = 'dummy'
+                del my_params['delete_subresource_first']
                 # SubDummyResource1_id and sub_dummy_res_2_display_name are
                 # deleted from params. Specify them using display_name.
                 # This also tests that user can specify either id or
                 # display_name to identify resource.
-                my_params["SubDummyResource1_display_name"] = "dummy1"
-                my_params["sub_dummy_res_2_display_name"] = "dummy2"
-                nested_dummy_resource.do_delete_subresource_first = True
+                my_params["SubDummyResource1"][0]["display_name"] = "dummy1"
+                my_params["sub_dummy_res_2"][0]["display_name"] = "dummy2-1"
+                my_params["sub_dummy_res_2"][1]["display_name"] = "dummy2-2"
+                my_params["sub_dummy_res_3"]["display_name"] = "dummy3"
                 exec_logs = []
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
-                self.assertEqual(exec_logs[2], expected_exec_logs[2])
-                self.assertCountEqual(exec_logs[:2], expected_exec_logs[:2])
+                self.assertEqual(exec_logs[0], expected_exec_logs[3])
+                self.assertEqual(exec_logs[1:3], expected_exec_logs[1:3])
+                self.assertEqual(exec_logs[3], expected_exec_logs[0])
+                self.assertEqual(exec_logs[4], expected_exec_logs[4])
 
             test_delete_base_resource_first()
             test_delete_sub_resource_first()
@@ -334,93 +425,188 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_detached_delete_parent():
             # when parent is absent but child is present
             nonlocal my_params
-            my_params = {
+            my_params.clear()
+            my_params.update({
                 "hostname": "dummy",
                 "username": "dummy",
                 "password": "dummy",
                 "validate_certs": False,
                 "state": "absent",
                 "id": "dummy",
-                "SubDummyResource1_state": "present",
-                "SubDummyResource1_id": "dummy1",
-                "sub_dummy_res_2_state": "present",
-                "sub_dummy_res_2_id": "dummy2",
-            }
+                "SubDummyResource1": [
+                    {
+                        "state": "absent",
+                        "id": "dummy1"
+                    }
+                ],
+                "sub_dummy_res_2": [
+                    {
+                        "state": "present",
+                        "id": "dummy2-1"
+                    },
+                    {
+                        "state": "present",
+                        "id": "dummy2-2"
+                    },
+                ],
+                "sub_dummy_res_3": {
+                    "state": "absent",
+                    "id": "dummy3"
+                }
+            })
             expected_exec_logs = [
                 {
-                    'msg': 'No SubDummyResource2 exist with id dummy2',
+                    'msg': 'No SubDummyResource1 exist with id dummy1',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource1'
+                },
+                {
+                    'msg': 'No SubDummyResource2 exist with id dummy2-1',
                     'changed': False,
                     'resource_type': 'SubDummyResource2'
                 },
                 {
-                    'resource_type': 'SubDummyResource1',
-                    'id': 'dummy1',
-                    'body': 'OK',
-                    'message': 'SubDummyResource1 with id dummy1 created.',
-                    'changed': True
+                    'msg': 'No SubDummyResource2 exist with id dummy2-2',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource2'
+                },
+                {
+                    'msg': 'No SubDummyResource3 exist with id dummy3',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource3'
                 },
                 {
                     'msg': 'No NestedDummyNSXTResource exist with id dummy',
                     'changed': False,
                     'resource_type': 'NestedDummyNSXTResource'
+                },
+                {
+                    'body': 'OK',
+                    'resource_type': 'SubDummyResource2',
+                    'message': 'SubDummyResource2 with id dummy2-1 created.',
+                    'changed': True,
+                    'id': 'dummy2-1'
+                },
+                {
+                    'body': 'OK',
+                    'resource_type': 'SubDummyResource2',
+                    'message': 'SubDummyResource2 with id dummy2-2 created.',
+                    'changed': True,
+                    'id': 'dummy2-2'
                 }
             ]
-            nested_dummy_resource.do_delete_subresource_first = True
-            (nested_dummy_resource.
-             do_achieve_subresource_state_if_del_parent) = (
-                False)
-            exec_logs = []
-            nested_dummy_resource.realize(
-                successful_resource_exec_logs=exec_logs)
-            self.assertEqual(exec_logs[2], expected_exec_logs[2])
-            self.assertCountEqual(exec_logs[:2], expected_exec_logs[:2])
+
+            def test_without_flag_achieve_subresource_state_if_del_parent():
+                exec_logs = []
+                nested_dummy_resource.realize(
+                    successful_resource_exec_logs=exec_logs)
+                self.assertEqual(exec_logs[0], expected_exec_logs[3])
+                self.assertEqual(exec_logs[1:3], expected_exec_logs[1:3])
+                self.assertEqual(exec_logs[3], expected_exec_logs[0])
+                self.assertEqual(exec_logs[4], expected_exec_logs[4])
+
+            def test_with_flag_achieve_subresource_state_if_del_parent():
+                nonlocal my_params
+                my_params['achieve_subresource_state_if_del_parent'] = True
+                # Test that user can specify either id or
+                # display_name to identify resource.
+                my_params['display_name'] = 'dummy'
+                my_params["SubDummyResource1"][0]["display_name"] = "dummy1"
+                my_params["sub_dummy_res_2"][0]["display_name"] = "dummy2-1"
+                my_params["sub_dummy_res_2"][0][
+                    "achieve_subresource_state_if_del_parent"] = True
+                my_params["sub_dummy_res_2"][1]["display_name"] = "dummy2-2"
+                my_params["sub_dummy_res_2"][1][
+                    "achieve_subresource_state_if_del_parent"] = True
+                my_params["sub_dummy_res_3"]["display_name"] = "dummy3"
+                exec_logs = []
+                nested_dummy_resource.realize(
+                    successful_resource_exec_logs=exec_logs)
+                print(exec_logs)
+                self.assertEqual(exec_logs[0], expected_exec_logs[3])
+                self.assertEqual(exec_logs[1:3], expected_exec_logs[5:])
+                self.assertEqual(exec_logs[3], expected_exec_logs[0])
+                self.assertEqual(exec_logs[4], expected_exec_logs[4])
+
+            test_without_flag_achieve_subresource_state_if_del_parent()
+            test_with_flag_achieve_subresource_state_if_del_parent()
 
         def test_detached_delete_child():
             # when parent is present but child is absent
             nonlocal my_params
-            my_params = {
+            my_params.clear()
+            my_params.update({
                 "hostname": "dummy",
                 "username": "dummy",
                 "password": "dummy",
                 "validate_certs": False,
                 "state": "present",
-                "display_name": "dummy",
-                "SubDummyResource1_state": "absent",
-                "SubDummyResource1_id": "dummy1",
-                "sub_dummy_res_2_state": "present",
-                "sub_dummy_res_2_id": "dummy2",
-            }
+                "id": "dummy",
+                "SubDummyResource1": [
+                    {
+                        "state": "absent",
+                        "id": "dummy1"
+                    }
+                ],
+                "sub_dummy_res_2": [
+                    {
+                        "state": "absent",
+                        "id": "dummy2-1"
+                    },
+                    {
+                        "state": "absent",
+                        "id": "dummy2-2"
+                    },
+                ],
+                "sub_dummy_res_3": {
+                    "state": "absent",
+                    "id": "dummy3"
+                }
+            })
             expected_exec_logs = [
                 {
+                    'msg': 'No SubDummyResource1 exist with id dummy1',
                     'changed': False,
-                    'resource_type': 'SubDummyResource1',
-                    'msg': 'No SubDummyResource1 exist with id dummy1'
+                    'resource_type': 'SubDummyResource1'
                 },
                 {
-                    'message': 'SubDummyResource2 with id dummy2 created.',
-                    'changed': True,
+                    'msg': 'No SubDummyResource2 exist with id dummy2-1',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource2'
+                },
+                {
+                    'msg': 'No SubDummyResource2 exist with id dummy2-2',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource2'
+                },
+                {
+                    'msg': 'No SubDummyResource3 exist with id dummy3',
+                    'changed': False,
+                    'resource_type': 'SubDummyResource3'
+                },
+                {
+                    'msg': 'No NestedDummyNSXTResource exist with id dummy',
+                    'changed': False,
+                    'resource_type': 'NestedDummyNSXTResource'
+                },
+                {
                     'body': 'OK',
-                    'resource_type': 'SubDummyResource2',
-                    'id': 'dummy2'
-                },
-                {
+                    'resource_type': 'NestedDummyNSXTResource',
                     'message': ('NestedDummyNSXTResource with id dummy'
                                 ' created.'),
                     'changed': True,
-                    'body': 'OK',
-                    'resource_type': 'NestedDummyNSXTResource',
                     'id': 'dummy'
                 }
             ]
-            (nested_dummy_resource.
-             do_achieve_subresource_state_if_del_parent) = (
-                False)
+
             exec_logs = []
             nested_dummy_resource.realize(
                 successful_resource_exec_logs=exec_logs)
-            print(str(exec_logs))
-            self.assertEqual(exec_logs[2], expected_exec_logs[2])
-            self.assertCountEqual(exec_logs[:2], expected_exec_logs[:2])
+            print(exec_logs)
+            self.assertEqual(exec_logs[0], expected_exec_logs[5])
+            self.assertEqual(exec_logs[1], expected_exec_logs[0])
+            self.assertEqual(exec_logs[2:4], expected_exec_logs[1:3])
+            self.assertEqual(exec_logs[4], expected_exec_logs[3])
 
         test_create()
         test_delete()
@@ -532,171 +718,46 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         test_with_same_params_multilevel_dict()
         test_with_diff_params_multilevel_dict()
 
-    def test_make_ansible_arg_spec(self):
-        @patch('module_utils.nsxt_base_resource.AnsibleModule')
-        def test_when_resource_in_base(mock_ansible_module):
-            init_base_resources = nsxt_base_resource.BASE_RESOURCES
-            nsxt_base_resource.BASE_RESOURCES = {"SimpleDummyNSXTResource"}
-            simple_dummy_resource = SimpleDummyNSXTResource()
-            simple_dummy_resource.resource_class = (
-                simple_dummy_resource.__class__)
-            mock_ansible_module.side_effect = None
-            simple_dummy_resource._make_ansible_arg_spec()
-
-            expected_arg_spec = simple_dummy_resource.get_resource_spec()
-            expected_arg_spec.update(
-                simple_dummy_resource._get_base_arg_spec_of_resource())
-            expected_arg_spec.update(
-                PolicyCommunicator.get_vmware_argument_spec())
-
-            self.assertTrue(hasattr(simple_dummy_resource, "_arg_spec"))
-            self.assertEqual(
-                expected_arg_spec, simple_dummy_resource._arg_spec)
-            nsxt_base_resource.BASE_RESOURCES = init_base_resources
-
-        def test_when_resource_not_in_base():
-            simple_dummy_resource = SimpleDummyNSXTResource()
-            simple_dummy_resource._make_ansible_arg_spec()
-
-            self.assertFalse(hasattr(simple_dummy_resource, "_arg_spec"))
-
-        @patch('module_utils.nsxt_base_resource.AnsibleModule')
-        def test_with_sub_resource(mock_ansible_module):
-            init_base_resources = nsxt_base_resource.BASE_RESOURCES
-            nsxt_base_resource.BASE_RESOURCES = {"NestedDummyNSXTResource"}
-            nested_dummy_resource = NestedDummyNSXTResource()
-            nested_dummy_resource.resource_class = (
-                nested_dummy_resource.__class__)
-            mock_ansible_module.side_effect = None
-            nested_dummy_resource._make_ansible_arg_spec()
-
-            expected_arg_spec = nested_dummy_resource.get_resource_spec()
-            expected_arg_spec.update(
-                nested_dummy_resource._get_base_arg_spec_of_resource())
-            expected_arg_spec.update(
-                PolicyCommunicator.get_vmware_argument_spec())
-
-            sub_resources_classes = [NestedDummyNSXTResource.SubDummyResource1,
-                                     NestedDummyNSXTResource.SubDummyResource2]
-            for sub_resources_class in sub_resources_classes:
-                sub_dummy_resource = sub_resources_class()
-                expected_sub_dummy_arg_spec = (
-                    sub_dummy_resource.get_resource_spec())
-                expected_sub_dummy_arg_spec.update(
-                    sub_dummy_resource._get_base_arg_spec_of_resource())
-                # Prepend unique arg identifier to sub-resource
-                sub_dummy_uniquq_arg_id = (
-                    sub_dummy_resource.get_unique_arg_identifier())
-                for key in list(expected_sub_dummy_arg_spec.keys()):
-                    value = expected_sub_dummy_arg_spec.pop(key)
-                    expected_sub_dummy_arg_spec[sub_dummy_uniquq_arg_id + "_" +
-                                                key] = value
-
-                expected_arg_spec.update(expected_sub_dummy_arg_spec)
-
-            self.assertTrue(hasattr(nested_dummy_resource, "_arg_spec"))
-            self.assertEqual(
-                expected_arg_spec, nested_dummy_resource._arg_spec)
-            nsxt_base_resource.BASE_RESOURCES = init_base_resources
-
-        test_when_resource_in_base()
-        test_when_resource_not_in_base()
-        test_with_sub_resource()
-
     def test_get_attribute(self):
         simple_dummy_resource = SimpleDummyNSXTResource()
 
-        def test_when_resource_in_base():
-            mock_ansible_module = MockAnsible()
-            simple_dummy_resource.module = mock_ansible_module
-            init_base_resources = nsxt_base_resource.BASE_RESOURCES
-            nsxt_base_resource.BASE_RESOURCES = {"SimpleDummyNSXTResource"}
-            mock_ansible_module.params = {
-                "dummy": "dummy",
-                "SimpleDummyNSXTResource_dummy1": "dummy"
-            }
-            expected_value = "dummy"
-            observed_value = simple_dummy_resource.get_attribute("dummy")
-            self.assertEqual(expected_value, observed_value)
+        mock_ansible_module = MockAnsible()
+        simple_dummy_resource.module = mock_ansible_module
+        init_base_resources = nsxt_base_resource.BASE_RESOURCES
+        nsxt_base_resource.BASE_RESOURCES = {"SimpleDummyNSXTResource"}
+        resource_params = {
+            "dummy": "dummy"
+        }
+        mock_ansible_module.params = resource_params
+        expected_value = "dummy"
+        observed_value = simple_dummy_resource.get_attribute(
+            "dummy", resource_params)
+        self.assertEqual(expected_value, observed_value)
 
-            observed_value = simple_dummy_resource.get_attribute("dummy1")
-            self.assertEqual(expected_value, observed_value)
+        expected_value = (nsxt_base_resource.NSXTBaseRealizableResource.
+                          INCORRECT_ARGUMENT_NAME_VALUE)
+        observed_value = simple_dummy_resource.get_attribute(
+            "dummy2", resource_params)
+        self.assertEqual(expected_value, observed_value)
 
-            expected_value = (nsxt_base_resource.NSXTBaseRealizableResource.
-                              INCORRECT_ARGUMENT_NAME_VALUE)
-            observed_value = simple_dummy_resource.get_attribute("dummy2")
-            self.assertEqual(expected_value, observed_value)
-
-            nsxt_base_resource.BASE_RESOURCES = init_base_resources
-
-        def test_when_resource_not_in_base():
-            mock_ansible_module = MockAnsible()
-            simple_dummy_resource.module = mock_ansible_module
-            mock_ansible_module.params = {
-                "dummy": "dummy",
-                "SimpleDummyNSXTResource_dummy1": "dummy"
-            }
-            expected_value = "dummy"
-            observed_value = simple_dummy_resource.get_attribute("dummy1")
-            self.assertEqual(expected_value, observed_value)
-
-            expected_value = (nsxt_base_resource.NSXTBaseRealizableResource.
-                              INCORRECT_ARGUMENT_NAME_VALUE)
-            observed_value = simple_dummy_resource.get_attribute("dummy")
-            self.assertEqual(expected_value, observed_value)
-
-            observed_value = simple_dummy_resource.get_attribute("dummy2")
-            self.assertEqual(expected_value, observed_value)
-
-        test_when_resource_in_base()
-        test_when_resource_not_in_base()
-
-    def test_extract_resource_params(self):
+    def test_extract_nsx_resource_params(self):
         simple_dummy_resource = SimpleDummyNSXTResource()
 
-        def test_when_resource_in_base():
-            init_base_resources = nsxt_base_resource.BASE_RESOURCES
-            nsxt_base_resource.BASE_RESOURCES = {"SimpleDummyNSXTResource"}
+        resource_params = {
+            # Note that AnsibleModule can have >= keys than the spec
+            "dummy": "dummy",
+            "redundant_dummy": "dummy"
+        }
 
-            mock_ansible_module = MockAnsible()
-            simple_dummy_resource.module = mock_ansible_module
+        expected_params = {
+            "dummy": "dummy"
+        }
 
-            mock_ansible_module.params = {
-                # Note that AnsibleModule can have >= keys than the spec
-                "dummy": "dummy",
-                "redundant_dummy": "dummy"
-            }
+        observed_params = (
+            simple_dummy_resource._extract_nsx_resource_params(
+                resource_params))
 
-            expected_params = {
-                "dummy": "dummy"
-            }
-
-            observed_params = simple_dummy_resource._extract_resource_params()
-
-            self.assertEqual(expected_params, observed_params)
-
-            nsxt_base_resource.BASE_RESOURCES = init_base_resources
-
-        def test_when_resource_not_in_base():
-            mock_ansible_module = MockAnsible()
-            simple_dummy_resource.module = mock_ansible_module
-
-            mock_ansible_module.params = {
-                # Note that AnsibleModule can have >= keys than the spec
-                "SimpleDummyNSXTResource_dummy": "dummy",
-                "SimpleDummyNSXTResource_redundant_dummy": "dummy"
-            }
-
-            expected_params = {
-                "dummy": "dummy"
-            }
-
-            observed_params = simple_dummy_resource._extract_resource_params()
-
-            self.assertEqual(expected_params, observed_params)
-
-        test_when_resource_in_base()
-        test_when_resource_not_in_base()
+        self.assertEqual(expected_params, observed_params)
 
     @patch('module_utils.policy_communicator.PolicyCommunicator')
     def test_send_request_to_API(self, mock_policy_communicator):
@@ -758,7 +819,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         }
 
         def test_when_resource_not_updated():
-            simple_dummy_resource.resource_params = {}
+            simple_dummy_resource.nsx_resource_params = {}
             exec_logs = []
             # mock_policy_communicator.request.return_value = None
             simple_dummy_resource._achieve_present_state(exec_logs)
@@ -782,9 +843,10 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_when_resource_updated(is_created=False):
             def test_when_policy_request_succeeds():
                 nonlocal policy_communicator_request_call_num
-                simple_dummy_resource.resource_params = {
+                simple_dummy_resource.nsx_resource_params = {
                     "dummy": "dummy"
                 }
+                simple_dummy_resource.resource_params = {}
                 exec_logs = []
                 mock_policy_communicator.request.return_value = (200, "OK")
                 simple_dummy_resource._achieve_present_state(exec_logs)
@@ -812,12 +874,11 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                             simple_dummy_resource.__class__.__name__)
                     }
                 ]
-                print(exec_logs)
                 self.assertEqual(exec_logs, expected_exec_logs)
 
             def test_when_policy_request_fails():
                 nonlocal policy_communicator_request_call_num
-                simple_dummy_resource.resource_params = {
+                simple_dummy_resource.nsx_resource_params = {
                     "dummy": "dummy"
                 }
                 exec_logs = []
@@ -912,7 +973,8 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         nested_dummy_resource = NestedDummyNSXTResource()
 
         expected_values = [NestedDummyNSXTResource.SubDummyResource1,
-                           NestedDummyNSXTResource.SubDummyResource2]
+                           NestedDummyNSXTResource.SubDummyResource2,
+                           NestedDummyNSXTResource.SubDummyResource3]
 
         observed_values = list(
             nested_dummy_resource._get_sub_resources_class_of(

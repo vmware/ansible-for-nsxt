@@ -47,7 +47,7 @@ class NSXTBaseRealizableResource(ABC):
 
     def realize(self, supports_check_mode=True,
                 successful_resource_exec_logs=[],
-                baseline_arg_names=[]):
+                baseline_arg_names=[], resource_params=None):
         # must call this method to realize the creation, update, or deletion of
         # resource
 
@@ -58,10 +58,12 @@ class NSXTBaseRealizableResource(ABC):
             self._make_ansible_arg_spec(
                 supports_check_mode=supports_check_mode)
 
-        self.module = AnsibleModule(argument_spec=self._arg_spec,
-                                    supports_check_mode=supports_check_mode)
+        if not hasattr(self, 'module'):
+            self.module = AnsibleModule(
+                argument_spec=self._arg_spec,
+                supports_check_mode=supports_check_mode)
 
-        self.set_baseline_args(baseline_arg_names)
+            self.set_baseline_args(baseline_arg_names)
 
         # Infer manager credentials
         mgr_hostname = self.module.params['hostname']
@@ -72,24 +74,31 @@ class NSXTBaseRealizableResource(ABC):
         self.policy_communicator = PolicyCommunicator.get_instance(
             mgr_username, mgr_hostname, mgr_password)
 
+        if resource_params is None:
+            resource_params = self.module.params
+
+        self.resource_params = resource_params
+
         self.validate_certs = self.module.params['validate_certs']
-        self._state = self.get_attribute('state')
+        self._state = self.get_attribute('state', resource_params)
         if not (hasattr(self, 'id') and self.id):
             if self.get_resource_name() in BASE_RESOURCES:
                 self.id = self._get_id_using_attr_name(
-                    None, self.module.params,
+                    None, resource_params,
                     self.get_resource_base_url(self.baseline_args),
-                    self.get_unique_arg_identifier())
+                    self.get_spec_identifier())
             else:
                 self.id = self._get_id_using_attr_name(
-                    None, self.module.params,
+                    None, resource_params,
                     self.get_resource_base_url(self._parent_info),
-                    self.get_unique_arg_identifier())
+                    self.get_spec_identifier())
+
         if self.id is None:
             return
 
         # Extract the resource params from module
-        self.resource_params = self._extract_resource_params()
+        self.nsx_resource_params = self._extract_nsx_resource_params(
+            resource_params)
 
         # parent_info is passed to subresources of a resource automatically
         if not hasattr(self, "_parent_info"):
@@ -104,19 +113,19 @@ class NSXTBaseRealizableResource(ABC):
             # we fill the missing resource params (the params not specified)
             # by user using the existing params
             self._fill_missing_resource_params(
-                self.existing_resource, self.resource_params)
+                self.existing_resource, self.nsx_resource_params)
         except Exception as err:
             # the resource does not exist currently on the manager
             self.existing_resource = None
+        self._achieve_state(resource_params, successful_resource_exec_logs)
 
-        self._achieve_state(successful_resource_exec_logs)
-
-    def get_unique_arg_identifier(self):
+    @classmethod
+    def get_spec_identifier(cls):
         # Can be overriden in the subclass to provide different
         # unique_arg_identifier. It is used to infer which args belong to which
         # subresource.
         # By default, class name is used for subresources.
-        return self.get_resource_name()
+        return cls.get_resource_name()
 
     def get_state(self):
         return self._state
@@ -133,43 +142,30 @@ class NSXTBaseRealizableResource(ABC):
         # Must be overridden by the subclass
         raise NotImplementedError
 
-    def get_resource_name(self):
-        return self.__class__.__name__
+    @classmethod
+    def get_resource_name(cls):
+        return cls.__name__
 
     def create_or_update_subresource_first(self):
         # return True if subresource should be created/updated before parent
         # resource
-        if self.get_resource_name() in BASE_RESOURCES:
-            return self.module.params.get("create_or_update_subresource_first",
-                                          False)
-        return self.module.params.get(self.get_unique_arg_identifier() +
-                                      "_create_or_update_subresource_first",
-                                      False)
+        return self.resource_params.get(
+            "create_or_update_subresource_first", False)
 
     def delete_subresource_first(self):
         # return True if subresource should be deleted before parent resource
-        if self.get_resource_name() in BASE_RESOURCES:
-            return self.module.params.get("delete_subresource_first", True)
-        return self.module.params.get(self.get_unique_arg_identifier() +
-                                      "_delete_subresource_first", True)
+        return self.resource_params.get("delete_subresource_first", True)
 
     def achieve_subresource_state_if_del_parent(self):
         # return True if this resource is to be realized with its own specified
         # state irrespective of the state of its parent resource.
-        if self.get_resource_name() in BASE_RESOURCES:
-            return self.module.params.get(
-                "achieve_subresource_state_if_del_parent", False)
-        return self.module.params.get(
-            self.get_unique_arg_identifier() +
-            "_achieve_subresource_state_if_del_parent", False)
+        return self.resource_params.get(
+            "achieve_subresource_state_if_del_parent", False)
 
     def do_wait_till_create(self):
         # By default, we do not wait for the parent resource to be created or
         # updated before its subresource is to be realized.
-        if self.get_resource_name() in BASE_RESOURCES:
-            return self.module.params.get("do_wait_till_create", False)
-        return self.module.params.get(self.get_unique_arg_identifier() +
-                                      "_do_wait_till_create", False)
+        return self.resource_params.get("do_wait_till_create", False)
 
     @staticmethod
     def get_resource_update_priority():
@@ -182,24 +178,50 @@ class NSXTBaseRealizableResource(ABC):
         # for deletion, we iterate in ascending order.
         return 1
 
-    def achieve_subresource_state(self, successful_resource_exec_logs):
+    def set_arg_spec(self, arg_spec):
+        self._arg_spec = arg_spec
+
+    def set_ansible_module(self, ansible_module):
+        self.module = ansible_module
+
+    def set_parent_info(self, parent_info):
+        self._parent_info = parent_info
+
+    def achieve_subresource_state(
+            self, resource_params, successful_resource_exec_logs):
         """
             Achieve the state of each sub-resource.
         """
         for sub_resource_class in self._get_sub_resources_class_of(
                 self.resource_class):
-            sub_resource = sub_resource_class()
-            sub_resource._arg_spec = self._arg_spec
-            sub_resource._parent_info = self._parent_info
+            if sub_resource_class.allows_multiple_resource_spec():
+                children_resource_spec = (resource_params.get(
+                    sub_resource_class.get_spec_identifier()) or [])
+            else:
+                children_resource_spec = ([resource_params.get(
+                    sub_resource_class.get_spec_identifier())] or [])
+
             # Update the parent pointer
             my_parent = self._parent_info.get('_parent', '')
             self._update_parent_info()
-            sub_resource.realize(
-                successful_resource_exec_logs=successful_resource_exec_logs)
+
+            for resource_param_spec in children_resource_spec:
+                sub_resource = sub_resource_class()
+
+                sub_resource.set_arg_spec(self._arg_spec)
+                sub_resource.set_ansible_module(self.module)
+
+                sub_resource.set_parent_info(self._parent_info)
+
+                sub_resource.realize(
+                    successful_resource_exec_logs=(
+                        successful_resource_exec_logs),
+                    resource_params=resource_param_spec)
+
             # Restore the parent pointer
             self._parent_info['_parent'] = my_parent
 
-    def update_resource_params(self):
+    def update_resource_params(self, nsx_resource_params):
         # Can be used to updates the params of resource before making
         # the API call.
         # Should be overridden in the subclass if needed
@@ -249,35 +271,25 @@ class NSXTBaseRealizableResource(ABC):
         # Override this and fill in self._parent_info if that is to be passed
         # to the sub-resource
         # By default, parent's id is passed
-        parent_info[self.get_unique_arg_identifier() + "_id"] = self.id
+        parent_info[self.get_spec_identifier() + "_id"] = self.id
 
-    def get_attribute(self, attribute):
+    def get_attribute(self, attribute, resource_params):
         """
             attribute: String
-
-            Returns the attribute from module params if specified.
-            - If it's a sub-resource, the param name must have its
-              unique_arg_identifier as a prefix.
-            - There is no prefix for base resource.
+            resource_params: Parameters of the resource
         """
-        if self.get_resource_name() in BASE_RESOURCES:
-            return self.module.params.get(
-                attribute, self.module.params.get(
-                    self.get_resource_name() + "_" + attribute,
-                    self.INCORRECT_ARGUMENT_NAME_VALUE))
-        else:
-            if attribute == "state":
-                # if parent has absent state, subresources should have absent
-                # state if . So, irrespective of what user specifies, if parent
-                # is to be deleted, the child resources will be deleted.
-                # override achieve_subresource_state_if_del_parent
-                # in resource class to change this behavior
-                if (self._parent_info["_parent"].get_state() == "absent" and
-                        not self.achieve_subresource_state_if_del_parent()):
-                    return "absent"
-            return self.module.params.get(
-                self.get_unique_arg_identifier() + "_" + attribute,
-                self.INCORRECT_ARGUMENT_NAME_VALUE)
+        if (attribute == "state" and
+                self.get_resource_name() not in BASE_RESOURCES):
+            # if parent has absent state, subresources should have absent
+            # state if . So, irrespective of what user specifies, if parent
+            # is to be deleted, the child resources will be deleted.
+            # override achieve_subresource_state_if_del_parent
+            # in resource class to change this behavior
+            if (self._parent_info["_parent"].get_state() == "absent" and
+                    not self.achieve_subresource_state_if_del_parent()):
+                return "absent"
+        return resource_params.get(
+            attribute, self.INCORRECT_ARGUMENT_NAME_VALUE)
 
     def set_baseline_args(self, baseline_arg_names):
         # Can be overriden in subclass
@@ -287,8 +299,8 @@ class NSXTBaseRealizableResource(ABC):
                 baseline_arg_name]
 
     def do_resource_params_have_attr_with_id_or_display_name(self, attr):
-        if (attr + "_id" in self.resource_params or
-                attr + "_display_name" in self.resource_params):
+        if (attr + "_id" in self.nsx_resource_params or
+                attr + "_display_name" in self.nsx_resource_params):
             return True
         return False
 
@@ -311,6 +323,23 @@ class NSXTBaseRealizableResource(ABC):
         """
         return False
 
+    @classmethod
+    def is_required_in_spec(cls):
+        """
+        Override in subclass if this resource is optional to be specified
+        in the ansible playbook.
+        """
+        return False
+
+    @classmethod
+    def allows_multiple_resource_spec(cls):
+        """
+        Override in the resource class definition with False if only one
+        resource can be associated with the parent. By default, we accept
+        multiple
+        """
+        return True
+
     def _get_id_using_attr_name(self, attr_name, params,
                                 resource_base_url, resource_type):
         # Pass attr_name '' or None to infer base resource's ID
@@ -319,10 +348,6 @@ class NSXTBaseRealizableResource(ABC):
         if attr_name:
             id_identifier = attr_name + "_id"
             display_name_identifier = attr_name + "_display_name"
-        elif self.get_resource_name() not in BASE_RESOURCES:
-            id_identifier = self.get_unique_arg_identifier() + "_id"
-            display_name_identifier = (
-                self.get_unique_arg_identifier() + "_display_name")
         if id_identifier in params and params[id_identifier]:
             return params.pop(id_identifier)
         if (display_name_identifier in params and
@@ -380,120 +405,52 @@ class NSXTBaseRealizableResource(ABC):
             self._arg_spec.update(
                 PolicyCommunicator.get_vmware_argument_spec())
 
+            # ... then update it with top most resource spec ...
+            self._update_arg_spec_with_resource(
+                self.resource_class, self._arg_spec)
             # Update with all sub-resources arg spec
             for sub_resources_class in self._get_sub_resources_class_of(
                     self.resource_class):
-                self._update_arg_spec_with_all_resources(sub_resources_class)
+                self._update_arg_spec_with_all_resources(
+                    sub_resources_class, self._arg_spec)
 
-            # Make all subresources args not required...
-            for arg, spec in self._arg_spec.items():
-                spec["required"] = False
-
-            # ... then update it with top most resource spec ...
-            self._update_arg_spec_with_resource(self.resource_class)
-            # ... then update it with vmware arg spec ...
-            self._arg_spec.update(
-                PolicyCommunicator.get_vmware_argument_spec())
-
-            # ... then create a local Ansible Module ...
-            module = AnsibleModule(argument_spec=self._arg_spec,
-                                   supports_check_mode=supports_check_mode)
-
-            if not (module.params['id'] and module.params['display_name']):
-                module.fail_json(
-                    msg="Please specify either id or display_name of the "
-                        "resource")
-
-            # ... then infer which subresources are specified by the user and
-            # update their arg_spec with appropriate `required` fields.
-            for sub_resources_class in self._get_sub_resources_class_of(
-                    self.__class__):
-                self._update_req_arg_spec_of_specified_resource(
-                    sub_resources_class, module)
-
-    def _update_req_arg_spec_of_specified_resource(self, resource_class,
-                                                   ansible_module):
-        # If the resource identified by resource_class is specified by the
-        # user, this method updates the _arg_spec with the resources
-        # arg_spec
-        resource = resource_class()
-        if (ansible_module.params[resource.get_unique_arg_identifier() +
-                                  "_id"] is not None or
-                ansible_module.params[resource.get_unique_arg_identifier() +
-                                      "_display_name"] is not None or
-                (hasattr(resource, 'id') and resource.id) and
-                ansible_module.params[resource.get_unique_arg_identifier() +
-                                      "_state"] is not None):
-            # This resource is specified so update the `required` fields of
-            # this resource.
-            resource_arg_spec = resource_class.get_resource_spec()
-            for key, value in resource_arg_spec.items():
-                arg_key = (resource.get_unique_arg_identifier() + "_" +
-                           key)
-                self._arg_spec[arg_key]["required"] = resource_arg_spec[
-                    key].get("required", False)
-            base_arg_spec = self._get_base_arg_spec_of_resource()
-            for key, value in base_arg_spec.items():
-                if (hasattr(resource, 'id') and resource.id and
-                        key == "display_name"):
-                    continue
-                arg_key = (resource.get_unique_arg_identifier() + "_" +
-                           key)
-                self._arg_spec[arg_key]["required"] = base_arg_spec[
-                    key].get("required", False)
-        elif (ansible_module.params[resource.get_unique_arg_identifier() +
-              "_state"] is not None):
-            ansible_module.fail_json(
-                msg="Please specify either id or display_name for {}".format(
-                    resource.get_unique_arg_identifier()))
-
-        # Do this for all the subresources of this resource also
-        for sub_resources_class in self._get_sub_resources_class_of(
-                resource_class):
-            self._update_req_arg_spec_of_specified_resource(
-                sub_resources_class, ansible_module)
-
-    def _update_arg_spec_with_resource(self, resource_class):
+    def _update_arg_spec_with_resource(self, resource_class, arg_spec):
         # updates _arg_spec with resource_class's arg_spec
         resource_arg_spec = self._get_base_arg_spec_of_resource()
+        resource_arg_spec.update(self._get_base_arg_spec_of_nsx_resource())
         resource_arg_spec.update(resource_class.get_resource_spec())
-        self._update_resource_arg_spec_with_arg_identifier(resource_arg_spec,
-                                                           resource_class)
-        self._arg_spec.update(resource_arg_spec)
+        if resource_class.__name__ not in BASE_RESOURCES:
+            arg_spec.update(
+                {
+                    resource_class.get_spec_identifier(): dict(
+                        options=resource_arg_spec,
+                        required=resource_class.is_required_in_spec(),
+                        type='dict',
+                    )
+                })
+            if resource_class.allows_multiple_resource_spec():
+                arg_spec[resource_class.get_spec_identifier()]['type'] = 'list'
+                arg_spec[resource_class.get_spec_identifier()]['elements'] = (
+                    'dict')
+        else:
+            arg_spec.update(resource_arg_spec)
+        return resource_arg_spec
 
-    def _update_arg_spec_with_all_resources(self, resource_class):
+    def _update_arg_spec_with_all_resources(self, resource_class, arg_spec):
         # updates _arg_spec with resource_class's arg_spec and all it's
         # sub-resources
-        self._update_arg_spec_with_resource(resource_class)
+        resource_arg_spec = self._update_arg_spec_with_resource(
+            resource_class, arg_spec)
         # go to each child of resource_class and update it
         for sub_resources_class in self._get_sub_resources_class_of(
                 resource_class):
-            self._update_arg_spec_with_all_resources(sub_resources_class)
+            self._update_arg_spec_with_all_resources(
+                sub_resources_class, resource_arg_spec)
 
-    def _update_resource_arg_spec_with_arg_identifier(self, resource_arg_spec,
-                                                      resource_class):
-        # update the arg_spec of resource with class resource_class in
-        # self._arg_spec prepending the unique_arg_identifier of resource
-        # to the keys in arg_spec of resource
-        if resource_class is None:
-            return
-        if resource_class.__name__ in BASE_RESOURCES:
-            return
-        arg_spec = {}
-        for key, value in resource_arg_spec.items():
-            key = resource_class().get_unique_arg_identifier() + "_" + key
-            arg_spec[key] = value
-        resource_arg_spec.clear()
-        resource_arg_spec.update(arg_spec)
-
-    def _get_base_arg_spec_of_resource(self):
+    def _get_base_arg_spec_of_nsx_resource(self):
         resource_base_arg_spec = {}
         resource_base_arg_spec.update(
             # these are the base args for any NSXT Resource
-            id=dict(
-                required=False,
-                type='str'
-            ),
             display_name=dict(
                 required=False,
                 type='str'
@@ -504,7 +461,8 @@ class NSXTBaseRealizableResource(ABC):
             ),
             tags=dict(
                 required=False,
-                type=list,
+                type='list',
+                elements='dict',
                 options=dict(
                     scope=dict(
                         required=True,
@@ -515,65 +473,58 @@ class NSXTBaseRealizableResource(ABC):
                         type='str'
                     )
                 )
+            )
+        )
+        return resource_base_arg_spec
+
+    def _get_base_arg_spec_of_resource(self):
+        resource_base_arg_spec = {}
+        resource_base_arg_spec.update(
+            id=dict(
+                type='str'
             ),
             state=dict(
                 required=True,
+                type='str',
                 choices=['present', 'absent']
             ),
             create_or_update_subresource_first=dict(
-                required=False,
                 default=False,
                 type='bool'
             ),
             delete_subresource_first=dict(
-                required=False,
                 default=True,
                 type='bool'
             ),
             achieve_subresource_state_if_del_parent=dict(
-                required=False,
                 default=False,
                 type='bool'
             ),
             do_wait_till_create=dict(
-                required=False,
                 default=False,
                 type='bool'
             )
         )
         return resource_base_arg_spec
 
-    def _extract_resource_params(self):
+    def _extract_nsx_resource_params(self, resource_params):
         # extract the params belonging to this resource only.
-        unwanted_resource_params = [
-            "state", "id", "create_or_update_subresource_first",
-            "delete_subresource_first", "do_wait_till_create",
-            "achieve_subresource_state_if_del_parent"]
-        unwanted_resource_params += self.baseline_args.keys()
-        if self.get_resource_name() not in BASE_RESOURCES:
-            unwanted_resource_params = set([self.get_unique_arg_identifier() +
-                                           "_" + unwanted_resource_param for
-                                            unwanted_resource_param in
-                                            unwanted_resource_params])
-        params = {}
+        filtered_params = {}
 
         def filter_with_spec(spec):
             for key in spec.keys():
-                arg_key = key
-                if self.get_resource_name() not in BASE_RESOURCES:
-                    arg_key = self.get_unique_arg_identifier() + "_" + key
-                if arg_key in self.module.params and \
-                    arg_key not in unwanted_resource_params and \
-                        self.module.params[arg_key] is not None:
-                    params[key] = self.module.params[arg_key]
+                if (key in resource_params and
+                        resource_params[key] is not None):
+                    filtered_params[key] = resource_params[key]
+
         filter_with_spec(self.get_resource_spec())
-        filter_with_spec(self._get_base_arg_spec_of_resource())
-        return params
+        filter_with_spec(self._get_base_arg_spec_of_nsx_resource())
+        return filtered_params
 
     def _achieve_present_state(self, successful_resource_exec_logs):
-        self.update_resource_params()
+        self.update_resource_params(self.nsx_resource_params)
         is_resource_updated = self.check_for_update(
-            self.existing_resource, self.resource_params)
+            self.existing_resource, self.nsx_resource_params)
         if not is_resource_updated:
             # Either the resource does not exist or it exists but was not
             # updated in the YAML.
@@ -597,9 +548,9 @@ class NSXTBaseRealizableResource(ABC):
                     })
                     return
                 # Create a new resource
-                _, resp = self._send_request_to_API(suffix="/" + self.id,
-                                                    method='PATCH',
-                                                    data=self.resource_params)
+                _, resp = self._send_request_to_API(
+                    suffix="/" + self.id, method='PATCH',
+                    data=self.nsx_resource_params)
                 if self.do_wait_till_create() and not self._wait_till_create():
                     raise Exception
 
@@ -616,7 +567,7 @@ class NSXTBaseRealizableResource(ABC):
                 self.module.fail_json(msg="Failed to add %s with id %s."
                                           "Request body [%s]. Error[%s]."
                                           % (self.get_resource_name(),
-                                             self.id, self.resource_params,
+                                             self.id, self.nsx_resource_params,
                                              to_native(err)
                                              ),
                                       successfully_updated_resources=srel)
@@ -630,12 +581,12 @@ class NSXTBaseRealizableResource(ABC):
                     "resource_type": self.get_resource_name()
                 })
                 return
-            self.resource_params['_revision'] = \
+            self.nsx_resource_params['_revision'] = \
                 self.existing_resource['_revision']
             try:
-                _, resp = self._send_request_to_API(suffix="/"+self.id,
-                                                    method="PATCH",
-                                                    data=self.resource_params)
+                _, resp = self._send_request_to_API(
+                    suffix="/"+self.id, method="PATCH",
+                    data=self.nsx_resource_params)
                 successful_resource_exec_logs.append({
                     "changed": True,
                     "id": self.id,
@@ -649,7 +600,8 @@ class NSXTBaseRealizableResource(ABC):
                 self.module.fail_json(msg="Failed to update %s with id %s."
                                           "Request body [%s]. Error[%s]." %
                                           (self.get_resource_name(), self.id,
-                                           self.resource_params, to_native(err)
+                                           self.nsx_resource_params, to_native(
+                                               err)
                                            ),
                                       successfully_updated_resources=srel)
 
@@ -702,7 +654,6 @@ class NSXTBaseRealizableResource(ABC):
                     resource_base_url = (self.resource_class.
                                          get_resource_base_url(
                                              baseline_args=self.baseline_args))
-
             (rc, resp) = self.policy_communicator.request(
                 resource_base_url + suffix, validate_certs=self.validate_certs,
                 ignore_errors=ignore_error, method=method, data=data)
@@ -710,7 +661,8 @@ class NSXTBaseRealizableResource(ABC):
         except Exception as e:
             raise e
 
-    def _achieve_state(self, successful_resource_exec_logs=[]):
+    def _achieve_state(self, resource_params,
+                       successful_resource_exec_logs=[]):
         """
             Achieves `present` or `absent` state as specified in the YAML.
         """
@@ -718,25 +670,29 @@ class NSXTBaseRealizableResource(ABC):
             # The resource was not specified in the YAML.
             # So, no need to realize it.
             return
-
         if (self._state == "present" and
                 self.create_or_update_subresource_first()):
-            self.achieve_subresource_state(successful_resource_exec_logs)
+            self.achieve_subresource_state(
+                resource_params, successful_resource_exec_logs)
         if self._state == "absent" and self.delete_subresource_first():
-            self.achieve_subresource_state(successful_resource_exec_logs)
+            self.achieve_subresource_state(
+                resource_params, successful_resource_exec_logs)
 
         if self._state == 'present':
-            self._achieve_present_state(successful_resource_exec_logs)
+            self._achieve_present_state(
+                successful_resource_exec_logs)
         else:
             self._achieve_absent_state(successful_resource_exec_logs)
 
         if self._state == "present" and not (
                 self.create_or_update_subresource_first()):
             self.achieve_subresource_state(
+                resource_params,
                 successful_resource_exec_logs=successful_resource_exec_logs)
 
         if self._state == "absent" and not self.delete_subresource_first():
-            self.achieve_subresource_state(successful_resource_exec_logs)
+            self.achieve_subresource_state(
+                resource_params, successful_resource_exec_logs)
 
         if self.get_resource_name() in BASE_RESOURCES:
             changed = False
