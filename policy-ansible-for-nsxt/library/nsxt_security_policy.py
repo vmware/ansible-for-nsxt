@@ -81,6 +81,23 @@ options:
                 Finally, "Default" category is the placeholder
                 default rules with lowest in the order of priority.
         type: str
+    comments:
+        type: str
+        description: SecurityPolicy lock/unlock comments
+    locked:
+        type: bool
+        description:
+            - Lock a security policy
+            - Indicates whether a security policy should be locked. If the
+              security policy is locked by a user, then no other user would
+              be able to modify this security policy. Once the user releases
+              the lock, other users can update this security policy.
+    scheduler_path:
+        type: str
+        description:
+            - Path to the scheduler for time based scheduling
+            - Provides a mechanism to apply the rules in this policy for a
+              specified time duration.
     scope:
         description: The list of group paths where the rules in this
                      policy will get applied. This scope will take
@@ -90,6 +107,17 @@ options:
     sequence_number:
         description: Sequence number to resolve conflicts across Domains
         type: int
+    stateful:
+        type: bool
+        description:
+            - Stateful nature of the entries within this security policy.
+            - Stateful or Stateless nature of security policy is enforced
+              on all rules in this security policy. When it is stateful, the
+              state of the network connects are tracked and a stateful packet
+              inspection is performed.
+            - Layer3 security policies can be stateful or stateless.
+              By default, they are stateful.
+            - Layer2 security policies can only be stateless.
     rules:
         description: Rules that are a part of this SecurityPolicy
         type: list
@@ -165,28 +193,36 @@ options:
                              to the source groups
                 type: bool
                 default: false
+    tcp_strict:
+        type: bool
+        description:
+            - Enforce strict tcp handshake before allowing data packets
+            - Ensures that a 3 way TCP handshake is done before the data
+              packets are sent.
+            - tcp_strict=true is supported only for stateful security policies
 '''
 
 EXAMPLES = '''
 - name: create Security Policy
   nsxt_security_policy:
-  hostname: "10.160.84.49"
-  username: "admin"
-  password: "Admin!23Admin"
-  validate_certs: False
-  id: test-sec-pol
-  display_name: test-sec-pol
-  state: "present"
-  domain_id: "default"
-  rules:
-    - action: "ALLOW"
-      description: "example-rule"
-      sequence_number: 1
-      display_name: "test-example-rule"
-      id: "test-example-rule"
-      source_groups: ["/infra/domains/vmc/groups/dbgroup"]
-      destination_groups: ["/infra/domains/vmc/groups/appgroup"]
-      services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
+    hostname: "10.10.10.10"
+    username: "username"
+    password: "password"
+    validate_certs: False
+    id: test-sec-pol
+    display_name: test-sec-pol
+    state: "present"
+    domain_id: "default"
+    locked: True
+    rules:
+      - action: "ALLOW"
+        description: "example-rule"
+        sequence_number: 1
+        display_name: "test-example-rule"
+        id: "test-example-rule"
+        source_groups: ["/infra/domains/vmc/groups/dbgroup"]
+        destination_groups: ["/infra/domains/vmc/groups/appgroup"]
+        services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
 '''
 
 RETURN = '''# '''
@@ -203,17 +239,42 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
     def get_resource_spec():
         security_policy_arg_spec = {}
         security_policy_arg_spec.update(
-            domain_id=dict(
-                required=True,
-                type='str'
-            ),
             category=dict(
                 required=False,
                 type='str'
             ),
+            comments=dict(
+                required=False,
+                type='str'
+            ),
+            domain_id=dict(
+                required=True,
+                type='str'
+            ),
+            locked=dict(
+                required=False,
+                type='bool'
+            ),
+            scheduler_path=dict(
+                required=False,
+                type='str'
+            ),
+            scope=dict(
+                required=False,
+                type='list'
+            ),
+            sequence_number=dict(
+                required=False,
+                type='int'
+            ),
+            stateful=dict(
+                required=False,
+                type='bool'
+            ),
             rules=dict(
                 required=False,
                 type='list',
+                elements='dict',
                 options=dict(
                     action=dict(
                         required=True,
@@ -245,11 +306,9 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
                         default=False
                     ),
                     display_name=dict(
-                        required=False,
                         type='str'
                     ),
                     id=dict(
-                        required=True,
                         type='str'
                     ),
                     sequence_number=dict(
@@ -271,13 +330,9 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
                     )
                 )
             ),
-            scope=dict(
+            tcp_strict=dict(
                 required=False,
-                type='list'
-            ),
-            sequence_number=dict(
-                required=False,
-                type='int'
+                type='bool'
             )
         )
         return security_policy_arg_spec
@@ -286,6 +341,9 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
     def get_resource_base_url(baseline_args):
         return '/infra/domains/{}/security-policies'.format(
             baseline_args["domain_id"])
+
+    def update_resource_params(self, nsx_resource_params):
+        nsx_resource_params.pop('domain_id')
 
 
 if __name__ == '__main__':
