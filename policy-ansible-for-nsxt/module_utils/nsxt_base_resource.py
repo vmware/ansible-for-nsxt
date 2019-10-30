@@ -399,7 +399,7 @@ class NSXTBaseRealizableResource(ABC):
             module = AnsibleModule(argument_spec=self._arg_spec,
                                    supports_check_mode=supports_check_mode)
 
-            if not (module.params['id'] and module.params['display_name']):
+            if not ('id' in module.params or 'display_name' in module.params):
                 module.fail_json(
                     msg="Please specify either id or display_name of the "
                         "resource")
