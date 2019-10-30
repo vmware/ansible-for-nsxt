@@ -22,27 +22,10 @@ import unittest
 import json
 from unittest.mock import Mock, patch
 
-from shutil import copyfile
-import ansible.module_utils.basic as ansible_basic
-
-# Copy policy_communicator.py to ansibles' module_utils to test.
-import os
-path_policy_ansible_lib = os.getcwd()
-path_ansible_lib = os.path.dirname(
-    os.path.abspath(ansible_basic.__file__)) + "/../"
-policy_communicator_file = (
-    path_policy_ansible_lib + "/module_utils/policy_communicator.py")
-
-copyfile(policy_communicator_file,
-         path_ansible_lib + "module_utils/policy_communicator.py")
-
-# now import it
+# In order to test, you need to export the PYTHONPATH so that it can find
+# these py modules
 import module_utils.nsxt_base_resource as nsxt_base_resource
-from ansible.module_utils.policy_communicator import PolicyCommunicator
-
-# then delete it from ansible's module_utils
-os.remove(path_ansible_lib + "module_utils/policy_communicator.py")
-
+from module_utils.policy_communicator import PolicyCommunicator
 
 class SimpleDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     def __init__(self):
