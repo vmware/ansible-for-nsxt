@@ -127,6 +127,63 @@ options:
         description: Same as dhcp_config_id. Either one can be specified.
                      If both are specified, dhcp_config_id takes precedence.
         type: str
+    t0sr_id:
+        description: Tier-0 Static Route ID.
+        required: false
+        type: str
+    t0sr_display_name:
+        description:
+            - Tier-0 Static Route display name.
+            - Either this or t0sr_id must be specified. If both are specified,
+              t0sr_id takes precedence.
+        required: false
+        type: str
+    t0sr_description:
+        description:
+            - Tier-0 Static Route description.
+        type: str
+    t0sr_state:
+        description:
+            - State can be either 'present' or 'absent'. 'present' is used to
+              create or update resource. 'absent' is used to delete resource.
+            - Must be specified in order to modify the resource
+        choices:
+            - present
+            - absent
+    t0sr_network:
+        description: Network address in CIDR format
+        required: true
+        type: str
+    t0sr_next_hops:
+        description: Next hop routes for network
+        type: list
+        elements: dict
+        suboptions:
+            admin_distance:
+                description: Cost associated with next hop route
+                type: int
+                default: 1
+        ip_address:
+            description: Next hop gateway IP address
+            type: str
+        scope:
+            description:
+                - Interface path associated with current route
+                - For example, specify a policy path referencing the IPSec VPN
+                  Session
+            type: list
+    t0sr_tags:
+        description: Opaque identifiers meaningful to the API user
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
     t0ls_id:
         description: Tier-0 Locale Service ID.
         required: false
@@ -221,45 +278,85 @@ options:
                     - either this or edge_node_id must be specified. If
                       both are specified, edge_node_id takes precedence.
                 type: str
+    t0ls_ha_vip_configs:
+        description:
+            - Array of HA VIP Config.
+            - This configuration can be defined only for Active-Standby Tier0
+              gateway to provide redundancy. For mulitple external interfaces,
+              multiple HA VIP configs must be defined and each config will
+              pair exactly two external interfaces. The VIP will move and will
+              always be owned by the Active node. When this property is
+              configured, configuration of dynamic-routing is not allowed.
+        type: list
+        elements: dict
+        suboptions:
+            enabled:
+                description: Flag to enable this HA VIP config.
+                default: true
+                type: bool
+            external_interface_paths:
+                description:
+                    - Policy paths to Tier0 external interfaces for providing
+                      redundancy
+                    - Policy paths to Tier0 external interfaces which are to
+                      be paired to provide redundancy. Floating IP will be
+                      owned by one of these interfaces depending upon which
+                      edge node is Active.
+                type: list
+            vip_subnets:
+                description:
+                    - VIP floating IP address subnets
+                    - Array of IP address subnets which will be used as
+                      floating IP addresses.
+                type: list
+                suboptions:
+                    ip_addresses:
+                        description: IP addresses assigned to interface
+                        type: list
+                        required: true
+                    prefix_len:
+                        description: Subnet prefix length
+                        type: int
+                        required: true
     t0ls_route_redistribution_types:
         description: Enable redistribution of different types of routes
                      on Tier-0.
         choices:
-            - TIER0_STATIC: Redistribute user added static routes.
-            - TIER0_CONNECTED: Redistribute all subnets configured on
+            - TIER0_STATIC = Redistribute user added static routes.
+            - TIER0_CONNECTED = Redistribute all subnets configured on
                                Interfaces and routes related to
                                TIER0_ROUTER_LINK, TIER0_SEGMENT,
                                TIER0_DNS_FORWARDER_IP,
                                TIER0_IPSEC_LOCAL_IP, TIER0_NAT types.
-            - TIER0_EXTERNAL_INTERFACE: Redistribute external interface
+            - TIER0_EXTERNAL_INTERFACE = Redistribute external interface
                                         subnets on Tier-0.
-            - TIER0_LOOPBACK_INTERFACE: Redistribute loopback interface
+            - TIER0_LOOPBACK_INTERFACE = Redistribute loopback interface
                                         subnets on Tier-0.
-            - TIER0_SEGMENT: Redistribute subnets configured on
+            - TIER0_SEGMENT = Redistribute subnets configured on
                              Segments connected to Tier-0.
-            - TIER0_ROUTER_LINK: Redistribute router link port subnets
+            - TIER0_ROUTER_LINK = Redistribute router link port subnets
                                  on Tier-0.
-            - TIER0_SERVICE_INTERFACE: Redistribute Tier0 service
+            - TIER0_SERVICE_INTERFACE = Redistribute Tier0 service
                                        interface subnets.
-            - TIER0_DNS_FORWARDER_IP: Redistribute DNS forwarder
+            - TIER0_DNS_FORWARDER_IP = Redistribute DNS forwarder
                                       subnets.
-            - TIER0_IPSEC_LOCAL_IP: Redistribute IPSec subnets.
-            - TIER0_NAT: Redistribute NAT IPs owned by Tier-0.
-            - TIER1_NAT: Redistribute NAT IPs advertised by Tier-1 instances.
-            - TIER1_LB_VIP: Redistribute LB VIP IPs advertised by Tier-1
+            - TIER0_IPSEC_LOCAL_IP = Redistribute IPSec subnets.
+            - TIER0_NAT = Redistribute NAT IPs owned by Tier-0.
+            - TIER1_NAT = Redistribute NAT IPs advertised by Tier-1 instances.
+            - TIER1_LB_VIP = Redistribute LB VIP IPs advertised by Tier-1
               instances.
-            - TIER1_LB_SNAT: Redistribute LB SNAT IPs advertised by Tier-1
+            - TIER1_LB_SNAT = Redistribute LB SNAT IPs advertised by Tier-1
               instances.
-            - TIER1_DNS_FORWARDER_IP: Redistribute DNS forwarder subnets on
+            - TIER1_DNS_FORWARDER_IP = Redistribute DNS forwarder subnets on
               Tier-1 instances.
-            - TIER1_CONNECTED: Redistribute all subnets configured on Segments
+            - TIER1_CONNECTED = Redistribute all subnets configured on Segments
               and Service Interfaces.
-            - TIER1_SERVICE_INTERFACE: Redistribute Tier1 service interface
+            - TIER1_SERVICE_INTERFACE = Redistribute Tier1 service interface
               subnets.
-            - TIER1_SEGMENT: Redistribute subnets configured on Segments
+            - TIER1_SEGMENT = Redistribute subnets configured on Segments
               connected to Tier1.
-            - TIER1_IPSEC_LOCAL_ENDPOINT: Redistribute IPSec VPN local-endpoint
-              subnets advertised by TIER1.
+            - TIER1_IPSEC_LOCAL_ENDPOINT = Redistribute IPSec VPN
+              local-endpoint subnets advertised by TIER1.
         type: list
     t0ls_bgp_ecmp:
         description: Flag to enable ECMP.
@@ -745,6 +842,48 @@ class NSXTTier0(NSXTBaseRealizableResource):
     def update_parent_info(self, parent_info):
         parent_info["tier0_id"] = self.id
 
+    class NSXTTier0StaticRoutes(NSXTBaseRealizableResource):
+        def get_unique_arg_identifier(self):
+            return NSXTTier0.NSXTTier0LocaleService.get_unique_arg_identifier()
+
+        @staticmethod
+        def get_unique_arg_identifier():
+            return "t0sr"
+
+        @staticmethod
+        def get_resource_spec():
+            tier0_sr_arg_spec = {}
+            tier0_sr_arg_spec.update(
+                network=dict(
+                    required=True,
+                    type='str'
+                ),
+                next_hops=dict(
+                    required=True,
+                    type='list',
+                    elements='dict',
+                    options=dict(
+                        admin_distance=dict(
+                            type='int',
+                            default=1
+                        ),
+                        ip_address=dict(
+                            type='str'
+                        ),
+                        scope=dict(
+                            type='list',
+                            elements='str'
+                        )
+                    )
+                ),
+            )
+            return tier0_sr_arg_spec
+
+        @staticmethod
+        def get_resource_base_url(parent_info):
+            tier0_id = parent_info.get("tier0_id", 'default')
+            return '/infra/tier-0s/{}/static-routes'.format(tier0_id)
+
     class NSXTTier0LocaleService(NSXTBaseRealizableResource):
         def get_unique_arg_identifier(self):
             return NSXTTier0.NSXTTier0LocaleService.get_unique_arg_identifier()
@@ -810,6 +949,36 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 route_redistribution_types=dict(
                     required=False,
                     type='list'
+                ),
+                ha_vip_configs=dict(
+                    type='list',
+                    elements='dict',
+                    options=dict(
+                        enabled=dict(
+                            default=True,
+                            type='bool'
+                        ),
+                        external_interface_paths=dict(
+                            required=True,
+                            type='list',
+                            elements='str'
+                        ),
+                        vip_subnets=dict(
+                            type='list',
+                            elements='dict',
+                            required=True,
+                            options=dict(
+                                ip_addresses=dict(
+                                    type='list',
+                                    required=True
+                                ),
+                                prefix_len=dict(
+                                    type='int',
+                                    rqeuired=True
+                                )
+                            )
+                        ),
+                    )
                 )
             )
             return tier0_ls_arg_spec

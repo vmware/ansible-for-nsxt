@@ -169,6 +169,63 @@ options:
         description: Same as tier0_id. Either one can be specified.
                      If both are specified, tier0_id takes precedence.
         type: str
+    t1sr_id:
+        description: Tier-1 Static Route ID.
+        required: false
+        type: str
+    t1sr_display_name:
+        description:
+            - Tier-1 Static Route display name.
+            - Either this or t1sr_id must be specified. If both are specified,
+              t1sr_id takes precedence.
+        required: false
+        type: str
+    t1sr_description:
+        description:
+            - Tier-1 Static Route description.
+        type: str
+    t1sr_state:
+        description:
+            - State can be either 'present' or 'absent'. 'present' is used to
+              create or update resource. 'absent' is used to delete resource.
+            - Must be specified in order to modify the resource
+        choices:
+            - present
+            - absent
+    t1sr_network:
+        description: Network address in CIDR format
+        required: true
+        type: str
+    t1sr_next_hops:
+        description: Next hop routes for network
+        type: list
+        elements: dict
+        suboptions:
+            admin_distance:
+                description: Cost associated with next hop route
+                type: int
+                default: 1
+        ip_address:
+            description: Next hop gateway IP address
+            type: str
+        scope:
+            description:
+                - Interface path associated with current route
+                - For example, specify a policy path referencing the IPSec VPN
+                  Session
+            type: list
+    t1sr_tags:
+        description: Opaque identifiers meaningful to the API user
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
     t1ls_id:
         description: Tier-1 Locale Service ID
         required: false
@@ -268,23 +325,23 @@ options:
         description: Enable redistribution of different types of routes
                      on Tier-1.
         choices:
-            - TIER1_STATIC: Redistribute all subnets and static routes
+            - TIER1_STATIC = Redistribute all subnets and static routes
                             advertised by Tier-1s.
-            - TIER1_NAT: Redistribute NAT IPs advertised by Tier-1
+            - TIER1_NAT = Redistribute NAT IPs advertised by Tier-1
                          instances.
-            - TIER1_LB_VIP: Redistribute LB VIP IPs advertised by
+            - TIER1_LB_VIP = Redistribute LB VIP IPs advertised by
                             Tier-1 instances.
-            - TIER1_LB_SNAT: Redistribute LB SNAT IPs advertised by
+            - TIER1_LB_SNAT = Redistribute LB SNAT IPs advertised by
                              Tier-1 instances.
-            - TIER1_DNS_FORWARDER_IP: Redistribute DNS forwarder
+            - TIER1_DNS_FORWARDER_IP = Redistribute DNS forwarder
                                       subnets on Tier-1 instances.
-            - TIER1_CONNECTED: Redistribute all subnets configured on
+            - TIER1_CONNECTED = Redistribute all subnets configured on
                                Segments and Service Interfaces.
-            - TIER1_SERVICE_INTERFACE: Redistribute Tier1 service
+            - TIER1_SERVICE_INTERFACE = Redistribute Tier1 service
                                        interface subnets.
-            - TIER1_SEGMENT: Redistribute subnets configured on
+            - TIER1_SEGMENT = Redistribute subnets configured on
                              Segments connected to Tier1.
-            - TIER1_IPSEC_LOCAL_ENDPOINT: Redistribute IPSec VPN
+            - TIER1_IPSEC_LOCAL_ENDPOINT = Redistribute IPSec VPN
                                           local-endpoint  subnets
                                           advertised by TIER1.
         type: list
@@ -555,6 +612,48 @@ class NSXTTier1(NSXTBaseRealizableResource):
 
     def update_parent_info(self, parent_info):
         parent_info["tier1_id"] = self.id
+
+    class NSXTTier1StaticRoutes(NSXTBaseRealizableResource):
+        def get_unique_arg_identifier(self):
+            return NSXTTier0.NSXTTier1LocaleService.get_unique_arg_identifier()
+
+        @staticmethod
+        def get_unique_arg_identifier():
+            return "t1sr"
+
+        @staticmethod
+        def get_resource_spec():
+            tier1_sr_arg_spec = {}
+            tier1_sr_arg_spec.update(
+                network=dict(
+                    required=True,
+                    type='str'
+                ),
+                next_hops=dict(
+                    required=True,
+                    type='list',
+                    elements='dict',
+                    options=dict(
+                        admin_distance=dict(
+                            type='int',
+                            default=1
+                        ),
+                        ip_address=dict(
+                            type='str'
+                        ),
+                        scope=dict(
+                            type='list',
+                            elements='str'
+                        )
+                    )
+                ),
+            )
+            return tier1_sr_arg_spec
+
+        @staticmethod
+        def get_resource_base_url(parent_info):
+            tier1_id = parent_info.get("tier1_id", 'default')
+            return '/infra/tier-1s/{}/static-routes'.format(tier1_id)
 
     class NSXTTier1LocaleService(NSXTBaseRealizableResource):
         def get_unique_arg_identifier(self):

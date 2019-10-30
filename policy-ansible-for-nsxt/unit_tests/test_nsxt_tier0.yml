@@ -22,9 +22,24 @@
         tags:
           - scope: "a"
             tag: "b"
+        t0sr_display_name: test-sr
+        t0sr_state: "present"
+        t0sr_network: '1.1.2.0/24'
+        t0sr_next_hops:
+          - ip_address: '192.172.1.42'
         t0ls_state: "present"
         t0ls_display_name: "test-t0ls"
         t0ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+        t0ls_ha_vip_configs:
+          - enabled: False
+            external_interface_paths:
+              - 'a'
+              - 'b'
+            vip_subnets:
+              - ip_addresses:
+                  - '1.1.1.1'
+                  - '2.2.2.2'
+                prefix_len: 2
         t0ls_edge_cluster_info:
           edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
         t0ls_preferred_edge_nodes_info:

@@ -27,6 +27,11 @@
             subnets: ["35.1.1.1/23"]
         route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED', 'TIER1_NAT']
         tier0_display_name: "test-tier00"
+        t1sr_display_name: test-sr
+        t1sr_state: "present"
+        t1sr_network: '1.1.2.0/24'
+        t1sr_next_hops:
+          - ip_address: '192.172.1.42'
         t1ls_state: "present"
         t1ls_display_name: "test-t1ls"
         t1ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
