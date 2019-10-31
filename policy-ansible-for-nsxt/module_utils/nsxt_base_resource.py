@@ -209,17 +209,18 @@ class NSXTBaseRealizableResource(ABC):
             self._update_parent_info()
 
             for resource_param_spec in children_resource_spec:
-                sub_resource = sub_resource_class()
+                if resource_param_spec is not None:
+                    sub_resource = sub_resource_class()
 
-                sub_resource.set_arg_spec(self._arg_spec)
-                sub_resource.set_ansible_module(self.module)
+                    sub_resource.set_arg_spec(self._arg_spec)
+                    sub_resource.set_ansible_module(self.module)
 
-                sub_resource.set_parent_info(self._parent_info)
+                    sub_resource.set_parent_info(self._parent_info)
 
-                sub_resource.realize(
-                    successful_resource_exec_logs=(
-                        successful_resource_exec_logs),
-                    resource_params=resource_param_spec)
+                    sub_resource.realize(
+                        successful_resource_exec_logs=(
+                            successful_resource_exec_logs),
+                        resource_params=resource_param_spec)
 
             # Restore the parent pointer
             self._parent_info['_parent'] = my_parent
