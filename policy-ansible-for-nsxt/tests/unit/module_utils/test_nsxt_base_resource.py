@@ -20,27 +20,35 @@
 
 import unittest
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 from shutil import copyfile
 import ansible.module_utils.basic as ansible_basic
 
 import sys
+import os
+sys.path.append(os.getcwd())
+import plugins.module_utils.policy_communicator as pc
+sys.modules[
+    'ansible_collections.vmware.ansible_for_policy_nsxt.plugins.'
+    'module_utils.policy_communicator'] = pc
+
 
 # Copy policy_communicator.py to ansibles' module_utils to test.
 import os
+
 path_policy_ansible_lib = os.getcwd()
 sys.path.append(path_policy_ansible_lib)
 
 path_ansible_lib = os.path.dirname(
     os.path.abspath(ansible_basic.__file__)) + "/"
 policy_communicator_file = (
-    path_policy_ansible_lib + "/module_utils/policy_communicator.py")
+    path_policy_ansible_lib + "/plugins/module_utils/policy_communicator.py")
 copyfile(policy_communicator_file,
          path_ansible_lib + "policy_communicator.py")
 
 # now import it
-import module_utils.nsxt_base_resource as nsxt_base_resource
+import plugins.module_utils.nsxt_base_resource as nsxt_base_resource
 from ansible.module_utils.policy_communicator import PolicyCommunicator
 
 # then delete it from ansible's module_utils
@@ -210,7 +218,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         nsxt_base_resource.BASE_RESOURCES = self.init_base_resources
         return super().tearDown()
 
-    @patch('module_utils.nsxt_base_resource.PolicyCommunicator')
+    @patch('plugins.module_utils.nsxt_base_resource.PolicyCommunicator')
     def test_realize(self, mock_policy_communicator):
         init_base_resources = nsxt_base_resource.BASE_RESOURCES
         nsxt_base_resource.BASE_RESOURCES = {"NestedDummyNSXTResource"}
@@ -759,7 +767,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
 
         self.assertEqual(expected_params, observed_params)
 
-    @patch('module_utils.policy_communicator.PolicyCommunicator')
+    @patch('plugins.module_utils.policy_communicator.PolicyCommunicator')
     def test_send_request_to_API(self, mock_policy_communicator):
         mock_policy_communicator.request.return_value = (200, "OK")
 
@@ -806,7 +814,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
 
         nsxt_base_resource.BASE_RESOURCES = init_base_resources
 
-    @patch('module_utils.policy_communicator.PolicyCommunicator')
+    @patch('plugins.module_utils.policy_communicator.PolicyCommunicator')
     def test_achieve_present_state(self, mock_policy_communicator):
         init_base_resources = nsxt_base_resource.BASE_RESOURCES
         nsxt_base_resource.BASE_RESOURCES = {"SimpleDummyNSXTResource"}
@@ -903,7 +911,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         test_create_new_resource()
         nsxt_base_resource.BASE_RESOURCES = init_base_resources
 
-    @patch('module_utils.policy_communicator.PolicyCommunicator')
+    @patch('plugins.module_utils.policy_communicator.PolicyCommunicator')
     def test_achieve_absent_state(self, mock_policy_communicator):
         init_base_resources = nsxt_base_resource.BASE_RESOURCES
         nsxt_base_resource.BASE_RESOURCES = {"SimpleDummyNSXTResource"}

@@ -6,6 +6,8 @@
 #
 - hosts: localhost
   become: yes
+  collections:
+    - vmware.ansible_for_policy_nsxt
   tasks:
     - name: Update Tier1
       nsxt_tier1:

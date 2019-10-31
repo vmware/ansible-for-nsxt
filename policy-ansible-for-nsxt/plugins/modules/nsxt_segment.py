@@ -208,7 +208,7 @@ options:
 
 EXAMPLES = '''
 - name: create Segment
-  nsxt_segment:
+  vmware.ansible_for_policy_nsxt.nsxt_segment:
     hostname: "10.10.10.10"
     username: "username"
     password: "password"
@@ -230,22 +230,23 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import json
-import time
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils._text import to_native
+from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+    module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 
 if __name__ == '__main__':
-    from ansible.module_utils.nsxt_policy_transport_zone import (
-        NSXTPolicyTransportZone)
+    import json
+    import time
+    from ansible.module_utils.basic import AnsibleModule
+    from ansible.module_utils._text import to_native
+    from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+        module_utils.nsxt_policy_transport_zone import NSXTPolicyTransportZone
 
     import os
     import sys
     sys.path.append(os.getcwd())
 
-    from library.nsxt_tier0 import NSXTTier0
-    from library.nsxt_tier1 import NSXTTier1
+    from plugins.modules.nsxt_tier0 import NSXTTier0
+    from plugins.modules.nsxt_tier1 import NSXTTier1
 
 
 class NSXTSegment(NSXTBaseRealizableResource):

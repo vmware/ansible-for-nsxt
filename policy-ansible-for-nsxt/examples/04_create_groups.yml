@@ -5,6 +5,8 @@
   become: yes
   vars_files:
     - build_topology_vars.yml
+  collections:
+    - vmware.ansible_for_policy_nsxt
   tasks:
     - name: Modify Groups
       nsxt_policy_group:

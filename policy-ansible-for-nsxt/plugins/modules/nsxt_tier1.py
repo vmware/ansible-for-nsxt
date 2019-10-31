@@ -167,7 +167,7 @@ options:
         type: str
     tier0_display_name:
         description: Same as tier0_id. Either one can be specified.
-                    If both are specified, tier0_id takes precedence.
+                     If both are specified, tier0_id takes precedence.
         type: str
     static_routes:
         type: list
@@ -473,7 +473,7 @@ options:
 
 EXAMPLES = '''
 - name: create Tier1
-  nsxt_tier1:
+  vmware.ansible_for_policy_nsxt.nsxt_tier1:
     hostname: "10.10.10.10"
     username: "username"
     password: "password"
@@ -514,27 +514,30 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import json
-import time
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import _ANSIBLE_ARGS as ANSIBLE_ARGS
-from ansible.module_utils._text import to_native
-from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+    module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 
 if __name__ == '__main__':
-    from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
-    from ansible.module_utils.policy_ipv6_profiles import (
-        PolicyIpv6NdraProfiles)
-    from ansible.module_utils.policy_dhcp import PolicyDhcpRelayConfig
-    from ansible.module_utils.policy_edge_cluster import PolicyEdgeCluster
-    from ansible.module_utils.policy_edge_node import PolicyEdgeNode
+    import json
+    import time
+    from ansible.module_utils.basic import AnsibleModule
+    from ansible.module_utils._text import to_native
+    from ansible_collections.vmware.ansible_for_policy_nsxt.\
+        plugins.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
+    from ansible_collections.vmware.ansible_for_policy_nsxt.\
+        plugins.module_utils.policy_ipv6_profiles import PolicyIpv6NdraProfiles
+    from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+        module_utils.policy_dhcp import PolicyDhcpRelayConfig
+    from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+        module_utils.policy_edge_cluster import PolicyEdgeCluster
+    from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+        module_utils.policy_edge_node import PolicyEdgeNode
 
     import os
     import sys
     sys.path.append(os.getcwd())
-
-    from library.nsxt_segment import NSXTSegment
-    from library.nsxt_tier0 import NSXTTier0
+    from plugins.modules.nsxt_segment import NSXTSegment
+    from plugins.modules.nsxt_tier0 import NSXTTier0
 
 
 class NSXTTier1(NSXTBaseRealizableResource):

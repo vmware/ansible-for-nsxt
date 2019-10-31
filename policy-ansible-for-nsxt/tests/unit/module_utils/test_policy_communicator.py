@@ -22,7 +22,7 @@ import unittest
 import json
 from unittest.mock import Mock, patch
 
-from module_utils.policy_communicator import PolicyCommunicator
+from plugins.module_utils.policy_communicator import PolicyCommunicator
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -44,7 +44,7 @@ class PolicyCommunicatorTestCase(unittest.TestCase):
 
         self.assertNotEqual(pc1, pc2)
 
-    @patch("module_utils.policy_communicator.open_url")
+    @patch("plugins.module_utils.policy_communicator.open_url")
     def test_request_success_policy_response_with_success(self, mock_open_url):
         pc = self.policy_communicator
 
@@ -61,7 +61,7 @@ class PolicyCommunicatorTestCase(unittest.TestCase):
         self.assertEqual(rc, 200)
         self.assertEqual(response, json.loads(expected_response))
 
-    @patch("module_utils.policy_communicator.open_url")
+    @patch("plugins.module_utils.policy_communicator.open_url")
     def test_request_success_policy_response_with_none(self, mock_open_url):
         pc = self.policy_communicator
 
@@ -79,7 +79,7 @@ class PolicyCommunicatorTestCase(unittest.TestCase):
         self.assertEqual(rc, 200)
         self.assertEqual(response, None)
 
-    @patch("module_utils.policy_communicator.open_url")
+    @patch("plugins.module_utils.policy_communicator.open_url")
     def test_request_success_policy_response_with_error(self, mock_open_url):
         pc = self.policy_communicator
 
@@ -95,7 +95,7 @@ class PolicyCommunicatorTestCase(unittest.TestCase):
         with self.assertRaises(Exception):
             rc, response = pc.request("dummy")
 
-    @patch("module_utils.policy_communicator.open_url")
+    @patch("plugins.module_utils.policy_communicator.open_url")
     def test_request_failure(self, mock_open_url):
         pc = self.policy_communicator
 

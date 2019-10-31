@@ -6,6 +6,8 @@
 #
 - hosts: localhost
   become: yes
+  collections:
+    - vmware.ansible_for_policy_nsxt
   tasks:
     - name: create Policy Group
       nsxt_policy_group:

@@ -204,7 +204,7 @@ options:
 
 EXAMPLES = '''
 - name: create Security Policy
-  nsxt_security_policy:
+  vmware.ansible_for_policy_nsxt.nsxt_security_policy:
     hostname: "10.10.10.10"
     username: "username"
     password: "password"
@@ -227,11 +227,14 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import json
-import time
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils._text import to_native
+from ansible_collections.vmware.ansible_for_policy_nsxt.plugins.\
+    module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+
+if __name__ == '__main__':
+    import json
+    import time
+    from ansible.module_utils.basic import AnsibleModule
+    from ansible.module_utils._text import to_native
 
 
 class NSXTSecurityPolicy(NSXTBaseRealizableResource):

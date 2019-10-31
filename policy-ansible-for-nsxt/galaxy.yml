@@ -1,0 +1,14 @@
+namespace: "vmware"
+name: "ansible_for_policy_nsxt"
+version: "1.0.0"
+readme: "README.md"
+authors:
+  - "Gautam Verma <gautam94verma@gmail.com>"
+description: This ansible collection allows creation, deletion, and modification
+             of NSX-T Policy resources
+license_file: ../LICENSE.txt
+tags:
+  - NSX-T
+  - Policy NSX-T
+  - VMware
+repository: "https://github.com/vmware/ansible-for-nsxt/tree/dev/policy-ansible-for-nsxt"
