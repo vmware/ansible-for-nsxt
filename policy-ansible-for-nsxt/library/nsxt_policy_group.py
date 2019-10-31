@@ -68,20 +68,20 @@ options:
 EXAMPLES = '''
 - name: create Policy Group
   nsxt_policy_group:
-  hostname: "10.160.84.49"
-  username: "admin"
-  password: "Admin!23Admin"
-  validate_certs: False
-  id: test-lb-service
-  display_name: test-lb-service
-  state: "present"
-  domain_id: "default"
-  expression:
-    - member_type: "VirtualMachine"
-      value: "webvm"
-      key: "Tag"
-      operator: "EQUALS"
-      resource_type: "Condition"
+    hostname: "10.10.10.10"
+    username: "username"
+    password: "password"
+    validate_certs: False
+    id: test-lb-service
+    display_name: test-lb-service
+    state: "present"
+    domain_id: "default"
+    expression:
+      - member_type: "VirtualMachine"
+        value: "webvm"
+        key: "Tag"
+        operator: "EQUALS"
+        resource_type: "Condition"
 '''
 
 RETURN = '''# '''
@@ -114,6 +114,9 @@ class NSXTPolicyGroup(NSXTBaseRealizableResource):
         return '/infra/domains/{}/groups'.format(
             baseline_args["domain_id"]
         )
+
+    def update_resource_params(self, nsx_resource_params):
+        nsx_resource_params.pop('domain_id')
 
 
 if __name__ == '__main__':

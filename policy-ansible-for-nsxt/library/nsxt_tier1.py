@@ -167,218 +167,244 @@ options:
         type: str
     tier0_display_name:
         description: Same as tier0_id. Either one can be specified.
-                     If both are specified, tier0_id takes precedence.
+                    If both are specified, tier0_id takes precedence.
         type: str
-    t1ls_id:
-        description: Tier-1 Locale Service ID
-        required: false
-        type: str
-    t1ls_display_name:
-        description:
-            - Tier-1 Locale Service display name.
-            - Either this or t1ls_id must be specified. If both are specified,
-              t1ls_id takes precedence.
-        required: false
-        type: str
-    t1ls_description:
-        description: Tier-1 Locale Service  description
-        type: str
-    t1ls_state:
-        description:
-            - "State can be either 'present' or 'absent'. 'present' is used to
-              create or update resource. 'absent' is used to delete resource."
-            - Required if I(segp_id != null)."
-        choices:
-            - present
-            - absent
-    t1ls_tags:
-        description: Opaque identifiers meaningful to the API user.
-        type: dict
-        suboptions:
-            scope:
-                description: Tag scope.
-                required: true
-                type: str
-            tag:
-                description: Tag value.
-                required: true
-                type: str
-    t1ls_edge_cluster_info:
-        description: Used to create path to edge cluster. Auto-assigned
-                     if associated enforcement-point has only one edge
-                     cluster.
-        type: dict
-        suboptions:
-            site_id:
-                description: site_id where edge cluster is located
-                default: default
-                type: str
-            enforcementpoint_id:
-                description: enforcementpoint_id where edge cluster is
-                             located
-                default: default
-                type: str
-            edge_cluster_id:
-                description: ID of the edge cluster
-                required: true
-                type: str
-            edge_cluster_display_name:
-                description:
-                    - display name of the edge cluster.
-                    - Either this or edge_cluster_id must be specified. If
-                      both are specified, edge_cluster_id takes precedence
-                type: str
-    t1ls_preferred_edge_nodes_info:
-        description: Used to create paths to edge nodes. Specified edge
-                     is used as preferred edge cluster member when
-                     failover mode is set to PREEMPTIVE, not
-                     applicable otherwise.
+    locale_services:
         type: list
+        element: dict
+        description: This is a list of Locale Services that need to be created,
+                     updated, or deleted
         suboptions:
-            site_id:
-                description: site_id where edge node is located
-                default: default
+            id:
+                description: Tier-1 Locale Service ID
                 type: str
-            enforcementpoint_id:
-                description: enforcementpoint_id where edge node is
-                             located
-                default: default
-                type: str
-            edge_cluster_id:
-                description: edge_cluster_id where edge node is
-                             located
-                required: true
-                type: str
-            edge_cluster_display_name:
+            display_name:
                 description:
-                    - display name of the edge cluster.
-                    - either this or edge_cluster_id must be specified. If
-                      both are specified, edge_cluster_id takes precedence
+                    - Tier-1 Locale Service display name.
+                    - Either this or id must be specified. If both are
+                      specified, id takes precedence.
+                required: false
                 type: str
-            edge_node_id:
-                description: ID of the edge node
+            description:
+                description: Tier-1 Locale Service  description
                 type: str
-            edge_node_display_name:
+            state:
                 description:
-                    - Display name of the edge node.
-                    - either this or edge_node_id must be specified. If
-                      both are specified, edge_node_id takes precedence.
-                type: str
-    t1ls_route_redistribution_types:
-        description: Enable redistribution of different types of routes
-                     on Tier-1.
-        choices:
-            - TIER1_STATIC: Redistribute all subnets and static routes
-                            advertised by Tier-1s.
-            - TIER1_NAT: Redistribute NAT IPs advertised by Tier-1
-                         instances.
-            - TIER1_LB_VIP: Redistribute LB VIP IPs advertised by
-                            Tier-1 instances.
-            - TIER1_LB_SNAT: Redistribute LB SNAT IPs advertised by
-                             Tier-1 instances.
-            - TIER1_DNS_FORWARDER_IP: Redistribute DNS forwarder
-                                      subnets on Tier-1 instances.
-            - TIER1_CONNECTED: Redistribute all subnets configured on
-                               Segments and Service Interfaces.
-            - TIER1_SERVICE_INTERFACE: Redistribute Tier1 service
-                                       interface subnets.
-            - TIER1_SEGMENT: Redistribute subnets configured on
-                             Segments connected to Tier1.
-            - TIER1_IPSEC_LOCAL_ENDPOINT: Redistribute IPSec VPN
-                                          local-endpoint  subnets
-                                          advertised by TIER1.
-        type: list
-    t1iface_id:
-        description: Tier-1 Interface ID
-        required: false
-        type: str
-    t1iface_description:
-        description: Tier-1 Interface  description
-        type: str
-    t0iface_display_name:
-        description:
-            - Tier-1 Interface display name
-            - Either this or t1iface_id must be specified. If both are
-              specified, t1iface_id takes precedence.
-        required: false
-        type: str
-    t1iface_state:
-        description:
-            - "State can be either 'present' or 'absent'. 'present' is used to
-              create or update resource. 'absent' is used to delete resource."
-            - Required if I(segp_id != null)."
-        choices:
-            - present
-            - absent
-    t1iface_tags:
-        description: Opaque identifiers meaningful to the API user.
-        type: dict
-        suboptions:
-            scope:
-                description: Tag scope.
-                required: true
-                type: str
-            tag:
-                description: Tag value.
-                required: true
-                type: str
-    t1iface_ipv6_ndra_profile_id:
-        description:
-            - "Configrue IPv6 NDRA profile. Only one NDRA profile can be
-               configured."
-            - Required if I(t1iface_id != null).
-        type: str
-    t1iface_segment_id:
-        description:
-            - Specify Segment to which this interface is connected to.
-            - Required if I(t1iface_id != null).
-        type: str
-    t0iface_segment_display_name:
-        description:
-            - Same as t1iface_segment_id
-            - Either this or t1iface_segment_id must be specified. If
-              both are specified, t1iface_segment_id takes precedence.
-        type: str
-    t1iface_subnets:
-        description:
-            - IP address and subnet specification for interface.
-            - Specify IP address and network prefix for interface.
-            - Required if I(t1iface_id != null).
-        type: list
+                    - State can be either 'present' or 'absent'. 'present' is
+                      used to create or update resource. 'absent' is used to
+                      delete resource.
+                    - Required if I(segp_id != null)
+                choices:
+                    - present
+                    - absent
+            tags:
+                description: Opaque identifiers meaningful to the API user.
+                type: dict
+                suboptions:
+                    scope:
+                        description: Tag scope.
+                        required: true
+                        type: str
+                    tag:
+                        description: Tag value.
+                        required: true
+                        type: str
+            edge_cluster_info:
+                description: Used to create path to edge cluster. Auto-assigned
+                             if associated enforcement-point has only one edge
+                             cluster.
+                type: dict
+                suboptions:
+                    site_id:
+                        description: site_id where edge cluster is located
+                        default: default
+                        type: str
+                    enforcementpoint_id:
+                        description: enforcementpoint_id where edge cluster is
+                                     located
+                        default: default
+                        type: str
+                    edge_cluster_id:
+                        description: ID of the edge cluster
+                        required: true
+                        type: str
+                    edge_cluster_display_name:
+                        description:
+                            - display name of the edge cluster.
+                            - Either this or edge_cluster_id must be specified.
+                              If both are specified, edge_cluster_id takes
+                              precedence
+                        type: str
+            preferred_edge_nodes_info:
+                description: Used to create paths to edge nodes. Specified edge
+                             is used as preferred edge cluster member when
+                             failover mode is set to PREEMPTIVE, not
+                             applicable otherwise.
+                type: list
+                suboptions:
+                    site_id:
+                        description: site_id where edge node is located
+                        default: default
+                        type: str
+                    enforcementpoint_id:
+                        description: enforcementpoint_id where edge node is
+                                     located
+                        default: default
+                        type: str
+                    edge_cluster_id:
+                        description: edge_cluster_id where edge node is
+                                     located
+                        required: true
+                        type: str
+                    edge_cluster_display_name:
+                        description:
+                            - display name of the edge cluster.
+                            - either this or edge_cluster_id must be specified.
+                              If both are specified, edge_cluster_id takes
+                              precedence
+                        type: str
+                    edge_node_id:
+                        description: ID of the edge node
+                        type: str
+                    edge_node_display_name:
+                        description:
+                            - Display name of the edge node.
+                            - either this or edge_node_id must be specified. If
+                              both are specified, edge_node_id takes precedence
+                        type: str
+            route_redistribution_types:
+                description: Enable redistribution of different types of routes
+                             on Tier-1.
+                choices:
+                    - TIER1_STATIC - Redistribute all subnets and static routes
+                                    advertised by Tier-1s.
+                    - TIER1_NAT - Redistribute NAT IPs advertised by Tier-1
+                                instances.
+                    - TIER1_LB_VIP - Redistribute LB VIP IPs advertised by
+                                    Tier-1 instances.
+                    - TIER1_LB_SNAT - Redistribute LB SNAT IPs advertised by
+                                    Tier-1 instances.
+                    - TIER1_DNS_FORWARDER_IP - Redistribute DNS forwarder
+                                            subnets on Tier-1 instances.
+                    - TIER1_CONNECTED - Redistribute all subnets configured on
+                                    Segments and Service Interfaces.
+                    - TIER1_SERVICE_INTERFACE - Redistribute Tier1 service
+                                            interface subnets.
+                    - TIER1_SEGMENT - Redistribute subnets configured on
+                                    Segments connected to Tier1.
+                    - TIER1_IPSEC_LOCAL_ENDPOINT - Redistribute IPSec VPN
+                                                local-endpoint  subnets
+                                                advertised by TIER1.
+                type: list
+            interfaces:
+                type: list
+                element: dict
+                description: Specify the interfaces associated with the Gateway
+                             in this section that need to be created, updated,
+                             or deleted
+                suboptions:
+                    id:
+                        description: Tier-1 Interface ID
+                        required: false
+                        type: str
+                    description:
+                        description: Tier-1 Interface  description
+                        type: str
+                    display_name:
+                        description:
+                            - Tier-1 Interface display name
+                            - Either this or id must be specified. If both are
+                              specified, id takes precedence.
+                        required: false
+                        type: str
+                    state:
+                        description:
+                            - State can be either 'present' or 'absent'.
+                              'present' is used to create or update resource.
+                              'absent' is used to delete resource.
+                            - Required if I(segp_id != null).
+                        choices:
+                            - present
+                            - absent
+                    tags:
+                        description: Opaque identifiers meaningful to the API
+                                     user
+                        type: dict
+                        suboptions:
+                            scope:
+                                description: Tag scope.
+                                required: true
+                                type: str
+                            tag:
+                                description: Tag value.
+                                required: true
+                                type: str
+                    ipv6_ndra_profile_id:
+                        description:
+                            - Configrue IPv6 NDRA profile. Only one NDRA
+                              profile can be configured
+                            - Required if I(id != null)
+                        type: str
+                    segment_id:
+                        description:
+                            - Specify Segment to which this interface is
+                              connected to.
+                            - Required if I(id != null)
+                        type: str
+                    t0iface_segment_display_name:
+                        description:
+                            - Same as segment_id
+                            - Either this or segment_id must be specified. If
+                              both are specified, segment_id takes precedence.
+                        type: str
+                    subnets:
+                        description:
+                            - IP address and subnet specification for interface
+                            - Specify IP address and network prefix for
+                              interface
+                            - Required if I(id != null)
+                        type: list
 '''
 
 EXAMPLES = '''
 - name: create Tier1
   nsxt_tier1:
-    hostname: "10.160.84.49"
-    username: "admin"
-    password: "Admin!23Admin"
+    hostname: "10.10.10.10"
+    username: "username"
+    password: "password"
     validate_certs: False
-    id: test-tier1
-    display_name: test-tier1
-    state: "present"
+    display_name: test-tier22222
+    state: present
     failover_mode: "PREEMPTIVE"
     disable_firewall: True
     force_whitelisting: True
     tags:
       - scope: "a"
-      tag: "b"
-    t1ls_id: test-t1ls
-    t1ls_state: "present"
-    t1ls_display_name: "test-t1ls"
-    t1ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
-    t1ls_edge_cluster_info:
-      edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
-    t1ls_preferred_edge_nodes_info:
-      - edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
-        edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
-    t1iface_id: "test-t0-t1ls-iface"
-    t1iface_display_name: "test-t0-t1ls-iface"
-    t1iface_state: "present"
-    t1iface_subnets:
-      - ip_addresses: ["35.1.1.1"]
-        prefix_len: 24
-    t1iface_segment_id: "sg-uplink"
+        tag: "b"
+    route_advertisement_rules:
+      - name: "test-route-advertisement-rules"
+        route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED']
+        subnets: ["35.1.1.1/23"]
+    route_advertisement_types:
+        - "TIER1_STATIC_ROUTES"
+        - "TIER1_CONNECTED"
+        - "TIER1_NAT"
+    tier0_display_name: "node-t0"
+    locale_services:
+      - state: present
+        display_name: test-t1ls-1
+        route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+      - state: present
+        display_name: test-t1ls-2
+        route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+        interfaces:
+          - id: "test-t1-t1ls-iface-2"
+            display_name: "test-t1-t1ls-iface"
+            state: present
+            subnets:
+              - ip_addresses: ["35.1.1.1"]
+                prefix_len: 24
+            segment_id: "test-seg-2"
 '''
 
 RETURN = '''# '''
@@ -386,6 +412,7 @@ RETURN = '''# '''
 import json
 import time
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import _ANSIBLE_ARGS as ANSIBLE_ARGS
 from ansible.module_utils._text import to_native
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 
@@ -511,14 +538,14 @@ class NSXTTier1(NSXTBaseRealizableResource):
     def get_resource_base_url(baseline_args=None):
         return '/infra/tier-1s'
 
-    def update_resource_params(self):
+    def update_resource_params(self, nsx_resource_params):
         ipv6_profile_paths = []
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "ipv6_ndra_profile"):
             ipv6_ndra_profile_base_url = (PolicyIpv6NdraProfiles.
                                           get_resource_base_url())
             ipv6_ndra_profile_id = self.get_id_using_attr_name_else_fail(
-                    "ipv6_ndra_profile", self.resource_params,
+                    "ipv6_ndra_profile", nsx_resource_params,
                     ipv6_ndra_profile_base_url, "Ipv6NdraProfile")
             ipv6_profile_paths.append(
                 ipv6_ndra_profile_base_url + "/" + ipv6_ndra_profile_id)
@@ -527,42 +554,42 @@ class NSXTTier1(NSXTBaseRealizableResource):
             ipv6_dad_profile_base_url = (PolicyIpv6DadProfiles.
                                          get_resource_base_url())
             ipv6_dad_profile_id = self.get_id_using_attr_name_else_fail(
-                    "ipv6_dad_profile", self.resource_params,
+                    "ipv6_dad_profile", nsx_resource_params,
                     ipv6_dad_profile_base_url, "Ipv6DadProfile")
             ipv6_profile_paths.append(
                 ipv6_dad_profile_base_url + "/" + ipv6_dad_profile_id)
         if ipv6_profile_paths:
-            self.resource_params["ipv6_profile_paths"] = ipv6_profile_paths
+            nsx_resource_params["ipv6_profile_paths"] = ipv6_profile_paths
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "dhcp_config"):
             dhcp_config_base_url = (
                 PolicyDhcpRelayConfig.get_resource_base_url())
             dhcp_config_id = self.get_id_using_attr_name_else_fail(
-                "dhcp_config", self.resource_params,
+                "dhcp_config", nsx_resource_params,
                 dhcp_config_base_url, "DhcpRelayConfig")
-            self.resource_params["dhcp_config_paths"] = [
+            nsx_resource_params["dhcp_config_paths"] = [
                 dhcp_config_base_url + "/" + dhcp_config_id]
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "tier0"):
             tier0_base_url = NSXTTier0.get_resource_base_url()
             tier0_id = self.get_id_using_attr_name_else_fail(
-                "tier0", self.resource_params,
+                "tier0", nsx_resource_params,
                 tier0_base_url, "Tier0")
-            self.resource_params["tier0_path"] = (
+            nsx_resource_params["tier0_path"] = (
                 tier0_base_url + "/" + tier0_id)
 
     def update_parent_info(self, parent_info):
         parent_info["tier1_id"] = self.id
 
     class NSXTTier1LocaleService(NSXTBaseRealizableResource):
-        def get_unique_arg_identifier(self):
-            return NSXTTier1.NSXTTier1LocaleService.get_unique_arg_identifier()
+        def get_spec_identifier(self):
+            return NSXTTier1.NSXTTier1LocaleService.get_spec_identifier()
 
-        @staticmethod
-        def get_unique_arg_identifier():
-            return "t1ls"
+        @classmethod
+        def get_spec_identifier(cls):
+            return "locale_services"
 
         @staticmethod
         def get_resource_spec():
@@ -630,9 +657,9 @@ class NSXTTier1(NSXTBaseRealizableResource):
             tier1_id = parent_info.get("tier1_id", 'default')
             return '/infra/tier-1s/{}/locale-services'.format(tier1_id)
 
-        def update_resource_params(self):
-            if "edge_cluster_info" in self.resource_params:
-                edge_cluster_info = self.resource_params.pop(
+        def update_resource_params(self, nsx_resource_params):
+            if "edge_cluster_info" in nsx_resource_params:
+                edge_cluster_info = nsx_resource_params.pop(
                     "edge_cluster_info")
                 site_id = edge_cluster_info["site_id"]
                 enforcementpoint_id = edge_cluster_info["enforcementpoint_id"]
@@ -642,13 +669,13 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 edge_cluster_id = self.get_id_using_attr_name_else_fail(
                     "edge_cluster", edge_cluster_info, edge_cluster_base_url,
                     PolicyEdgeCluster.__name__)
-                self.resource_params["edge_cluster_path"] = (
+                nsx_resource_params["edge_cluster_path"] = (
                     edge_cluster_base_url + "/" + edge_cluster_id)
 
-            if "preferred_edge_nodes_info" in self.resource_params:
-                preferred_edge_nodes_info = self.resource_params.pop(
+            if "preferred_edge_nodes_info" in nsx_resource_params:
+                preferred_edge_nodes_info = nsx_resource_params.pop(
                     "preferred_edge_nodes_info")
-                self.resource_params["preferred_edge_paths"] = []
+                nsx_resource_params["preferred_edge_paths"] = []
                 for preferred_edge_node_info in preferred_edge_nodes_info:
                     site_id = preferred_edge_node_info.get(
                         "site_id", "default")
@@ -665,20 +692,20 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     edge_node_id = self.get_id_using_attr_name_else_fail(
                         "edge_node", preferred_edge_node_info,
                         edge_node_base_url, PolicyEdgeNode.__name__)
-                    self.resource_params["preferred_edge_paths"].append(
+                    nsx_resource_params["preferred_edge_paths"].append(
                         edge_node_base_url + "/" + edge_node_id)
 
         def update_parent_info(self, parent_info):
-            parent_info["t1ls_id"] = self.id
+            parent_info["id"] = self.id
 
         class NSXTTier1Interface(NSXTBaseRealizableResource):
-            def get_unique_arg_identifier(self):
+            def get_spec_identifier(self):
                 return (NSXTTier1.NSXTTier1LocaleService.NSXTTier1Interface
-                        .get_unique_arg_identifier())
+                        .get_spec_identifier())
 
-            @staticmethod
-            def get_unique_arg_identifier():
-                return "t1iface"
+            @classmethod
+            def get_spec_identifier(cls):
+                return "interfaces"
 
             @staticmethod
             def get_resource_spec():
@@ -706,18 +733,18 @@ class NSXTTier1(NSXTBaseRealizableResource):
             @staticmethod
             def get_resource_base_url(parent_info):
                 tier1_id = parent_info.get("tier1_id", 'default')
-                locale_service_id = parent_info.get("t1ls_id", 'default')
+                locale_service_id = parent_info.get("id", 'default')
                 return ('/infra/tier-1s/{}/locale-services/{}/interfaces'
                         .format(tier1_id, locale_service_id))
 
-            def update_resource_params(self):
+            def update_resource_params(self, nsx_resource_params):
                 # segment_id is a required attr
                 segment_base_url = NSXTSegment.get_resource_base_url()
                 segment_id = self.get_id_using_attr_name_else_fail(
-                    "segment", self.resource_params,
+                    "segment", nsx_resource_params,
                     segment_base_url,
                     "Segment")
-                self.resource_params["segment_path"] = (
+                nsx_resource_params["segment_path"] = (
                     segment_base_url + "/" + segment_id)
 
                 if self.do_resource_params_have_attr_with_id_or_display_name(
@@ -726,9 +753,9 @@ class NSXTTier1(NSXTBaseRealizableResource):
                         PolicyIpv6NdraProfiles.get_resource_base_url())
                     ipv6_ndra_profile_id = (
                         self.get_id_using_attr_name_else_fail(
-                            "ipv6_ndra_profile", self.resource_params,
+                            "ipv6_ndra_profile", nsx_resource_params,
                             ipv6_ndra_profile_url, "Ipv6 NDRA Profile"))
-                    self.resource_params["ipv6_profile_paths"] = [
+                    nsx_resource_params["ipv6_profile_paths"] = [
                         ipv6_ndra_profile_url + "/" + ipv6_ndra_profile_id]
 
 

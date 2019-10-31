@@ -42,50 +42,66 @@ options:
     description:
         description: IP Pool description.
         type: str
-    ip_block_id:
-        description: The ID of the IpAddressBlock from which the subnet is to
-                     be created.
-        type: str
-        required=false
-    ip_block_display_name:
-        description: Same as ip_block_id. Either one must be specified.
-                     If both are specified, ip_block_id takes
-                     precedence.
-        required: false
-        type: str
-    auto_assign_gateway:
-        description:
-            - Indicate whether default gateway is to be reserved from the range
-            - If this property is set to true, the first IP in the range will
-              be reserved for gateway.
-        type: bool
-        default: true
-    size:
-        description:
-            - Represents the size or number of IP addresses in the subnet
-            - The size parameter is required for subnet creation. It must be
-              specified during creation but cannot be changed later.
-        type: int
+    pool_block_subnets:
+        type: list
+        element: dict
+        description: Specify the IP Pool Block Subnets that need to be created,
+                     updated, or deleted as a list of dict in this section
+        suboptions:
+            ip_block_id:
+                description: The ID of the IpAddressBlock from which the subnet
+                             is to be created
+                type: str
+            ip_block_display_name:
+                description: Same as ip_block_id. Either one must be specified.
+                             If both are specified, ip_block_id takes
+                             precedence.
+                required: false
+                type: str
+            auto_assign_gateway:
+                description:
+                    - Indicate whether default gateway is to be reserved from
+                      the range
+                    - If this property is set to true, the first IP in the
+                      range will be reserved for gateway.
+                type: bool
+                default: true
+            size:
+                description:
+                    - Represents the size or number of IP addresses in the
+                      subnet
+                    - The size parameter is required for subnet creation. It
+                      must be specified during creation but cannot be changed
+                      later.
+                type: int
 '''
 
 EXAMPLES = '''
 - name: create IP Pool
   nsxt_ip_pool:
-    hostname: "10.160.84.49"
-      username: "admin"
-      password: "Admin!23Admin"
-      validate_certs: False
-      id: test-ip-pool
-      display_name: test-ip-pool
-      state: "absent"
-      tags:
-      - tag: "a"
-        scope: "b"
-      ip_subnet_id: test-ip-subnet
-      ip_subnet_display_name: test-ip-subnet
-      ip_subnet_state: "present"
-      ip_subnet_ip_block_display_neme: "test-ip-blk"
-      ip_subnet_size: 16
+    hostname: "10.10.10.10"
+    username: "username"
+    password: "password"
+    validate_certs: False
+    id: test-ip-pool
+    display_name: test-ip-pool
+    state: "absent"
+    tags:
+    - tag: "a"
+      scope: "b"
+    pool_block_subnets:
+      - id: test-ip-subnet-1
+        state: present
+        ip_block_id: "test-ip-blk-1"
+        size: 16
+      - display_name: test-ip-subnet-2
+        state: present
+        ip_block_id: "test-ip-blk-1"
+        size: 16
+      - display_name: test-ip-subnet-3
+        state: present
+        ip_block_id: "test-ip-blk-1"
+        size: 8
 '''
 
 RETURN = '''# '''
@@ -119,13 +135,13 @@ class NSXTIpPool(NSXTBaseRealizableResource):
         parent_info["ip_pool_id"] = self.id
 
     class NSXTIpAddressPoolBlockSubnet(NSXTBaseRealizableResource):
-        def get_unique_arg_identifier(self):
+        def get_spec_identifier(self):
             return (NSXTIpPool.NSXTIpAddressPoolBlockSubnet.
-                    get_unique_arg_identifier())
+                    get_spec_identifier())
 
-        @staticmethod
-        def get_unique_arg_identifier():
-            return "ip_subnet"
+        @classmethod
+        def get_spec_identifier(cls):
+            return "pool_block_subnets"
 
         @staticmethod
         def get_resource_spec():
@@ -156,16 +172,16 @@ class NSXTIpPool(NSXTBaseRealizableResource):
                 parent_info["ip_pool_id"]
             )
 
-        def update_resource_params(self):
+        def update_resource_params(self, nsx_resource_params):
             # ip_block is a required attr
             ip_block_base_url = NSXTIpBlock.get_resource_base_url()
             ip_block_id = self.get_id_using_attr_name_else_fail(
-                "ip_block", self.resource_params,
+                "ip_block", nsx_resource_params,
                 ip_block_base_url, "IP Block")
-            self.resource_params["ip_block_path"] = (
+            nsx_resource_params["ip_block_path"] = (
                 ip_block_base_url + "/" + ip_block_id)
 
-            self.resource_params["resource_type"] = "IpAddressPoolBlockSubnet"
+            nsx_resource_params["resource_type"] = "IpAddressPoolBlockSubnet"
 
 
 if __name__ == '__main__':
