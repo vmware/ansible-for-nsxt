@@ -13,8 +13,8 @@
         username: "default"
         password: "default"
         validate_certs: False
-        display_name: test-tier0
-        state: "present"
+        display_name: test-tier0-1
+        state: present
         ha_mode: "ACTIVE_STANDBY"
         failover_mode: "PREEMPTIVE"
         disable_firewall: True
@@ -22,36 +22,54 @@
         tags:
           - scope: "a"
             tag: "b"
-        t0ls_state: "present"
-        t0ls_display_name: "test-t0ls"
-        t0ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
-        t0ls_edge_cluster_info:
-          edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
-        t0ls_preferred_edge_nodes_info:
-          - edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
-            edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
-        t0ls_bgp_state: "present"
-        t0ls_bgp_local_as_num: 1211
-        t0ls_bgp_inter_sr_ibgp: False
-        t0ls_bgp_graceful_restart_config:
-          mode: "GR_AND_HELPER"
-          timer:
-            restart_timer: 12
-        t0ls_bgp_route_aggregations:
-            - prefix: "10.1.1.0/24"
-            - prefix: "11.1.0.0/16"
-              summary_only: False
-        t0ls_bgp_neighbor_display_name: "neigh1"
-        t0ls_bgp_neighbor_neighbor_address: "1.2.3.4"
-        t0ls_bgp_neighbor_remote_as_num: "12"
-        t0ls_bgp_neighbor_state: "absent"
-        t0iface_id: "test-t0-t0ls-iface"
-        t0iface_display_name: "test-t0-t0ls-iface"
-        t0iface_state: "present"
-        t0iface_subnets:
-          - ip_addresses: ["35.1.1.1"]
-            prefix_len: 24
-        t0iface_segment_id: "sg-uplink"
-        t0iface_edge_node_info:
-          edge_cluster_id: "95196903-6b8a-4276-a7c4-387263e834fd"
-          edge_id: "940f1f4b-0317-45d4-84e2-b8c2394e7405"
+        static_routes:
+          - state: present
+            display_name: test-sr
+            network: '12.12.12.0/24'
+            next_hops:
+              - ip_address: "192.165.1.4"
+        locale_services:
+          - state: present
+            id: "test-t0ls"
+            route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+            edge_cluster_info:
+              edge_cluster_id: "7ef91a10-c780-4f48-a279-a5662db4ffa3"
+            preferred_edge_nodes_info:
+              - edge_cluster_id: "7ef91a10-c780-4f48-a279-a5662db4ffa3"
+                edge_node_id: "e10c42dc-db27-11e9-8cd0-000c291af7ee"
+            ha_vip_configs:
+              - external_interface_info:
+                  - display_name: '3-policyconnectivity-64'
+                  - id: '4-policyconnectivity-562'
+                vip_subnets:
+                  - ip_addresses:
+                      - '12.12.12.12'
+                    prefix_len: 23
+            BGP:
+              state: present
+              local_as_num: '1211'
+              inter_sr_ibgp: False
+              graceful_restart_config:
+                mode: "GR_AND_HELPER"
+                timer:
+                  restart_timer: 12
+              route_aggregations:
+                - prefix: "10.1.1.0/24"
+                - prefix: "11.1.0.0/24"
+                  summary_only: False
+              neighbors:
+                - display_name: neigh1
+                  neighbor_address: "1.2.3.4"
+                  remote_as_num: "12"
+                  state: present
+            interfaces:
+              - id: "test-t0-t0ls-iface"
+                display_name: "test-t0-t0ls-iface"
+                state: present
+                subnets:
+                  - ip_addresses: ["35.1.1.1"]
+                    prefix_len: 24
+                segment_id: "test-seg-4"
+                edge_node_info:
+                  edge_cluster_id: "7ef91a10-c780-4f48-a279-a5662db4ffa3"
+                  edge_node_id: "e10c42dc-db27-11e9-8cd0-000c291af7ee"
