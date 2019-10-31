@@ -130,6 +130,9 @@ class NSXTBaseRealizableResource(ABC):
     def get_state(self):
         return self._state
 
+    def get_parent_info(self):
+        return self._parent_info
+
     @staticmethod
     @abstractmethod
     def get_resource_base_url(parent_info):
@@ -305,9 +308,11 @@ class NSXTBaseRealizableResource(ABC):
         return False
 
     def get_id_using_attr_name_else_fail(self, attr_name, params,
-                                         resource_base_url, resource_type):
+                                         resource_base_url, resource_type,
+                                         ignore_not_found_error=True):
         resource_id = self._get_id_using_attr_name(
-            attr_name, params, resource_base_url, resource_type)
+            attr_name, params, resource_base_url, resource_type,
+            ignore_not_found_error)
         if resource_id is not None:
             return resource_id
         # Incorrect usage of Ansible Module
@@ -341,7 +346,8 @@ class NSXTBaseRealizableResource(ABC):
         return True
 
     def _get_id_using_attr_name(self, attr_name, params,
-                                resource_base_url, resource_type):
+                                resource_base_url, resource_type,
+                                ignore_not_found_error=True):
         # Pass attr_name '' or None to infer base resource's ID
         id_identifier = 'id'
         display_name_identifier = 'display_name'
@@ -355,12 +361,12 @@ class NSXTBaseRealizableResource(ABC):
             resource_display_name = params.pop(display_name_identifier)
             # Use display_name as ID if ID is not specified.
             return (self._get_id_from_display_name(
-                resource_base_url, resource_display_name, resource_type) or
-                resource_display_name)
+                resource_base_url, resource_display_name, resource_type,
+                ignore_not_found_error) or resource_display_name)
 
     def _get_id_from_display_name(self, resource_base_url,
                                   resource_display_name,
-                                  resource_type):
+                                  resource_type, ignore_not_found_error=True):
         try:
             # Get the id from the Manager
             (_, resp) = self._send_request_to_API(
@@ -377,12 +383,19 @@ class NSXTBaseRealizableResource(ABC):
                         self.module.fail_json(
                             msg="Multiple {} found with display_name {}. "
                                 "Please specify the resource using id in "
-                                "the playbook.".format(resource_type,
+                                "the playbook.".format(resource_type.__name__,
                                                        resource_display_name))
             if matched_resource is not None:
                 return matched_resource['id']
             else:
-                return None
+                if ignore_not_found_error:
+                    return None
+                else:
+                    # No resource found with this display_name
+                    self.module.fail_json(
+                        msg="No {} found with display_name {} for the "
+                            "specified configuration.".format(
+                                resource_type.__name__, resource_display_name))
         except Exception as e:
             # Manager replied with invalid URL. It means that the resource
             # does not exist on the Manager. So, return the display_name

@@ -13,8 +13,8 @@
         username: "default"
         password: "default"
         validate_certs: False
-        display_name: test-tier11
-        state: "present"
+        display_name: test-tier22222
+        state: present
         failover_mode: "PREEMPTIVE"
         disable_firewall: True
         force_whitelisting: True
@@ -26,14 +26,33 @@
             route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED']
             subnets: ["35.1.1.1/23"]
         route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED', 'TIER1_NAT']
-        tier0_display_name: "test-tier00"
-        t1ls_state: "present"
-        t1ls_display_name: "test-t1ls"
-        t1ls_route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
-        t1iface_id: "test-t1-t1ls-iface"
-        t1iface_display_name: "test-t1-t1ls-iface"
-        t1iface_state: "present"
-        t1iface_subnets:
-          - ip_addresses: ["35.1.1.1"]
-            prefix_len: 24
-        t1iface_segment_id: "sg-uplink"
+        tier0_display_name: "node-t0"
+        static_routes:
+          - state: present
+            display_name: test-sr
+            network: '12.12.12.0/24'
+            next_hops:
+              - ip_address: "192.165.1.4"
+        locale_services:
+          - state: present
+            display_name: test-t1ls-1
+            route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+            ha_vip_configs:
+              - external_interface_info:
+                  - display_name: '3-policyconnectivity-64'
+                  - id: '4-policyconnectivity-562'
+                vip_subnets:
+                  - ip_addresses:
+                      - '12.12.12.12'
+                    prefix_len: 23
+          - state: present
+            display_name: test-t1ls-2
+            route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+            interfaces:
+              - id: "test-t1-t1ls-iface-2"
+                display_name: "test-t1-t1ls-iface"
+                state: present
+                subnets:
+                  - ip_addresses: ["35.1.1.1"]
+                    prefix_len: 24
+                segment_id: "test-seg-2"

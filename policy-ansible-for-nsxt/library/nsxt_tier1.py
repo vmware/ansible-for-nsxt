@@ -169,6 +169,70 @@ options:
         description: Same as tier0_id. Either one can be specified.
                     If both are specified, tier0_id takes precedence.
         type: str
+    static_routes:
+        type: list
+        element: dict
+        description: This is a list of Static Routes that need to be created,
+                     updated, or deleted
+        suboptions:
+            id:
+                description: Tier-1 Static Route ID.
+                required: false
+                type: str
+            display_name:
+                description:
+                    - Tier-1 Static Route display name.
+                    - Either this or id must be specified. If both are
+                      specified, id takes precedence.
+                required: false
+                type: str
+            description:
+                description:
+                    - Tier-1 Static Route description.
+                type: str
+            state:
+                description:
+                    - State can be either 'present' or 'absent'. 'present' is
+                      used to create or update resource. 'absent' is used to
+                      delete resource.
+                    - Must be specified in order to modify the resource
+                choices:
+                    - present
+                    - absent
+            network:
+                description: Network address in CIDR format
+                required: true
+                type: str
+            next_hops:
+                description: Next hop routes for network
+                type: list
+                elements: dict
+                suboptions:
+                    admin_distance:
+                        description: Cost associated with next hop route
+                        type: int
+                        default: 1
+                ip_address:
+                    description: Next hop gateway IP address
+                    type: str
+                scope:
+                    description:
+                        - Interface path associated with current route
+                        - For example, specify a policy path referencing the
+                          IPSec VPN Session
+                    type: list
+            tags:
+                description: Opaque identifiers meaningful to the API user
+                type: dict
+                suboptions:
+                    scope:
+                        description: Tag scope.
+                        required: true
+                        type: str
+                    tag:
+                        description: Tag value.
+                        required: true
+                        type: str
     locale_services:
         type: list
         element: dict
@@ -296,6 +360,47 @@ options:
                                                 local-endpoint  subnets
                                                 advertised by TIER1.
                 type: list
+            ha_vip_configs:
+                type: list
+                elements: dict
+                description:
+                    - Array of HA VIP Config.
+                    - This configuration can be defined only for Active-Standby
+                      Tier0 gateway to provide redundancy. For mulitple
+                      external interfaces, multiple HA VIP configs must be
+                      defined and each config will pair exactly two external
+                      interfaces. The VIP will move and will always be owned by
+                      the Active node. When this property is configured,
+                      configuration of dynamic-routing is not allowed.
+                suboptions:
+                    enabled:
+                        description: Flag to enable this HA VIP config.
+                        default: true
+                        type: bool
+                    external_interface_paths:
+                        description:
+                            - Policy paths to Tier0 external interfaces for
+                              providing redundancy
+                            - Policy paths to Tier0 external interfaces which
+                              are to be paired to provide redundancy. Floating
+                              IP will be owned by one of these interfaces
+                              depending upon which edge node is Active.
+                        type: list
+                    vip_subnets:
+                        description:
+                            - VIP floating IP address subnets
+                            - Array of IP address subnets which will be used as
+                              floating IP addresses.
+                        type: list
+                        suboptions:
+                            ip_addresses:
+                                description: IP addresses assigned to interface
+                                type: list
+                                required: true
+                            prefix_len:
+                                description: Subnet prefix length
+                                type: int
+                                required: true
             interfaces:
                 type: list
                 element: dict
@@ -583,6 +688,48 @@ class NSXTTier1(NSXTBaseRealizableResource):
     def update_parent_info(self, parent_info):
         parent_info["tier1_id"] = self.id
 
+    class NSXTTier1StaticRoutes(NSXTBaseRealizableResource):
+        def get_spec_identifier(self):
+            return NSXTTier1.NSXTTier1StaticRoutes.get_spec_identifier()
+
+        @classmethod
+        def get_spec_identifier(cls):
+            return "static_routes"
+
+        @staticmethod
+        def get_resource_spec():
+            tier1_sr_arg_spec = {}
+            tier1_sr_arg_spec.update(
+                network=dict(
+                    required=True,
+                    type='str'
+                ),
+                next_hops=dict(
+                    required=True,
+                    type='list',
+                    elements='dict',
+                    options=dict(
+                        admin_distance=dict(
+                            type='int',
+                            default=1
+                        ),
+                        ip_address=dict(
+                            type='str'
+                        ),
+                        scope=dict(
+                            type='list',
+                            elements='str'
+                        )
+                    )
+                ),
+            )
+            return tier1_sr_arg_spec
+
+        @staticmethod
+        def get_resource_base_url(parent_info):
+            tier1_id = parent_info.get("tier1_id", 'default')
+            return '/infra/tier-1s/{}/static-routes'.format(tier1_id)
+
     class NSXTTier1LocaleService(NSXTBaseRealizableResource):
         def get_spec_identifier(self):
             return NSXTTier1.NSXTTier1LocaleService.get_spec_identifier()
@@ -648,6 +795,36 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 route_redistribution_types=dict(
                     required=False,
                     type='list'
+                ),
+                ha_vip_configs=dict(
+                    type='list',
+                    elements='dict',
+                    options=dict(
+                        enabled=dict(
+                            default=True,
+                            type='bool'
+                        ),
+                        external_interface_display_names=dict(
+                            required=True,
+                            type='list',
+                            elements='str'
+                        ),
+                        vip_subnets=dict(
+                            type='list',
+                            elements='dict',
+                            required=True,
+                            options=dict(
+                                ip_addresses=dict(
+                                    type='list',
+                                    required=True
+                                ),
+                                prefix_len=dict(
+                                    type='int',
+                                    rqeuired=True
+                                )
+                            )
+                        ),
+                    )
                 )
             )
             return tier1_ls_arg_spec
@@ -695,8 +872,30 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     nsx_resource_params["preferred_edge_paths"].append(
                         edge_node_base_url + "/" + edge_node_id)
 
+            if 'ha_vip_configs' in nsx_resource_params:
+                for ha_vip_config in nsx_resource_params['ha_vip_configs']:
+                    external_interface_info = ha_vip_config.pop(
+                        'external_interface_info')
+                    external_interface_paths = []
+                    for external_interface in (
+                            external_interface_info):
+                        interface_base_url = (
+                            NSXTTier1.NSXTTier0LocaleService.
+                            NSXTTier1Interface.get_resource_base_url(
+                                self.get_parent_info()))
+                        external_interface_paths.append(
+                            interface_base_url + "/" +
+                            self.get_id_using_attr_name_else_fail(
+                                None, external_interface,
+                                interface_base_url,
+                                NSXTTier1.NSXTTier1LocaleService.
+                                NSXTTier1Interface,
+                                ignore_not_found_error=False))
+                    ha_vip_config[
+                        'external_interface_paths'] = external_interface_paths
+
         def update_parent_info(self, parent_info):
-            parent_info["id"] = self.id
+            parent_info["ls_id"] = self.id
 
         class NSXTTier1Interface(NSXTBaseRealizableResource):
             def get_spec_identifier(self):
@@ -733,7 +932,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
             @staticmethod
             def get_resource_base_url(parent_info):
                 tier1_id = parent_info.get("tier1_id", 'default')
-                locale_service_id = parent_info.get("id", 'default')
+                locale_service_id = parent_info.get("ls_id", 'default')
                 return ('/infra/tier-1s/{}/locale-services/{}/interfaces'
                         .format(tier1_id, locale_service_id))
 

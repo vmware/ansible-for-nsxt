@@ -13,14 +13,21 @@
         username: "default"
         password: "default"
         validate_certs: False
-        id: my-unique-ip-pool-id
-        display_name: test-ip-pool
+        display_name: test-ip-pool-1
         state: "present"
         tags:
         - tag: "a"
           scope: "b"
-        ip_subnet_id: test-ip-subnet
-        ip_subnet_display_name: test-ip-subnet
-        ip_subnet_state: "present"
-        ip_subnet_ip_block_id: "test-ip-blk"
-        ip_subnet_size: 16
+        pool_block_subnets:
+          - id: test-ip-subnet-1
+            state: present
+            ip_block_id: "test-ip-blk-1"
+            size: 16
+          - display_name: test-ip-subnet-2
+            state: present
+            ip_block_id: "test-ip-blk-1"
+            size: 16
+          - display_name: test-ip-subnet-3
+            state: present
+            ip_block_id: "test-ip-blk-1"
+            size: 8
