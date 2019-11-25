@@ -171,6 +171,7 @@ def get_compute_manager_from_display_name(module, manager_url, mgr_username, mgr
 
 def wait_till_create(id, module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
+      down_counter = 0
       while True:
           (rc, resp) = request(manager_url+ '/fabric/compute-managers/%s/status'% id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
@@ -179,6 +180,9 @@ def wait_till_create(id, module, manager_url, mgr_username, mgr_password, valida
           elif resp['registration_status'] == "REGISTERED":
             if resp["connection_status"] == "CONNECTING":
                 time.sleep(10)
+            elif resp["connection_status"] == "DOWN" and down_counter < 3:
+              time.sleep(10)
+              down_counter = down_counter + 1
             elif resp["connection_status"] == "UP":
               time.sleep(5)
               return
