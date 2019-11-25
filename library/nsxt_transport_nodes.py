@@ -321,6 +321,43 @@ options:
                     description: 'VC Password'
                     required: false
                     type: str
+                reservation_info:
+                    description: 'Resource reservation for memory and CPU resources'
+                    required: false
+                    type: dict
+                    cpu_reservation:
+                        description: 'Guaranteed minimum allocation of CPU resources'
+                        required: false
+                        type: dict
+                        reservation_in_mhz:
+                            description: 'GCPU resevation in mhz'
+                            required: false
+                            type: int
+                        reservation_in_shares:
+                            description: 'CPU reservation in shares'
+                            required: false
+                            type: str
+                    memory_reservation:
+                        description: 'Guaranteed minimum allocation of memory resources'
+                        required: false
+                        type: dict
+                        reservation_percentage:
+                            description: 'Memory reservation percentage'
+                            required: false
+                            type: int
+                resource_allocation:
+                    description: 'Resource reservation settings'
+                    required: false
+                    type: dict'
+                    cpu_count:
+                        description: 'CPU count'
+                        required: false
+                        type: int
+                    memory_allocation_in_mb:
+                        description: 'Memory allocation in MB'
+                        required: false
+                        type: int
+
         deployment_type:
             description: Specifies whether the service VM should be deployed on each host such
                           that it provides partner service locally on the host, or whether the 
@@ -700,7 +737,16 @@ def main():
                        default_gateway_addresses=dict(required=False, type='list'),
                        management_port_subnets=dict(required=False, type='list'),
                        host=dict(required=False, type='str'),
-                       hostname=dict(required=True, type='str')),
+                       hostname=dict(required=True, type='str'),
+                       reservation_info=dict(required=False, type='dict',
+                       cpu_reservation=dict(required=False, type='dict',
+                       reservation_in_mhz=dict(required=False, type='int'),
+                       reservation_in_shares=dict(required=False, type='str')),
+                       memory_reservation=dict(required=False, type='dict',
+                       reservation_percentage=dict(required=False, type='int'))),
+                       resource_allocation=dict(required=False, type='dict',
+                       cpu_count=dict(required=False, type='int'),
+                       memory_allocation_in_mb=dict(required=False, type='int'))),
                        form_factor=dict(required=False, type='str')),
                        discovered_ip_addresses=dict(required=False, type='list'),
                        ip_addresses=dict(required=False, type='list'),
@@ -764,7 +810,6 @@ def main():
               transport_node_id = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, '/transport-nodes', display_name, exit_if_not_found=False)
           if transport_node_id:
               module.exit_json(changed=False, id=transport_node_id, message="Transport node with display_name %s already exist."% module.params['display_name'])
-
           (rc, resp) = request(manager_url+ '/transport-nodes', data=request_data, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
