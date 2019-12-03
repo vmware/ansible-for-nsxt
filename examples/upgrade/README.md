@@ -18,9 +18,13 @@ There are 7 main playbooks and a common variable files:
 
 The following playbooks can be used to check the status of different objects during
 the upgrade process
+
 check_upgrade_groups_facts.yml
+
 check_upgrade_pre_post_checks_facts.yml
+
 check_upgrade_status_summary_facts.yml
+
 
 To run the example, copy all the files two-levels up, edit the variables file
 to match your needs and run the playbooks in the order listed.
