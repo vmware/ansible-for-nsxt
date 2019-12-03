@@ -9,7 +9,7 @@
   # Common NSX Appliance variables
   #
   "nsx_username": "admin",
-  "nsx_password": "myPassword!myPassword!",
+  "nsx_password": "myPassword1!myPassword1!",
   "validate_certs": False,
 
   #
@@ -80,7 +80,7 @@
       "origin_type": "vCenter",
       "credential_type": "UsernamePasswordLoginCredential",
       "username": "administrator@madhu.local",
-      "password": "myPassword!"
+      "password": "myPassword1!"
     }
   ]
 }

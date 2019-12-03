@@ -1,0 +1,18 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - upgrade_vars.yml
+  tasks:
+    - name: Create upgrade groups
+      nsxt_upgrade_groups:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        display_name: "TestGroupAnsible"
+        type: "HOST"
+        parallel: "False"
+        enabled: "true"
+        upgrade_units: "{{ hosts }}"
+        state: "present"
