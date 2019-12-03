@@ -1,0 +1,28 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - upgrade_vars.yml
+  tasks:
+    - name: Update upgrade plan for Hosts
+      nsxt_upgrade_plan:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        component_type: 'host'
+        parallel: False
+        pause_after_each_group: False
+        pause_on_error: True
+        state: 'present'
+    - name: Update upgrade plan for Edges
+      nsxt_upgrade_plan:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        component_type: 'edge'
+        parallel: False
+        pause_after_each_group: False
+        pause_on_error: True
+        state: 'present'

@@ -152,7 +152,11 @@ def get_thumb(module):
       #Thumbprint
       thumb_sha256 = hashlib.sha256(der_cert_bin).hexdigest()
       wrappedSocket.close()
-      return ':'.join(a+b for a,b in zip(thumb_sha256[::2], thumb_sha256[1::2]))
+      # The API call expects the Thumbprint in Uppercase. While the API call is fixed,
+      # below is a quick fix
+      thumbprint = ""
+      thumbprint = ':'.join(a+b for a,b in zip(thumb_sha256[::2], thumb_sha256[1::2]))
+      return thumbprint.upper()
 
 def get_fabric_compute_managers(module, manager_url, mgr_username, mgr_password, validate_certs):
     try:

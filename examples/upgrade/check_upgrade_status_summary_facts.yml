@@ -1,0 +1,12 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - upgrade_vars.yml
+  tasks:
+    - name: Get upgrade status summary
+      nsxt_upgrade_status_summary_facts:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password}}"
+        validate_certs: "{{ validate_certs }}"

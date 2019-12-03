@@ -1,0 +1,13 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - upgrade_vars.yml
+  tasks:
+    - name: Run and abort upgrade prechecks
+      nsxt_upgrade_prechecks:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        state: 'present'

@@ -76,7 +76,7 @@ def main():
   while wait_time < (module.params['wait_time'] *60):
       try:
         current_time = datetime.now()
-        (rc, resp) = request(manager_url+ '/cluster/nodes/deployments', headers=dict(Accept='application/json'),
+        (rc, resp) = request(manager_url+ '/cluster-manager/status', headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
         module.exit_json(changed=changed, msg= " NSX manager is UP")
       except Exception as err:

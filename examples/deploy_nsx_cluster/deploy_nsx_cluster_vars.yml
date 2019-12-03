@@ -1,0 +1,86 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+#
+# Variables file for deploying NSX-T Cluster
+#
+{
+
+  #
+  # Common NSX Appliance variables
+  #
+  "nsx_username": "admin",
+  "nsx_password": "myPassword1!myPassword1!",
+  "validate_certs": False,
+
+  #
+  # OVA/OVF Information. Path can be on local file system or a HTTP URL
+  #
+  "nsx_ova_path": "/home/vmware",
+  "nsx_ova": "nsx-unified-appliance-2.5.0.0.0.14663978.ova",
+
+  #
+  # Common network details. This assumes all NSX appliance nodes are on the
+  # same subnet. If there is a need to deploy NSX appliance nodes which are
+  # on different subnets, add node specific details in the blocks below and
+  # use them in the playbooks instead.
+  #
+  "domain": "mylab.local",
+  "netmask": "255.255.224.0",
+  "gateway": "10.114.200.1",
+  "dns_server": "10.114.200.8",
+  "ntp_server": "10.114.200.8",
+
+  #
+  # First NSX appliance node. Defined separate based on the consumption.
+  # Accepts both IP (IPv4) and FQDN for 'mgmt_ip'
+  #
+  "nsx_node1": {
+    "hostname": "mynsx-01.mylab.local",
+    "mgmt_ip": "10.114.200.11",
+    "datacenter": "Datacenter",
+    "cluster": "Management",
+    "datastore": "datastore7",
+    "portgroup": "VM Network"
+  },
+
+  #
+  # Additional nodes defined as an array so that its easier to iterate
+  # through them in the playbook.
+  # NOTE: The Datacenter/Cluster/Datastore/Network requires the vCenter MOID
+  # (Module Object ID) and not the name
+  #
+  "additional_nodes": [
+    {
+      "hostname": "mynsx-02.mylab.local",
+      "mgmt_ip": "10.114.200.12",
+      "prefix": "27",
+      "datacenter": "Datacenter",
+      "cluster": "Management",
+      "datastore": "datastore7",
+      "portgroup": "VM Network"
+    },
+    {
+      "hostname": "mynsx-03.mylab.local",
+      "mgmt_ip": "10.114.200.13",
+      "prefix": "27",
+      "datacenter": "Datacenter",
+      "cluster": "Management",
+      "datastore": "datastore5",
+      "portgroup": "VM Network"
+    }
+  ],
+
+  #
+  # One or more compute managers that have to be registered with NSX
+  #
+  "compute_managers": [
+    {
+      "display_name": "vcenter",
+      "mgmt_ip": "10.114.200.6",
+      "origin_type": "vCenter",
+      "credential_type": "UsernamePasswordLoginCredential",
+      "username": "administrator@madhu.local",
+      "password": "myPassword1!"
+    }
+  ]
+}

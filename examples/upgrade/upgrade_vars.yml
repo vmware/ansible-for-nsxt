@@ -1,0 +1,32 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+#
+# Variables file for Upgrading NSX-T:
+#   - NSX-T Cluster
+#   - Transport Nodes (Edge and Host)
+#
+{
+
+  #
+  # Common NSX Appliance variables
+  #
+  "nsx_manager": "10.114.200.11",
+  "nsx_username": "admin",
+  "nsx_password": "myPassword1!myPassword1!",
+  "validate_certs": False,
+
+  # Upgrade MUB
+  "mub_url": "http://10.114.200.8/VMware-NSX-upgrade-bundle-2.5.0.1.0.14938184.mub",
+  "timeout": 9000,
+
+  # Display names of the hosts as seen by NSX which are to be upgraded
+  hosts: [
+    {
+      "host_name": "esx-c14"
+    },
+    {
+      "host_name": "esx-c15"
+    }
+  ]
+
+}

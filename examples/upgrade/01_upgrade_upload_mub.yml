@@ -1,0 +1,14 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - upgrade_vars.yml
+  tasks:
+    - name: Upload MUB to NSX-T Manager
+      nsxt_upgrade_upload_mub:
+        hostname: "{{  nsx_manager  }}"
+        username: "{{  nsx_username  }}"
+        password: "{{  nsx_password  }}"
+        validate_certs: "{{ validate_certs }}"
+        url: "{{ mub_url }}"
+        timeout: "{{ timeout }}" 
