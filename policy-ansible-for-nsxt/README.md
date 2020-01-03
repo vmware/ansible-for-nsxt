@@ -28,6 +28,7 @@ Please note that you must specify the correct vmware args in order to successful
 5. Security Policy and Firewall rules
 6. IP Pools
    1. IP Address Pool Block Subnet
+   2. IP Address Pool Static Subnet
 7. IP Blocks
 
 Note that to add a new modules, it's base class name should be added in the BASE_RESOURCES in modules/nsxt_base_resource.py

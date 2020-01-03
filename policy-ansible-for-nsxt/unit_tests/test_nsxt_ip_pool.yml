@@ -31,3 +31,20 @@
             state: present
             ip_block_id: "test-ip-blk-1"
             size: 8
+        pool_static_subnets:
+          - id: test-ip-static-subnet-1
+            state: present
+            allocation_ranges:
+              - start: '192.116.0.10'
+                end: '192.116.0.20'
+              - start: '192.116.0.30'
+                end: '192.116.0.40'
+            cidr: '192.116.0.0/26'
+          - display_name: test-ip-static-subnet-2
+            state: present
+            allocation_ranges:
+              - start: '192.116.1.10'
+                end: '192.116.1.20'
+              - start: '192.116.1.30'
+                end: '192.116.1.40'
+            cidr: '192.116.1.0/26'
