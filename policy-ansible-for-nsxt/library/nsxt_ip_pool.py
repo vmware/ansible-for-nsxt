@@ -74,6 +74,43 @@ options:
                       must be specified during creation but cannot be changed
                       later.
                 type: int
+    pool_static_subnets:
+        type: list
+        element: dict
+        description: Specify the IP Pool Static Subnets that need to be
+                     created, updated, or deleted as a list of dict in
+                     this section
+        suboptions:
+            allocation_ranges:
+                description: A collection of IPv4 or IPv6 IP Pool Ranges.
+                type: list
+                element: dict
+                suboptions:
+                    start:
+                        description: The start IP Address of the IP Range.
+                        type: str
+                        required: true
+                    end:
+                        description: The end IP Address of the IP Range.
+                        type: str
+                        required: true
+            cidr:
+                description: Subnet representation is a network address
+                             and prefix length
+                type: str
+                required: true
+            dns_nameservers:
+                description: The collection of upto 3 DNS servers
+                             for the subnet.
+                type: list
+                element: str
+            dns_suffix:
+                description: The DNS suffix for the DNS server.
+                type: str
+            gateway_ip:
+                description: The default gateway address on a
+                             layer-3 router.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -102,6 +139,23 @@ EXAMPLES = '''
         state: present
         ip_block_id: "test-ip-blk-1"
         size: 8
+    pool_static_subnets:
+      - id: test-ip-static-subnet-1
+        state: present
+        allocation_ranges:
+          - start: '192.116.0.10'
+            end: '192.116.0.20'
+          - start: '192.116.0.30'
+            end: '192.116.0.40'
+        cidr: '192.116.0.0/26'
+      - display_name: test-ip-static-subnet-2
+        state: present
+        allocation_ranges:
+          - start: '192.116.1.10'
+            end: '192.116.1.20'
+          - start: '192.116.1.30'
+            end: '192.116.1.40'
+        cidr: '192.116.1.0/26'
 '''
 
 RETURN = '''# '''
@@ -160,9 +214,13 @@ class NSXTIpPool(NSXTBaseRealizableResource):
                     type='bool'
                 ),
                 size=dict(
-                    required=False,
+                    required=True,
                     type='int'
-                )
+                ),
+                start_ip=dict(
+                    required=False,
+                    type='str'
+                ),
             )
             return ip_addr_pool_blk_subnet_arg_spec
 
@@ -182,6 +240,67 @@ class NSXTIpPool(NSXTBaseRealizableResource):
                 ip_block_base_url + "/" + ip_block_id)
 
             nsx_resource_params["resource_type"] = "IpAddressPoolBlockSubnet"
+
+    class NSXTIpAddressPoolStaticSubnet(NSXTBaseRealizableResource):
+        def get_spec_identifier(self):
+            return (NSXTIpPool.NSXTIpAddressPoolStaticSubnet.
+                    get_spec_identifier())
+
+        @classmethod
+        def get_spec_identifier(cls):
+            return "pool_static_subnets"
+
+        @staticmethod
+        def get_resource_spec():
+            ip_addr_pool_static_subnet_arg_spec = {}
+            ip_addr_pool_static_subnet_arg_spec.update(
+                auto_assign_gateway=dict(
+                    required=False,
+                    type='bool'
+                ),
+                allocation_ranges=dict(
+                    required=True,
+                    elements='dict',
+                    type='list',
+                    options=dict(
+                        start=dict(
+                            required=True,
+                            type='str'
+                        ),
+                        end=dict(
+                            required=True,
+                            type='str'
+                        ),
+                    )
+                ),
+                cidr=dict(
+                    required=True,
+                    type='str'
+                ),
+                dns_nameservers=dict(
+                    required=False,
+                    elements='str',
+                    type='list'
+                ),
+                dns_suffix=dict(
+                    required=False,
+                    type='str'
+                ),
+                gateway_ip=dict(
+                    required=False,
+                    type='str'
+                ),
+            )
+            return ip_addr_pool_static_subnet_arg_spec
+
+        @staticmethod
+        def get_resource_base_url(parent_info):
+            return '/infra/ip-pools/{}/ip-subnets'.format(
+                parent_info["ip_pool_id"]
+            )
+
+        def update_resource_params(self, nsx_resource_params):
+            nsx_resource_params["resource_type"] = "IpAddressPoolStaticSubnet"
 
 
 if __name__ == '__main__':
