@@ -577,6 +577,9 @@ options:
                                              ASPLAIN Format
                                 type: str
                                 required: True
+                            password:
+                                description: The BGP peering password
+                                type: str
                             route_filtering:
                                 description: Enable address families and route
                                              filtering in each direction
@@ -1423,6 +1426,10 @@ class NSXTTier0(NSXTBaseRealizableResource):
                         ),
                         neighbor_address=dict(
                             required=True,
+                            type='str'
+                        ),
+                        password=dict(
+                            required=False,
                             type='str'
                         )
                     )
