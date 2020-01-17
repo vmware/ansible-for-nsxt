@@ -572,6 +572,12 @@ options:
                                 description: Neighbor IP Address
                                 type: str
                                 required: True
+                            password:
+                                description: Password for BGP Neighbor
+                                             authentication. Empty string ("")
+                                             clears existing password.
+                                type: str
+                                required: False
                             remote_as_num:
                                 description: 4 Byte ASN of the neighbor in
                                              ASPLAIN Format
@@ -1388,6 +1394,10 @@ class NSXTTier0(NSXTBaseRealizableResource):
                         maximum_hop_limit=dict(
                             type='int',
                             default=1
+                        ),
+                        password=dict(
+                            type='str',
+                            required=False
                         ),
                         remote_as_num=dict(
                             required=True,

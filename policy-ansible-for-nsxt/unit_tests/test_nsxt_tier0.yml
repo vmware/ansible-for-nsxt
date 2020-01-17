@@ -63,6 +63,11 @@
                   remote_as_num: "12"
                   state: present
             interfaces:
+                - display_name: neigh2
+                  neighbor_address: "1.2.3.5"
+                  password: "myPassword"
+                  remote_as_num: "22"
+                  state: present
               - id: "test-t0-t0ls-iface"
                 display_name: "test-t0-t0ls-iface"
                 state: present
