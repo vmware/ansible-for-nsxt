@@ -1323,7 +1323,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
             @staticmethod
             def get_resource_base_url(parent_info):
                 tier0_id = parent_info.get("tier0_id", 'default')
-                locale_service_id = parent_info.get("id", 'default')
+                locale_service_id = parent_info.get("ls_id", 'default')
                 return ('/infra/tier-0s/{}/locale-services/{}'
                         .format(tier0_id, locale_service_id))
 
@@ -1431,7 +1431,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 @staticmethod
                 def get_resource_base_url(parent_info):
                     tier0_id = parent_info.get("tier0_id", 'default')
-                    locale_service_id = parent_info.get("id", 'default')
+                    locale_service_id = parent_info.get("ls_id", 'default')
                     return ('/infra/tier-0s/{}/locale-services/{}'
                             '/bgp/neighbors'.format(tier0_id,
                                                     locale_service_id))
