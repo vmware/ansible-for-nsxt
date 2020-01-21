@@ -19,7 +19,7 @@ The modules in this repository are focused on enabling automation of installatio
 
 ### Branch Information
 This repository has different branches with each branch providing support for upto a specific NSX-T release. Below is the list:
-* v1.1.0: NSX-T 2.4
+* v1.1.0: NSX-T 2.4, NSX-T 2.5
 * v1.0.0: NSX-T 2.3
 
 #### Deployment and installation modules
