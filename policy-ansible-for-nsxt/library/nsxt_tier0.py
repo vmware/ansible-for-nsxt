@@ -127,6 +127,97 @@ options:
         description: Same as dhcp_config_id. Either one can be specified.
                      If both are specified, dhcp_config_id takes precedence.
         type: str
+    vrf_config:
+        type: dict
+        description: VRF config, required for VRF Tier0
+        suboptions:
+            description:
+                description: Description of this resource
+                type: str
+            display_name:
+                description:
+                    - Identifier to use when displaying entity in logs or GUI
+                    - Defaults to id if not set
+                    - Error if both not specified
+                type: str
+            evpn_transit_vni:
+                description:
+                    - L3 VNI associated with the VRF for overlay traffic.
+                    - VNI must be unique and belong to configured VNI pool.
+                type: int
+            id:
+                description:
+                    - Unique identifier of this resource
+                    - Defaults to display_name if not set
+                    - Error if both not specified
+                type: str
+            route_distinguisher:
+                description: Route distinguisher. 'ASN:<>' or 'IPAddress:<>'.
+                type: str
+            route_targets:
+                description: Route targets
+                type: list
+                element: dict
+                suboptions:
+                    description:
+                        description: Description of this resource
+                        type: str
+                    display_name:
+                        description:
+                            - Identifier to use when displaying entity in logs
+                              or GUI
+                            - Defaults to id if not set
+                            - Error if both not specified
+                        type: str
+                    export_route_targets:
+                        description: Export route targets. 'ASN:' or
+                                     'IPAddress:<>'
+                        type: list
+                        element: str
+                    id:
+                        description:
+                            - Unique identifier of this resource
+                            - Defaults to display_name if not set
+                            - Error if both not specified
+                        type: str
+                    import_route_targets:
+                        description: Import route targets. 'ASN:' or
+                                     'IPAddress:<>'
+                        type: list
+                        element: str
+                    tags:
+                        description: Opaque identifiers meaningful to the API
+                                     user
+                        type: list
+                        element: dict
+                        suboptions:
+                            scope:
+                                description: Tag scope
+                                type: str
+                            tag:
+                                description: Tag value
+                                type: str
+            tags:
+                description: Opaque identifiers meaningful to the API user
+                type: list
+                element: dict
+                suboptions:
+                    scope:
+                        description: Tag scope
+                        type: str
+                    tag:
+                        description: Tag value
+                        type: str
+            tier0_display_name:
+                description: Default tier0 display name. Cannot be modified
+                             after realization. Either this or tier0_id must
+                             be specified
+                type: str
+            tier0_id:
+                description: Default tier0 id. Cannot be modified after
+                             realization. Either this or tier0_id must
+                             be specified
+                type: str
     static_routes:
         type: list
         element: dict
@@ -883,7 +974,83 @@ class NSXTTier0(NSXTBaseRealizableResource):
             dhcp_config_display_name=dict(
                 required=False,
                 type='str'
-            )
+            ),
+            vrf_config=dict(
+                required=False,
+                type='dict',
+                options=dict(
+                    # Note that only default site_id and
+                    # enforcementpoint_id are used
+                    description=dict(
+                        type='str',
+                        default=""
+                    ),
+                    display_name=dict(
+                        type='str',
+                    ),
+                    evpn_transit_vni=dict(
+                        type='int'
+                    ),
+                    id=dict(
+                        type='str'
+                    ),
+                    route_distinguisher=dict(
+                        type='str'
+                    ),
+                    route_targets=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            description=dict(
+                                type='str',
+                                default=""
+                            ),
+                            display_name=dict(
+                                type='str',
+                            ),
+                            export_route_targets=dict(
+                                type='list',
+                            ),
+                            id=dict(
+                                type='str',
+                            ),
+                            import_route_targets=dict(
+                                type='list',
+                            ),
+                            tags=dict(
+                                type='list',
+                                elements='dict',
+                                options=dict(
+                                    scope=dict(
+                                        type='str',
+                                    ),
+                                    tag=dict(
+                                        type='str',
+                                    ),
+                                )
+                            ),
+                        )
+                    ),
+                    tags=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            scope=dict(
+                                type='str',
+                            ),
+                            tag=dict(
+                                type='str',
+                            ),
+                        )
+                    ),
+                    tier0_display_name=dict(
+                        type='str'
+                    ),
+                    tier0_id=dict(
+                        type='str'
+                    ),
+                )
+            ),
         )
         return tier0_arg_spec
 
@@ -923,6 +1090,32 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 dhcp_config_base_url, "DhcpRelayConfig")
             nsx_resource_params["dhcp_config_paths"] = [
                 dhcp_config_base_url + "/" + dhcp_config_id]
+
+        if 'vrf_config' in nsx_resource_params:
+            # vrf config is attached
+            vrf_config = nsx_resource_params['vrf_config']
+
+            vrf_id = vrf_config.get('id')
+            vrf_display_name = vrf_config.get('display_name')
+            if not (vrf_display_name or vrf_id):
+                self.exit_with_failure(msg="Please specify either the ID or "
+                                       "display_name of the VRF in the "
+                                       "vrf_config using id or display_name")
+
+            tier0_id = vrf_config.pop('tier0_id', None)
+            if not tier0_id:
+                tier0_id = self.get_id_using_attr_name_else_fail(
+                    'tier0', vrf_config, NSXTTier0.get_resource_base_url(),
+                    'Tier0')
+            vrf_config['tier0_path'] = (
+                NSXTTier0.get_resource_base_url() + "/" + tier0_id)
+
+            vrf_config['resource_type'] = 'Tier0VrfConfig'
+
+            if 'route_targets' in vrf_config:
+                route_targets = vrf_config['route_targets'] or []
+                for route_target in route_targets:
+                    route_target['resource_type'] = 'VrfRouteTargets'
 
     def update_parent_info(self, parent_info):
         parent_info["tier0_id"] = self.id
@@ -1405,7 +1598,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                         ),
                         route_filtering=dict(
                             required=False,
-                            type=dict,
+                            type='dict',
                             options=dict(
                                 address_family=dict(
                                     required=False,
