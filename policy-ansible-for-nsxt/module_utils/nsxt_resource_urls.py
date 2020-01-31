@@ -55,3 +55,5 @@ DHCP_RELAY_CONFIG_URL = '/infra/dhcp-relay-configs'
 
 EDGE_CLUSTER_URL = _ENFORCEMENT_POINT_URL + '/{}/edge-clusters'
 EDGE_NODE_URL = EDGE_CLUSTER_URL + '/{}/edge-nodes'
+
+VM_URL = '/infra/realized-state/enforcement-points/default/virtual-machines'
