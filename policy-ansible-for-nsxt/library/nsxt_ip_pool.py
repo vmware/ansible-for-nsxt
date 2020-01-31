@@ -172,7 +172,7 @@ if __name__ == '__main__':
     import sys
     sys.path.append(os.getcwd())
 
-    from library.nsxt_ip_block import NSXTIpBlock
+    from ansible.module_utils.nsxt.resources.ip_block import NSXTIpBlock
 
 
 class NSXTIpPool(NSXTBaseRealizableResource):

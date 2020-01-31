@@ -71,25 +71,9 @@ RETURN = '''# '''
 import json
 import time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
 from ansible.module_utils._text import to_native
 
-
-class NSXTIpBlock(NSXTBaseRealizableResource):
-    @staticmethod
-    def get_resource_spec():
-        ip_block_arg_spec = {}
-        ip_block_arg_spec.update(
-            cidr=dict(
-                required=True,
-                type='str'
-            )
-        )
-        return ip_block_arg_spec
-
-    @staticmethod
-    def get_resource_base_url(baseline_args=None):
-        return '/infra/ip-blocks'
+from ansible.module_utils.nsxt.resources.ip_block import NSXTIpBlock
 
 
 if __name__ == '__main__':

@@ -533,8 +533,8 @@ if __name__ == '__main__':
     import sys
     sys.path.append(os.getcwd())
 
-    from library.nsxt_segment import NSXTSegment
-    from library.nsxt_tier0 import NSXTTier0
+    from ansible.module_utils.nsxt.resources.segment import NSXTSegment
+    from ansible.module_utils.nsxt.resources.tier0 import NSXTTier0
 
 
 class NSXTTier1(NSXTBaseRealizableResource):

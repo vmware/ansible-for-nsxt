@@ -17,23 +17,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
-import time
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils._text import to_native
-
-if __name__ == '__main__':
-    from ansible.module_utils.nsxt_policy_transport_zone import (
-        NSXTPolicyTransportZone)
-
-    import os
-    import sys
-    sys.path.append(os.getcwd())
-
-    from ansible.module_utils.nsxt.resources.tier0 import NSXTTier0
-    from ansible.module_utils.nsxt.resources.tier1 import NSXTTier1
-
 
 class NSXTSegment(NSXTBaseRealizableResource):
     @staticmethod
@@ -207,8 +191,3 @@ class NSXTSegment(NSXTBaseRealizableResource):
         def get_resource_base_url(parent_info):
             segment_id = parent_info.get("segment_id", 'default')
             return '/infra/segments/{}/ports'.format(segment_id)
-
-
-if __name__ == '__main__':
-    segment = NSXTSegment()
-    segment.realize()
