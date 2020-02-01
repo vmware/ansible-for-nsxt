@@ -520,21 +520,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import _ANSIBLE_ARGS as ANSIBLE_ARGS
 from ansible.module_utils._text import to_native
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-
-if __name__ == '__main__':
-    from ansible.module_utils.policy_ipv6_profiles import PolicyIpv6DadProfiles
-    from ansible.module_utils.policy_ipv6_profiles import (
-        PolicyIpv6NdraProfiles)
-    from ansible.module_utils.policy_dhcp import PolicyDhcpRelayConfig
-    from ansible.module_utils.policy_edge_cluster import PolicyEdgeCluster
-    from ansible.module_utils.policy_edge_node import PolicyEdgeNode
-
-    import os
-    import sys
-    sys.path.append(os.getcwd())
-
-    from library.nsxt_segment import NSXTSegment
-    from library.nsxt_tier0 import NSXTTier0
+from ansible.module_utils.nsxt_resource_urls import (
+    TIER_0_URL, TIER_1_URL, IPV6_DAD_PROFILE_URL, IPV6_NDRA_PROFILE_URL,
+    DHCP_RELAY_CONFIG_URL, EDGE_CLUSTER_URL, EDGE_NODE_URL, SEGMENT_URL,
+    TIER_1_STATIC_ROUTE_URL, TIER_1_LOCALE_SERVICE_URL,
+    TIER_1_LS_INTERFACE_URL, TIER_0_LOCALE_SERVICE_URL,
+    TIER_0_LS_INTERFACE_URL)
 
 
 class NSXTTier1(NSXTBaseRealizableResource):
@@ -641,49 +632,42 @@ class NSXTTier1(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
-        return '/infra/tier-1s'
+        return TIER_1_URL
 
     def update_resource_params(self, nsx_resource_params):
         ipv6_profile_paths = []
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "ipv6_ndra_profile"):
-            ipv6_ndra_profile_base_url = (PolicyIpv6NdraProfiles.
-                                          get_resource_base_url())
             ipv6_ndra_profile_id = self.get_id_using_attr_name_else_fail(
                     "ipv6_ndra_profile", nsx_resource_params,
-                    ipv6_ndra_profile_base_url, "Ipv6NdraProfile")
+                    IPV6_NDRA_PROFILE_URL, "Ipv6NdraProfile")
             ipv6_profile_paths.append(
-                ipv6_ndra_profile_base_url + "/" + ipv6_ndra_profile_id)
+                IPV6_NDRA_PROFILE_URL + "/" + ipv6_ndra_profile_id)
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "ipv6_dad_profile"):
-            ipv6_dad_profile_base_url = (PolicyIpv6DadProfiles.
-                                         get_resource_base_url())
             ipv6_dad_profile_id = self.get_id_using_attr_name_else_fail(
                     "ipv6_dad_profile", nsx_resource_params,
-                    ipv6_dad_profile_base_url, "Ipv6DadProfile")
+                    IPV6_DAD_PROFILE_URL, "Ipv6DadProfile")
             ipv6_profile_paths.append(
-                ipv6_dad_profile_base_url + "/" + ipv6_dad_profile_id)
+                IPV6_DAD_PROFILE_URL + "/" + ipv6_dad_profile_id)
         if ipv6_profile_paths:
             nsx_resource_params["ipv6_profile_paths"] = ipv6_profile_paths
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "dhcp_config"):
-            dhcp_config_base_url = (
-                PolicyDhcpRelayConfig.get_resource_base_url())
             dhcp_config_id = self.get_id_using_attr_name_else_fail(
                 "dhcp_config", nsx_resource_params,
-                dhcp_config_base_url, "DhcpRelayConfig")
+                DHCP_RELAY_CONFIG_URL, "DhcpRelayConfig")
             nsx_resource_params["dhcp_config_paths"] = [
-                dhcp_config_base_url + "/" + dhcp_config_id]
+                DHCP_RELAY_CONFIG_URL + "/" + dhcp_config_id]
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "tier0"):
-            tier0_base_url = NSXTTier0.get_resource_base_url()
             tier0_id = self.get_id_using_attr_name_else_fail(
                 "tier0", nsx_resource_params,
-                tier0_base_url, "Tier0")
+                TIER_0_URL, "Tier0")
             nsx_resource_params["tier0_path"] = (
-                tier0_base_url + "/" + tier0_id)
+                TIER_0_URL + "/" + tier0_id)
 
     def update_parent_info(self, parent_info):
         parent_info["tier1_id"] = self.id
@@ -728,7 +712,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
         @staticmethod
         def get_resource_base_url(parent_info):
             tier1_id = parent_info.get("tier1_id", 'default')
-            return '/infra/tier-1s/{}/static-routes'.format(tier1_id)
+            return TIER_1_STATIC_ROUTE_URL.format(tier1_id)
 
     class NSXTTier1LocaleService(NSXTBaseRealizableResource):
         def get_spec_identifier(self):
@@ -804,10 +788,33 @@ class NSXTTier1(NSXTBaseRealizableResource):
                             default=True,
                             type='bool'
                         ),
-                        external_interface_display_names=dict(
+                        external_interface_info=dict(
                             required=True,
                             type='list',
-                            elements='str'
+                            elements='dict',
+                            options=dict(
+                                tier0_id=dict(
+                                    type='str',
+                                ),
+                                tier0_display_name=dict(
+                                    type='str',
+                                ),
+                                tier0_ls_id=dict(
+                                    type='str',
+                                ),
+                                tier0_ls_display_name=dict(
+                                    type='str',
+                                ),
+                                tier0_ls_interface_id=dict(
+                                    type='str',
+                                ),
+                                tier0_ls_interface_display_name=dict(
+                                    type='str',
+                                ),
+                                external_interface_path=dict(
+                                    type='str'
+                                )
+                            )
                         ),
                         vip_subnets=dict(
                             type='list',
@@ -832,7 +839,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
         @staticmethod
         def get_resource_base_url(parent_info):
             tier1_id = parent_info.get("tier1_id", 'default')
-            return '/infra/tier-1s/{}/locale-services'.format(tier1_id)
+            return TIER_1_LOCALE_SERVICE_URL.format(tier1_id)
 
         def update_resource_params(self, nsx_resource_params):
             if "edge_cluster_info" in nsx_resource_params:
@@ -841,11 +848,10 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 site_id = edge_cluster_info["site_id"]
                 enforcementpoint_id = edge_cluster_info["enforcementpoint_id"]
                 edge_cluster_base_url = (
-                    PolicyEdgeCluster.get_resource_base_url(
-                        site_id, enforcementpoint_id))
+                    EDGE_CLUSTER_URL.format(site_id, enforcementpoint_id))
                 edge_cluster_id = self.get_id_using_attr_name_else_fail(
                     "edge_cluster", edge_cluster_info, edge_cluster_base_url,
-                    PolicyEdgeCluster.__name__)
+                    "Edge Cluster")
                 nsx_resource_params["edge_cluster_path"] = (
                     edge_cluster_base_url + "/" + edge_cluster_id)
 
@@ -859,16 +865,15 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     enforcementpoint_id = preferred_edge_node_info.get(
                         "enforcementpoint_id", "default")
                     edge_cluster_base_url = (
-                        PolicyEdgeCluster.get_resource_base_url(
-                            site_id, enforcementpoint_id))
+                        EDGE_CLUSTER_URL.format(site_id, enforcementpoint_id))
                     edge_cluster_id = self.get_id_using_attr_name_else_fail(
                         "edge_cluster", preferred_edge_node_info,
-                        edge_cluster_base_url, PolicyEdgeCluster.__name__)
-                    edge_node_base_url = PolicyEdgeNode.get_resource_base_url(
+                        edge_cluster_base_url, 'Edge Cluster')
+                    edge_node_base_url = EDGE_NODE_URL.format(
                         site_id, enforcementpoint_id, edge_cluster_id)
                     edge_node_id = self.get_id_using_attr_name_else_fail(
                         "edge_node", preferred_edge_node_info,
-                        edge_node_base_url, PolicyEdgeNode.__name__)
+                        edge_node_base_url, "Edge Node")
                     nsx_resource_params["preferred_edge_paths"].append(
                         edge_node_base_url + "/" + edge_node_id)
 
@@ -879,18 +884,30 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     external_interface_paths = []
                     for external_interface in (
                             external_interface_info):
-                        interface_base_url = (
-                            NSXTTier1.NSXTTier0LocaleService.
-                            NSXTTier1Interface.get_resource_base_url(
-                                self.get_parent_info()))
+                        external_interface_path = external_interface.get(
+                            'external_interface_path')
+                        if not external_interface_path:
+                            tier0_id = self.get_id_using_attr_name_else_fail(
+                                'tier0', external_interface, TIER_0_URL,
+                                "Tier 0", ignore_not_found_error=False)
+                            tier0_ls_id = (
+                                self.get_id_using_attr_name_else_fail(
+                                    'tier0_ls', external_interface,
+                                    TIER_0_LOCALE_SERVICE_URL,
+                                    "Tier 0 Locale Service",
+                                    ignore_not_found_error=False))
+                            tier0_ls_inf_id = (
+                                self.get_id_using_attr_name_else_fail(
+                                    'tier0_ls_interface', external_interface,
+                                    TIER_0_LS_INTERFACE_URL,
+                                    "Tier 0 Interface",
+                                    ignore_not_found_error=False))
+                            external_interface_path = (
+                                TIER_0_LS_INTERFACE_URL.format(
+                                    tier0_id, tier0_ls_id) + "/" +
+                                tier0_ls_inf_id)
                         external_interface_paths.append(
-                            interface_base_url + "/" +
-                            self.get_id_using_attr_name_else_fail(
-                                None, external_interface,
-                                interface_base_url,
-                                NSXTTier1.NSXTTier1LocaleService.
-                                NSXTTier1Interface,
-                                ignore_not_found_error=False))
+                            external_interface_path)
                     ha_vip_config[
                         'external_interface_paths'] = external_interface_paths
 
@@ -933,29 +950,24 @@ class NSXTTier1(NSXTBaseRealizableResource):
             def get_resource_base_url(parent_info):
                 tier1_id = parent_info.get("tier1_id", 'default')
                 locale_service_id = parent_info.get("ls_id", 'default')
-                return ('/infra/tier-1s/{}/locale-services/{}/interfaces'
-                        .format(tier1_id, locale_service_id))
+                return TIER_1_LS_INTERFACE_URL.format(
+                    tier1_id, locale_service_id)
 
             def update_resource_params(self, nsx_resource_params):
                 # segment_id is a required attr
-                segment_base_url = NSXTSegment.get_resource_base_url()
                 segment_id = self.get_id_using_attr_name_else_fail(
-                    "segment", nsx_resource_params,
-                    segment_base_url,
-                    "Segment")
+                    "segment", nsx_resource_params, SEGMENT_URL, "Segment")
                 nsx_resource_params["segment_path"] = (
-                    segment_base_url + "/" + segment_id)
+                    SEGMENT_URL + "/" + segment_id)
 
                 if self.do_resource_params_have_attr_with_id_or_display_name(
                         "ipv6_ndra_profile"):
-                    ipv6_ndra_profile_url = (
-                        PolicyIpv6NdraProfiles.get_resource_base_url())
                     ipv6_ndra_profile_id = (
                         self.get_id_using_attr_name_else_fail(
                             "ipv6_ndra_profile", nsx_resource_params,
-                            ipv6_ndra_profile_url, "Ipv6 NDRA Profile"))
+                            IPV6_NDRA_PROFILE_URL, "Ipv6 NDRA Profile"))
                     nsx_resource_params["ipv6_profile_paths"] = [
-                        ipv6_ndra_profile_url + "/" + ipv6_ndra_profile_id]
+                        IPV6_NDRA_PROFILE_URL + "/" + ipv6_ndra_profile_id]
 
 
 if __name__ == '__main__':

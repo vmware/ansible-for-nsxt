@@ -90,6 +90,7 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible.module_utils.nsxt_resource_urls import POLICY_GROUP_URL
 from ansible.module_utils._text import to_native
 
 
@@ -111,7 +112,7 @@ class NSXTPolicyGroup(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args):
-        return '/infra/domains/{}/groups'.format(
+        return POLICY_GROUP_URL.format(
             baseline_args["domain_id"]
         )
 

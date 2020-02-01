@@ -231,6 +231,7 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible.module_utils.nsxt_resource_urls import SECURITY_POLICY_URL
 from ansible.module_utils._text import to_native
 
 
@@ -339,7 +340,7 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args):
-        return '/infra/domains/{}/security-policies'.format(
+        return SECURITY_POLICY_URL.format(
             baseline_args["domain_id"])
 
     def update_resource_params(self, nsx_resource_params):

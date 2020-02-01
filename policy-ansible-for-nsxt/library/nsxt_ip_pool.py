@@ -164,15 +164,9 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible.module_utils.nsxt_resource_urls import (
+    IP_ADDRESS_POOL_SUBNET_URL, IP_BLOCK_URL, IP_POOL_URL)
 from ansible.module_utils._text import to_native
-
-
-if __name__ == '__main__':
-    import os
-    import sys
-    sys.path.append(os.getcwd())
-
-    from library.nsxt_ip_block import NSXTIpBlock
 
 
 class NSXTIpPool(NSXTBaseRealizableResource):
@@ -183,7 +177,7 @@ class NSXTIpPool(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
-        return '/infra/ip-pools'
+        return IP_POOL_URL
 
     def update_parent_info(self, parent_info):
         parent_info["ip_pool_id"] = self.id
@@ -226,18 +220,17 @@ class NSXTIpPool(NSXTBaseRealizableResource):
 
         @staticmethod
         def get_resource_base_url(parent_info):
-            return '/infra/ip-pools/{}/ip-subnets'.format(
+            return IP_ADDRESS_POOL_SUBNET_URL.format(
                 parent_info["ip_pool_id"]
             )
 
         def update_resource_params(self, nsx_resource_params):
             # ip_block is a required attr
-            ip_block_base_url = NSXTIpBlock.get_resource_base_url()
             ip_block_id = self.get_id_using_attr_name_else_fail(
                 "ip_block", nsx_resource_params,
-                ip_block_base_url, "IP Block")
+                IP_BLOCK_URL, "IP Block")
             nsx_resource_params["ip_block_path"] = (
-                ip_block_base_url + "/" + ip_block_id)
+                IP_BLOCK_URL + "/" + ip_block_id)
 
             nsx_resource_params["resource_type"] = "IpAddressPoolBlockSubnet"
 
@@ -295,7 +288,7 @@ class NSXTIpPool(NSXTBaseRealizableResource):
 
         @staticmethod
         def get_resource_base_url(parent_info):
-            return '/infra/ip-pools/{}/ip-subnets'.format(
+            return IP_ADDRESS_POOL_SUBNET_URL.format(
                 parent_info["ip_pool_id"]
             )
 

@@ -384,7 +384,7 @@ class NSXTBaseRealizableResource(ABC):
                         self.module.fail_json(
                             msg="Multiple {} found with display_name {}. "
                                 "Please specify the resource using id in "
-                                "the playbook.".format(resource_type.__name__,
+                                "the playbook.".format(resource_type,
                                                        resource_display_name))
             if matched_resource is not None:
                 return matched_resource['id']
@@ -396,7 +396,7 @@ class NSXTBaseRealizableResource(ABC):
                     self.module.fail_json(
                         msg="No {} found with display_name {} for the "
                             "specified configuration.".format(
-                                resource_type.__name__, resource_display_name))
+                                resource_type, resource_display_name))
         except Exception as e:
             # Manager replied with invalid URL. It means that the resource
             # does not exist on the Manager. So, return the display_name
