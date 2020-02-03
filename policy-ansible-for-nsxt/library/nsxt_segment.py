@@ -234,18 +234,9 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible.module_utils.nsxt_resource_urls import (
+    SEGMENT_PORT_URL, SEGMENT_URL, TIER_0_URL, TIER_1_URL, TRANSPORT_ZONE_URL)
 from ansible.module_utils._text import to_native
-
-if __name__ == '__main__':
-    from ansible.module_utils.nsxt_policy_transport_zone import (
-        NSXTPolicyTransportZone)
-
-    import os
-    import sys
-    sys.path.append(os.getcwd())
-
-    from library.nsxt_tier0 import NSXTTier0
-    from library.nsxt_tier1 import NSXTTier1
 
 
 class NSXTSegment(NSXTBaseRealizableResource):
@@ -314,25 +305,23 @@ class NSXTSegment(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
-        return '/infra/segments'
+        return SEGMENT_URL
 
     def update_resource_params(self, nsx_resource_params):
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "tier0"):
-            tier0_base_url = NSXTTier0.get_resource_base_url()
             tier0_id = self.get_id_using_attr_name_else_fail(
                 "tier0", nsx_resource_params,
-                tier0_base_url, "Tier0")
+                TIER_0_URL, "Tier0")
             nsx_resource_params["connectivity_path"] = (
-                tier0_base_url + "/" + tier0_id)
+                TIER_0_URL + "/" + tier0_id)
         elif self.do_resource_params_have_attr_with_id_or_display_name(
                 "tier1"):
-            tier1_base_url = NSXTTier1.get_resource_base_url()
             tier1_id = self.get_id_using_attr_name_else_fail(
                 "tier1", nsx_resource_params,
-                tier1_base_url, "Tier1")
+                TIER_1_URL, "Tier1")
             nsx_resource_params["connectivity_path"] = (
-                tier1_base_url + "/" + tier1_id)
+                TIER_1_URL + "/" + tier1_id)
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "transport_zone"):
@@ -340,8 +329,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
             enforcementpoint_id = nsx_resource_params.pop(
                 "enforcementpoint_id")
             transport_zone_base_url = (
-                NSXTPolicyTransportZone.get_resource_base_url(
-                    site_id, enforcementpoint_id))
+                TRANSPORT_ZONE_URL.format(site_id, enforcementpoint_id))
             transport_zone_id = self.get_id_using_attr_name_else_fail(
                 "transport_zone", nsx_resource_params,
                 transport_zone_base_url, "Transport Zone")
@@ -419,7 +407,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
         @staticmethod
         def get_resource_base_url(parent_info):
             segment_id = parent_info.get("segment_id", 'default')
-            return '/infra/segments/{}/ports'.format(segment_id)
+            return SEGMENT_PORT_URL.format(segment_id)
 
 
 if __name__ == '__main__':

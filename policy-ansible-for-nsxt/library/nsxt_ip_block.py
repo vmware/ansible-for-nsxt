@@ -72,6 +72,7 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
+from ansible.module_utils.nsxt_resource_urls import IP_BLOCK_URL
 from ansible.module_utils._text import to_native
 
 
@@ -89,7 +90,7 @@ class NSXTIpBlock(NSXTBaseRealizableResource):
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
-        return '/infra/ip-blocks'
+        return IP_BLOCK_URL
 
 
 if __name__ == '__main__':
