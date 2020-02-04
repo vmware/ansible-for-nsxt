@@ -415,6 +415,87 @@ options:
                     - Can be used to wait for the realization of subresource
                       before the request to create the next resource is sent to
                       the Manager
+    bfd_peers:
+        type: list
+        element: dict
+        description: This is a list of BFD Peers that need to be created,
+                     updated, or deleted
+        suboptions:
+            id:
+                description: Tier-0 BFD Peer ID.
+                required: false
+                type: str
+            display_name:
+                description:
+                    - Tier-0 BFD Peer display name.
+                    - Either this or id must be specified. If both are
+                      specified, id takes precedence.
+                required: false
+                type: str
+            description:
+                description:
+                    - Tier-0 BFD Peer description. config
+                type: str
+            state:
+                description:
+                    - State can be either 'present' or 'absent'. 'present' is
+                      used to create or update resource. 'absent' is used to
+                      delete resource.
+                    - Must be specified in order to modify the resource
+                choices:
+                    - present
+                    - absent
+            bfd_config_id:
+                description:
+                    - The associated BFD Config ID
+                    - Either this, bfd_config_display_name, or bfd_config_path
+                      must be specified
+                    - BFD configuration is not supported for IPv6 networks.
+                type: str
+            bfd_config_display_name:
+                description:
+                    - The associated BFD Config display name
+                    - Either this, bfd_config_id, or bfd_config_path
+                      must be specified
+                    - BFD configuration is not supported for IPv6 networks.
+                type: str
+            bfd_config_path:
+                description:
+                    - The associated BFD Config policy path
+                    - Either this, bfd_config_display_name, or bfd_config_id
+                      must be specified
+                    - BFD configuration is not supported for IPv6 networks.
+                type: str
+            enabled:
+                description: Flag to enable BFD peer.
+                type: list
+                elements: dict
+                suboptions:
+                    admin_distance:
+                        description: Cost associated with next hop route
+                        type: int
+                        default: 1
+                ip_address:
+                    description: Next hop gateway IP address
+                    type: str
+                scope:
+                    description:
+                        - Interface path associated with current route
+                        - For example, specify a policy path referencing the
+                          IPSec VPN Session
+                    type: list
+            tags:
+                description: Opaque identifiers meaningful to the API user
+                type: dict
+                suboptions:
+                    scope:
+                        description: Tag scope.
+                        required: true
+                        type: str
+                    tag:
+                        description: Tag value.
+                        required: true
+                        type: str
     locale_services:
         type: list
         element: dict
@@ -1104,6 +1185,17 @@ EXAMPLES = '''
     tags:
       - scope: "a"
         tag: "b"
+    static_routes:
+      - state: present
+        display_name: test-sr
+        network: '12.12.12.0/24'
+        next_hops:
+          - ip_address: "192.165.1.4"
+    bfd_peers:
+      - state: present
+        display_name: test-peer-1
+        peer_address: "192.100.100.5"
+        bfd_config_id: test-bfd-config
     locale_services:
       - state: present
         id: "test-t0ls"
@@ -1149,6 +1241,15 @@ EXAMPLES = '''
             multicast:
               enabled: True
             ipv6_ndra_profile_display_name: test
+    vrf_config:
+      display_name: my-vrf
+      id: my-vrf2
+      tier0_display_name: node-t0
+      tags:
+        - scope: scope-tag-1
+          tag: value-tag-1
+      route_distinguisher: 'ASN:4000'
+      evpn_transit_vni: 6000
 '''
 
 RETURN = '''# '''
@@ -1163,7 +1264,7 @@ from ansible.module_utils.nsxt_resource_urls import (
     TIER_0_URL, IPV6_DAD_PROFILE_URL, IPV6_NDRA_PROFILE_URL,
     DHCP_RELAY_CONFIG_URL, EDGE_CLUSTER_URL, EDGE_NODE_URL, SEGMENT_URL,
     TIER_0_STATIC_ROUTE_URL, TIER_0_LOCALE_SERVICE_URL,
-    TIER_0_LS_INTERFACE_URL, TIER_0_BGP_NEIGHBOR_URL)
+    TIER_0_LS_INTERFACE_URL, TIER_0_BGP_NEIGHBOR_URL, TIER_0_BFD_PEERS)
 
 
 class NSXTTier0(NSXTBaseRealizableResource):
@@ -1395,6 +1496,11 @@ class NSXTTier0(NSXTBaseRealizableResource):
         parent_info["tier0_id"] = self.id
 
     class NSXTTier0StaticRoutes(NSXTBaseRealizableResource):
+        @staticmethod
+        def get_resource_update_priority():
+            # Create this first
+            return 2
+
         def get_spec_identifier(self):
             return NSXTTier0.NSXTTier0StaticRoutes.get_spec_identifier()
 
@@ -1435,6 +1541,61 @@ class NSXTTier0(NSXTBaseRealizableResource):
         def get_resource_base_url(parent_info):
             tier0_id = parent_info.get("tier0_id", 'default')
             return TIER_0_STATIC_ROUTE_URL.format(tier0_id)
+
+        def update_parent_info(self, parent_info):
+            parent_info["sr_id"] = self.id
+
+    class NSXTTier0SRBFDPeer(NSXTBaseRealizableResource):
+        def get_spec_identifier(self):
+            return (NSXTTier0.NSXTTier0StaticRoutes.NSXTTier0SRVFDPeer.
+                    get_spec_identifier())
+
+        @classmethod
+        def get_spec_identifier(cls):
+            return "bfd_peers"
+
+        @staticmethod
+        def get_resource_spec():
+            tier0_sr_bfd_peer_arg_spec = {}
+            tier0_sr_bfd_peer_arg_spec.update(
+                bfd_config_id=dict(
+                    type='str'
+                ),
+                bfd_config_display_name=dict(
+                    type='str'
+                ),
+                bfd_config_path=dict(
+                    type='str'
+                ),
+                enabled=dict(
+                    type='bool',
+                    default=True
+                ),
+                peer_address=dict(
+                    type='str',
+                    required=True
+                ),
+                source_addresses=dict(
+                    type='list',
+                ),
+            )
+            return tier0_sr_bfd_peer_arg_spec
+
+        @staticmethod
+        def get_resource_base_url(parent_info):
+            tier0_id = parent_info.get("tier0_id", 'default')
+            return TIER_0_BFD_PEERS.format(tier0_id)
+
+        def update_resource_params(self, nsx_resource_params):
+            if 'bfd_config_path' in nsx_resource_params:
+                return
+            bfd_config_id = self.get_id_using_attr_name_else_fail(
+                "bfd_config", nsx_resource_params, '/infra/bfd-configs',
+                'BFD Config')
+            nsx_resource_params.pop('bfd_config_id', None)
+            nsx_resource_params.pop('bfd_config_display_name', None)
+            nsx_resource_params['bfd_config_path'] = (
+                '/infra/bfd-configs/{}'.format(bfd_config_id))
 
     class NSXTTier0LocaleService(NSXTBaseRealizableResource):
         def get_spec_identifier(self):
