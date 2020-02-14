@@ -46,6 +46,10 @@ options:
         description: Display name
         required: true
         type: str
+    description:
+        description: Description of the resource
+        required: false
+        type: str
     enabled:
         description: 'The enabled property specifies the status of NIOC feature.
                       When enabled is set to true, NIOC feature is turned on and
