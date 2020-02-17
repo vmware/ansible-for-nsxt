@@ -78,6 +78,7 @@ EXAMPLES = '''
           placement_type: VsphereClusterNodeVMDeploymentConfig
           vc_id: "7503e86e-c502-46fc-8d91-45a06d314d88"
           management_network: "network-44"
+          disk_provisioning: "LAZY_ZEROED_THICK"
           hostname: "manager-2"
           compute: "domain-c49"
           storage: "datastore-43"
