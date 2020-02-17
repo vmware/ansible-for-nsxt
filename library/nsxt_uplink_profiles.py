@@ -46,6 +46,10 @@ options:
         description: Display name
         required: true
         type: str
+    description:
+        description: Description of the resource
+        required: false
+        type: str
     enabled:
         description: 'The enabled property specifies the status of NIOC feature.
                       When enabled is set to true, NIOC feature is turned on and
@@ -207,6 +211,7 @@ def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
                         transport_vlan=dict(required=False, type='int'),
+                        description=dict(required=False, type='str'),
                         enabled=dict(required=False, type='boolean'),
                         host_infra_traffic_res=dict(required=False, type='list'),
                         overlay_encap=dict(required=False, type='str'),
