@@ -5,7 +5,7 @@
     - answerfile.yml
   tasks:
     - name: Lists info for all cluster node VM auto-deployment
-      nsxt_controller_manager_auto_deployment_facts:
+      nsxt_manager_auto_deployment_facts:
           hostname: "{{hostname}}"
           username: "{{username}}"
           password: "{{password}}"
