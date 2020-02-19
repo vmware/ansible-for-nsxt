@@ -83,6 +83,10 @@ options:
         description: 'Compute manager type like vCenter'
         required: true
         type: str
+    description:
+        description: 'Description of this resource'
+        required: true
+        type: str
     server:
         description: 'IP address or hostname of compute manager'
         required: true
@@ -109,6 +113,7 @@ EXAMPLES = '''
     display_name: "vCenter"
     server: "10.161.244.213"
     origin_type: vCenter
+    description: 'Compute manager1'
     credential:
       credential_type: "UsernamePasswordLoginCredential"
       username: "administrator@vsphere.local"
@@ -227,6 +232,7 @@ def main():
                     credential_verifier=dict(required=False, type='str'),
                     credential_key=dict(required=False, type='str', no_log=True),
                     credential_type=dict(required=True, type='str')),
+                    description=dict(required=False, type='str'),
                     origin_type=dict(required=True, type='str'),
                     server=dict(required=True, type='str'),
                     state=dict(required=True, choices=['present', 'absent']))
