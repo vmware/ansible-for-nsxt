@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_controller_manager_auto_deployment
+module: nsxt_manager_auto_deployment
 short_description: 'Deploy and register a cluster node VM'
 description: "Deploys a cluster node VM as specified by the deployment config.
               Once the VM is deployed and powered on, it will automatically join the
@@ -61,7 +61,7 @@ options:
 
 EXAMPLES = '''
   - name: Deploy and register a cluster node VM
-    nsxt_manager_controllers:
+    nsxt_manager_auto_deployment:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"

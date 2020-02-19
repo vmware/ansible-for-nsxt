@@ -5,7 +5,7 @@
     - answerfile.yml
   tasks:
     - name: Deploy and register a cluster node VM
-      nsxt_controller_manager_auto_deployment:
+      nsxt_manager_auto_deployment:
           hostname: "{{hostname}}"
           username: "{{username}}"
           password: "{{password}}"
