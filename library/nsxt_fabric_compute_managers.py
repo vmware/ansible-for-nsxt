@@ -212,7 +212,9 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_compute_manager is None:
         return False
     if existing_compute_manager['server'] != compute_manager_with_ids['server'] or \
-        existing_compute_manager['credential']['thumbprint'] != compute_manager_with_ids['credential']['thumbprint']:
+        existing_compute_manager['credential']['thumbprint'] != compute_manager_with_ids['credential']['thumbprint'] or \
+        existing_compute_manager['origin_type'] != compute_manager_with_ids['origin_type'] or \
+        existing_compute_manager['description'] != compute_manager_with_ids['description']:
         return True
     return False
 
@@ -228,6 +230,7 @@ def main():
                     credential_key=dict(required=False, type='str', no_log=True),
                     credential_type=dict(required=True, type='str')),
                     origin_type=dict(required=True, type='str'),
+                    description=dict(required=True, type='str'),
                     server=dict(required=True, type='str'),
                     state=dict(required=True, choices=['present', 'absent']))
 
