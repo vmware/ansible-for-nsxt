@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-module: nsxt_controller_manager_auto_deployment_facts
+module: nsxt_manager_auto_deployment_facts
 short_description: 'Returns info for all cluster node VM auto-deployment attempts'
 description: 'Returns request information for every attempted deployment of a 
               cluster node VM'
@@ -41,7 +41,7 @@ options:
 '''
 
 EXAMPLES = '''
-- nsxt_controller_manager_auto_deployment_facts:
+- nsxt_manager_auto_deployment_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
