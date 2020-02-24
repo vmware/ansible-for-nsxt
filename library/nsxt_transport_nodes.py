@@ -463,6 +463,8 @@ EXAMPLES = '''
         ip_assignment_spec:
           resource_type: "StaticIpPoolSpec"
           ip_pool_name: "IPPool-IPV4-1"
+        transport_zone_endpoints:
+        - transport_zone_name: "TZ1"
     transport_zone_endpoints:
     - transport_zone_name: "TZ1"
     node_deployment_info:
@@ -581,6 +583,12 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
                 host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
                                                                                             mgr_username, mgr_password, validate_certs,
                                                                                             "/pools/ip-pools", ip_pool_name)
+            if host_switch.__contains__('transport_zone_endpoints'):
+                for transport_zone_endpoint in host_switch['transport_zone_endpoints']:
+                    transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
+                    transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
+                                                                                             mgr_username, mgr_password, validate_certs,
+                                                                                             "/transport-zones", transport_zone_name)
     if transport_node_params.__contains__('transport_zone_endpoints'):
         for transport_zone_endpoint in transport_node_params['transport_zone_endpoints']:
             transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
