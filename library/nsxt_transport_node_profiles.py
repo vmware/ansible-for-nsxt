@@ -99,6 +99,7 @@ EXAMPLES = '''
         - name: "uplinkProfile1"
           type: "UplinkHostSwitchProfile"
         host_switch_name: "hostswitch1"
+        host_switch_mode: "STANDARD"
         pnics:
         - device_name: "vmnic1"
           uplink_name: "uplink-1"
