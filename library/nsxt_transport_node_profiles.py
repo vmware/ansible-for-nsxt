@@ -175,8 +175,9 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         host_switch['host_switch_profile_ids'] = host_switch_profile_ids
         ip_pool_id = None
         if host_switch.__contains__('ip_assignment_spec'):
-            ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
-            host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
+            if host_switch['ip_assignment_spec'].__contains__('ip_pool_name'):
+                ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
+                host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
                                                                                         mgr_username, mgr_password, validate_certs,
                                                                                         "/pools/ip-pools", ip_pool_name)
         if host_switch.__contains__('transport_zone_endpoints'):
