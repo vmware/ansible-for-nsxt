@@ -1,0 +1,16 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Retrieve information about EULA acceptance
+      nsxt_eula_accept_facts:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        required_info: "{{ item }}"
+      with_items:
+        - 'acceptance'
+        - 'contents'
