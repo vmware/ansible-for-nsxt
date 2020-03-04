@@ -171,7 +171,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if not existing_transport_zone.__contains__('uplink_teaming_policy_names') and transport_zone_params.__contains__('uplink_teaming_policy_names'):
         return True
     if existing_transport_zone.__contains__('uplink_teaming_policy_names') and transport_zone_params.__contains__('uplink_teaming_policy_names') and \
-        existing_transport_zone['uplink_teaming_policy_names'] != existing_transport_zone['uplink_teaming_policy_names']:
+        existing_transport_zone['uplink_teaming_policy_names'] != transport_zone_params['uplink_teaming_policy_names']:
         return True
     return False
 
