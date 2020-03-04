@@ -60,7 +60,9 @@ options:
         description: 'Login credentials for the compute manager'
         password:
             description: "Password for the user (optionally specified on PUT, unspecified on
-                          GET)"
+                          GET). Please take care of the special characters while providing
+                          password. Like if password contains '$' and if you are passing through
+                          command line, then you got to use \$ instead."
             no_log: 'True'
             required: false
             type: str
