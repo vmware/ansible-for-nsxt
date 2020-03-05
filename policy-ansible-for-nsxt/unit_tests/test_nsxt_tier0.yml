@@ -63,11 +63,11 @@
                   remote_as_num: "12"
                   state: present
             interfaces:
-                - display_name: neigh2
-                  neighbor_address: "1.2.3.5"
-                  password: "myPassword"
-                  remote_as_num: "22"
-                  state: present
+              - display_name: neigh2
+                neighbor_address: "1.2.3.5"
+                password: "myPassword"
+                remote_as_num: "22"
+                state: present
               - id: "test-t0-t0ls-iface"
                 display_name: "test-t0-t0ls-iface"
                 state: present
@@ -78,3 +78,12 @@
                 edge_node_info:
                   edge_cluster_id: "7ef91a10-c780-4f48-a279-a5662db4ffa3"
                   edge_node_id: "e10c42dc-db27-11e9-8cd0-000c291af7ee"
+        vrf_config:
+          display_name: my-vrf
+          id: my-vrf2
+          tier0_display_name: node-t0
+          tags:
+            - scope: scope-tag-1
+              tag: value-tag-1
+          route_distinguisher: 'ASN:4000'
+          evpn_transit_vni: 6000

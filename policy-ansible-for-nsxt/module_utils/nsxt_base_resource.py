@@ -321,6 +321,9 @@ class NSXTBaseRealizableResource(ABC):
                               " for the resource {}".format(
                                   attr_name, str(resource_type)))
 
+    def exit_with_failure(self, msg, **kwargs):
+        self.module.fail_json(msg=msg, **kwargs)
+
     def skip_delete(self):
         """
         Override in subclass if this resource is skipped to be deleted.
