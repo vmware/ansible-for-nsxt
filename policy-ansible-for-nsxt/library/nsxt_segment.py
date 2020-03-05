@@ -34,11 +34,78 @@ description:
     If the specified TransportZone is of VLAN type, a vlan_id is also required.
 version_added: "2.8"
 author: Gautam Verma
-extends_documentation_fragment: vmware_nsxt
 options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    display_name:
+        description:
+            - Display name.
+            - If resource ID is not specified, display_name will be used as ID.
+        required: false
+        type: str
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'.
+                    'present' is used to create or update resource.
+                    'absent' is used to delete resource."
+        required: true
+    validate_certs:
+        description: Enable server certificate verification.
+        type: bool
+        default: False
+    tags:
+        description: Opaque identifiers meaningful to the API user.
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
+    create_or_update_subresource_first:
+        type: bool
+        default: false
+        description:
+            - Can be used to create subresources first.
+            - Can be specified for each subresource.
+    delete_subresource_first:
+        type: bool
+        default: true
+        description:
+            - Can be used to delete subresources first.
+            - Can be specified for each subresource.
+    achieve_subresource_state_if_del_parent:
+        type: bool
+        default: false
+        description:
+            - Can be used to achieve the state of subresources even if
+              the parent(base) resource's state is absent.
+            - Can be specified for each subresource.
+    do_wait_till_create:
+        type: bool
+        default: false
+        description:
+            - Can be used to wait for the realization of subresource before the
+              request to create the next resource is sent to the Manager.
+            - Can be specified for each subresource.
     id:
         description: The id of the Policy Segment.
-        required: true
+        required: false
         type: str
     description:
         description: Segment description.
@@ -216,43 +283,6 @@ options:
               section
         element: dict
         suboptions:
-            id:
-                description: The id of the Policy Segment Port.
-                required: false
-                type: str
-            display_name:
-                description:
-                    - Segment Port display name.
-                    - Either this or id must be specified. If both are
-                      specified, id takes precedence.
-                required: false
-                type: str
-            description:
-                description:
-                    - Segment description.
-                type: str
-            tags:
-                description: Opaque identifiers meaningful to the API user.
-                type: dict
-            suboptions:
-                scope:
-                    description: Tag scope.
-                    required: true
-                    type: str
-                tag:
-                    description: Tag value.
-                    required: true
-                    type: str
-            state:
-                choices:
-                    - present
-                    - absent
-                description:
-                    - State can be either 'present' or 'absent'. 'present' is
-                      used to create or update resource. 'absent' is used to
-                      delete resource
-                    - Required if I(id != null)
-                required: true
             address_bindings:
                 description: Static address binding used for the port.
                 type: dict
@@ -306,6 +336,23 @@ options:
                             - PARENT
                             - CHILD
                             - INDEPENDENT
+            display_name:
+                description:
+                    - Segment Port display name.
+                    - Either this or id must be specified. If both are
+                      specified, id takes precedence.
+                required: false
+                type: str
+            description:
+                description:
+                    - Segment description.
+                type: str
+            do_wait_till_create:
+                type: bool
+                default: false
+                description: Can be used to wait for the realization of
+                             subresource before the request to create the next
+                             resource is sent to the Manager
             extra_configs:
                 description:
                     - Extra configs on segment port
@@ -330,6 +377,10 @@ options:
                                 description: Value
                                 type: str
                                 required: true
+            id:
+                description: The id of the Policy Segment Port.
+                required: false
+                type: str
             ignored_address_bindings:
                 description:
                     - Address bindings to be ignored by IP Discovery module
@@ -364,6 +415,28 @@ options:
                 choices:
                     - UNBLOCKED_VLAN
                 default: UNBLOCKED_VLAN
+            state:
+                choices:
+                    - present
+                    - absent
+                description:
+                    - State can be either 'present' or 'absent'. 'present' is
+                      used to create or update resource. 'absent' is used to
+                      delete resource
+                    - Required if I(id != null)
+                required: true
+            tags:
+                description: Opaque identifiers meaningful to the API user.
+                type: dict
+                suboptions:
+                    scope:
+                        description: Tag scope.
+                        required: true
+                        type: str
+                    tag:
+                        description: Tag value.
+                        required: true
+                        type: str
 '''
 
 EXAMPLES = '''

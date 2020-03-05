@@ -37,7 +37,7 @@ options:
         description:
             - Display name.
             - If resource ID is not specified, display_name will be used as ID.
-        required: true
+        required: false
         type: str
     state:
         choices:
@@ -71,7 +71,7 @@ options:
             - Can be specified for each subresource.
     delete_subresource_first:
         type: bool
-        default: false
+        default: true
         description:
             - Can be used to delete subresources first.
             - Can be specified for each subresource.
