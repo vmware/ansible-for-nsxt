@@ -47,7 +47,7 @@ options:
         type: str
     expression:
         description:
-            - The expression list must follow below criteria:
+            - The expression list must follow below criteria
                 - 1. A non-empty expression list, must be of odd size.
                   In a list, with indices starting from 0, all
                   non-conjunction expressions must be at
@@ -62,7 +62,35 @@ options:
                 - 4. Each expression must be a valid Expression. See
                   the definition of the Expression type for more
                   information.
+        type: list
+    extended_expression:
+        description:
+            - Extended Expression allows additional higher level context to be
+              specified for grouping criteria (e.g. user AD group). This field
+              allow users to specified user context as the source of a firewall
+              rule for IDFW feature.  Current version only support a single
+              IdentityGroupExpression. In the future, this might expand to
+              support other conjunction and non-conjunction expression.
+            - The extended expression list must follow below criteria
+                - 1. Contains a single IdentityGroupExpression. No conjunction
+                  expression is supported
+                - 2. No other non-conjunction expression is supported, except
+                  for IdentityGroupExpression
+                - 3. Each expression must be a valid Expression. See the
+                  definition of the Expression type for more information
+                - 4. Extended expression are implicitly AND with expression
+                - 5. No nesting can be supported if this value is used
+                - 6. If a Group is using extended expression, this group must
+                  be the only member in the source field of an communication
+                  map
+        type: list
+    group_state:
+        description: Realization state of this group
         type: str
+        choices:
+            - IN_PROGRESS
+            - SUCCESS
+            - FAILURE
 '''
 
 EXAMPLES = '''
@@ -106,7 +134,15 @@ class NSXTPolicyGroup(NSXTBaseRealizableResource):
             expression=dict(
                 required=True,
                 type='list'
-            )
+            ),
+            extended_expression=dict(
+                required=False,
+                type='list'
+            ),
+            group_state=dict(
+                required=False,
+                type='str'
+            ),
         )
         return policy_group_arg_spec
 
