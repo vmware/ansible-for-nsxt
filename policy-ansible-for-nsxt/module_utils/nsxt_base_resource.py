@@ -361,13 +361,13 @@ class NSXTBaseRealizableResource(ABC):
                 params[display_name_identifier]):
             resource_display_name = params.pop(display_name_identifier)
             # Use display_name as ID if ID is not specified.
-            return (self._get_id_from_display_name(
+            return (self.get_id_from_display_name(
                 resource_base_url, resource_display_name, resource_type,
                 ignore_not_found_error) or resource_display_name)
 
-    def _get_id_from_display_name(self, resource_base_url,
-                                  resource_display_name,
-                                  resource_type, ignore_not_found_error=True):
+    def get_id_from_display_name(self, resource_base_url,
+                                 resource_display_name,
+                                 resource_type, ignore_not_found_error=True):
         try:
             # Get the id from the Manager
             (_, resp) = self._send_request_to_API(
