@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 ---
 #
-# Playbook to test Segment
+# Playbook to test IP Block
 #
 - hosts: localhost
   become: yes
