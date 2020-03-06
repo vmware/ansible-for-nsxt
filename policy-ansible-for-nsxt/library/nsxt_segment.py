@@ -124,6 +124,13 @@ options:
             vlan_id:
                 description: VLAN ID for port binding
                 type: int
+    admin_state:
+        description: Represents Desired state of the Segment
+        type: str
+        choices:
+            - UP
+            - DOWN
+        default: UP
     advanced_config:
         description: Advanced configuration for Segment.
         type: dict
@@ -205,6 +212,107 @@ options:
                       associated with it and the host switch's default teaming
                       policy will be used by MP.
                 type: str
+    bridge_profiles:
+        description: Bridge Profile Configuration
+        type: list
+        elements: dict
+        suboptions:
+            bridge_profile_path:
+                description:
+                    - Policy path to L2 Bridge profile
+                    - Same bridge profile can be configured on different
+                      segments. Each bridge profile on a segment must unique.
+                type: str
+                required: true
+            uplink_teaming_policy_name:
+                description:
+                    - Uplink Teaming Policy Name
+                    - The name of the switching uplink teaming policy for the
+                      bridge endpoint. This name corresponds to one of the
+                      switching uplink teaming policy names listed in the
+                      transport zone. When this property is not specified, the
+                      teaming policy is assigned by MP.
+                type: str
+            vlan_ids:
+                description: VLAN specification for bridge endpoint. Either
+                             VLAN ID or VLAN ranges can be specified. Not both.
+                type: str
+            vlan_transport_zone_path:
+                description:
+                    - Policy path to VLAN Transport Zone
+                    - VLAN transport zone should belong to the enforcment-point
+                      as the transport zone specified in the segment.
+                type: str
+                required: true
+    connectivity_path:
+        description: Policy path to the connecting Tier-0 or Tier-1. Valid only
+                     for segments created under Infra
+        type: str
+    dhcp_config_path:
+        description:
+            - Policy path to DHCP configuration
+            - Policy path to DHCP server or relay configuration to use for all
+              IPv4 & IPv6 subnets configured on this segment.
+        type: str
+    extra_configs:
+        description:
+            - Extra configs on Segment
+            - This property could be used for vendor specific configuration in
+              key value string pairs, the setting in extra_configs will be
+              automatically inheritted by segment ports in the Segment.
+        type: list
+        elements: dict
+        suboptions:
+            config_pair:
+                description: Key value pair in string for the configuration
+                type: dict
+                required: true
+                suboptions:
+                    key:
+                        description: Key
+                        type: str
+                        required: true
+                    value:
+                        description: Value
+                        type: str
+                        required: true
+    l2_extension:
+        description: Configuration for extending Segment through L2 VPN
+        type: dict
+        suboptions:
+            l2vpn_paths:
+                description: Policy paths corresponding to the associated L2
+                             VPN sessions
+                type: list
+                elements: str
+            local_egress:
+                description: Local Egress
+                type: dict
+                suboptions:
+                    optimized_ips:
+                        description: Gateway IP for Local Egress. Local egress
+                                     is enabled only when this list is not
+                                     empty
+                        type: list
+                        elements: str
+            tunnel_id:
+                description: Tunnel ID
+                type: int
+    mac_pool_id:
+        description: Allocation mac pool associated with the Segment
+        type: str
+    metadata_proxy_paths:
+        description: Metadata Proxy Configuration Paths
+        type: list
+        elements: str
+    overlay_id:
+        description:
+            - Overlay connectivity ID for this Segment
+            - Used for overlay connectivity of segments. The overlay_id
+              should be allocated from the pool as definied by
+              enforcement-point. If not provided, it is auto-allocated from the
+              default pool on the enforcement-point
+        type: int
     replication_mode:
         description: Replication mode of the Segment
         type: str
@@ -456,8 +564,10 @@ EXAMPLES = '''
     advanced_config:
       address_pool_display_name: small-2-pool
       connectivity: "OFF"
-      hybrid: True
+      hybrid: False
       local_egress: True
+    admin_state: UP
+    connectivity_path: "/infra/tier-1s/d082bc25-a9b2-4d13-afe5-d3cecad4b854"
     subnets:
       - gateway_address: "40.1.1.1/16"
     segment_ports:
@@ -514,6 +624,11 @@ class NSXTSegment(NSXTBaseRealizableResource):
                     )
                 )
             ),
+            admin_state=dict(
+                type='str',
+                choices=['UP', 'DOWN'],
+                default='UP'
+            ),
             advanced_config=dict(
                 required=False,
                 type='dict',
@@ -567,10 +682,107 @@ class NSXTSegment(NSXTBaseRealizableResource):
                     ),
                 )
             ),
+            bridge_profiles=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    bridge_profile_path=dict(
+                        type='str',
+                        required=True
+                    ),
+                    uplink_teaming_policy_name=dict(
+                        type='str'
+                    ),
+                    vlan_ids=dict(
+                        type='list',
+                        elements='str'
+                    ),
+                    vlan_transport_zone_path=dict(
+                        type='str',
+                        required=True
+                    ),
+                )
+            ),
+            connectivity_path=dict(
+                type='str'
+            ),
+            dhcp_config_path=dict(
+                type='str'
+            ),
+            domain_name=dict(
+                required=False,
+                type='str'
+            ),
+            enforcementpoint_id=dict(
+                required=False,
+                type='str',
+                default="default"
+            ),
+            extra_configs=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    config_pair=dict(
+                        type='dict',
+                        required=True,
+                        options=dict(
+                            key=dict(
+                                type='str',
+                                required=True
+                            ),
+                            value=dict(
+                                type='str',
+                                required=True
+                            )
+                        )
+                    ),
+                )
+            ),
+            l2_extension=dict(
+                type='dict',
+                options=dict(
+                    l2vpn_path=dict(
+                        type='str',
+                        required=True
+                    ),
+                    l2vpn_paths=dict(
+                        type='list',
+                        elements='str'
+                    ),
+                    local_egress=dict(
+                        type='dict',
+                        options=dict(
+                            optimized_ips=dict(
+                                type='list',
+                                elements='str'
+                            )
+                        )
+                    ),
+                    tunnel_id=dict(
+                        type='int'
+                    ),
+                )
+            ),
+            mac_pool_id=dict(
+                required=False,
+                type='str'
+            ),
+            metadata_proxy_paths=dict(
+                elements='str',
+                type='list'
+            ),
+            overlay_id=dict(
+                type='int'
+            ),
             replication_mode=dict(
                 type='str',
                 default="MTEP",
                 choices=["MTEP", "SOURCE"]
+            ),
+            site_id=dict(
+                required=False,
+                type='str',
+                default="default"
             ),
             subnets=dict(
                 required=False,
@@ -587,15 +799,11 @@ class NSXTSegment(NSXTBaseRealizableResource):
                     )
                 )
             ),
-            tier0_id=dict(
-                required=False,
-                type='str'
-            ),
             tier0_display_name=dict(
                 required=False,
                 type='str'
             ),
-            tier1_id=dict(
+            tier0_id=dict(
                 required=False,
                 type='str'
             ),
@@ -603,15 +811,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 required=False,
                 type='str'
             ),
-            domain_name=dict(
-                required=False,
-                type='str'
-            ),
-            vlan_ids=dict(
-                required=False,
-                type='list'
-            ),
-            transport_zone_id=dict(
+            tier1_id=dict(
                 required=False,
                 type='str'
             ),
@@ -619,16 +819,14 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 required=False,
                 type='str'
             ),
-            site_id=dict(
+            transport_zone_id=dict(
                 required=False,
-                type='str',
-                default="default"
+                type='str'
             ),
-            enforcementpoint_id=dict(
+            vlan_ids=dict(
                 required=False,
-                type='str',
-                default="default"
-            )
+                type='list'
+            ),
         )
         return segment_arg_spec
 
