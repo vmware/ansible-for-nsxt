@@ -19,6 +19,7 @@
         failover_mode: "PREEMPTIVE"
         disable_firewall: True
         force_whitelisting: True
+        rd_admin_field: "122.34.12.124"
         tags:
           - scope: "a"
             tag: "b"
@@ -31,7 +32,10 @@
         locale_services:
           - state: present
             id: "test-t0ls"
-            route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+            route_redistribution_config:
+              redistribution_rules:
+                - name: abc
+                  route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
             edge_cluster_info:
               edge_cluster_id: "7ef91a10-c780-4f48-a279-a5662db4ffa3"
             preferred_edge_nodes_info:
@@ -63,11 +67,6 @@
                   remote_as_num: "12"
                   state: present
             interfaces:
-              - display_name: neigh2
-                neighbor_address: "1.2.3.5"
-                password: "myPassword"
-                remote_as_num: "22"
-                state: present
               - id: "test-t0-t0ls-iface"
                 display_name: "test-t0-t0ls-iface"
                 state: present
@@ -78,6 +77,11 @@
                 edge_node_info:
                   edge_cluster_id: "7ef91a10-c780-4f48-a279-a5662db4ffa3"
                   edge_node_id: "e10c42dc-db27-11e9-8cd0-000c291af7ee"
+                mtu: 1500
+                urpf_mode: "NONE"
+                multicast:
+                  enabled: True
+                ipv6_ndra_profile_display_name: test
         vrf_config:
           display_name: my-vrf
           id: my-vrf2
