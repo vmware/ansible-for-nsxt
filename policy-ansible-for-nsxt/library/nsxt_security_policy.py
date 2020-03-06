@@ -239,9 +239,50 @@ options:
                 description: Unique identifier of this resource
                 type: str
                 required: true
+            ip_protocol:
+                description:
+                    - IPv4 vs IPv6 packet type
+                    - Type of IP packet that should be matched while enforcing
+                      the rule. The value is set to IPV4_IPV6 for Layer3 rule
+                      if not specified. For Layer2/Ether rule the value must be
+                      null.
+                type: str
+                choices:
+                    - IPV4
+                    - IPV6
+                    - IPV4_IPV6
+            logged:
+                description: Flag to enable packet logging.
+                             Default is disabled.
+                type: bool
+                default: false
+            notes:
+                description: Text for additional notes on changes
+                type: str
+            profiles:
+                description:
+                    - Layer 7 service profiles
+                    - Holds the list of layer 7 service profile paths. These
+                      profiles accept attributes and sub-attributes of various
+                      network services (e.g. L4 AppId, encryption algorithm,
+                      domain name, etc) as key value pairs
+                type: list
+            scope:
+                description: The list of policy paths where the rule is applied
+                             LR/Edge/T0/T1/LRP etc. Note that a given rule can
+                             be applied on multiple LRs/LRPs
+                type: list
             sequence_number:
                 description: Sequence number of the this Rule
                 type: int
+            service_entries:
+                description:
+                    - Raw services
+                    - In order to specify raw services this can be used,
+                      along with services which contains path to services.
+                      This can be empty or null
+                type: list
+                elements: dict
             services:
                 description: Paths of services
                              In order to specify all services, use the
@@ -265,6 +306,23 @@ options:
                              to the source groups
                 type: bool
                 default: false
+            tag:
+                description:
+                    - Tag applied on the rule
+                    - User level field which will be printed in CLI and packet
+                      logs.
+                type: str
+            tags:
+                description: Opaque identifiers meaningful to the API user
+                type: list
+                elements: dict
+                suboptions:
+                    scope:
+                        description: Tag scope
+                        type: str
+                    tag:
+                        description: Tag value
+                        type: str
     tcp_strict:
         type: bool
         description:
@@ -295,6 +353,15 @@ EXAMPLES = '''
         source_groups: ["/infra/domains/vmc/groups/dbgroup"]
         destination_groups: ["/infra/domains/vmc/groups/appgroup"]
         services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
+        tag: my-tag
+        tags:
+          - scope: scope-1
+            tag: tag-1
+        logged: True
+        notes: dummy-notes
+        ip_protocol: IPV4_IPV6
+        scope: my-scope
+        profiles: "encryption algorithm"
 '''
 
 RETURN = '''# '''
@@ -390,9 +457,32 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
                     id=dict(
                         type='str'
                     ),
+                    ip_protocol=dict(
+                        type='str',
+                        choices=['IPV4', 'IPV6', 'IPV4_IPV6']
+                    ),
+                    logged=dict(
+                        type='bool',
+                        default=False
+                    ),
+                    notes=dict(
+                        type='str'
+                    ),
+                    profiles=dict(
+                        type='list',
+                        elements='str'
+                    ),
+                    scope=dict(
+                        type='list',
+                        elements='str'
+                    ),
                     sequence_number=dict(
                         required=False,
                         type='int'
+                    ),
+                    service_entries=dict(
+                        type='list',
+                        elements='dict'
                     ),
                     services=dict(
                         required=True,
@@ -406,7 +496,22 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
                         required=False,
                         type='bool',
                         default=False
-                    )
+                    ),
+                    tag=dict(
+                        type='str'
+                    ),
+                    tags=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            scope=dict(
+                                type='str'
+                            ),
+                            tag=dict(
+                                type='str'
+                            )
+                        )
+                    ),
                 )
             ),
             tcp_strict=dict(

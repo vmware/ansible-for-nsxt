@@ -27,3 +27,12 @@
             source_groups: ["/infra/domains/vmc/groups/dbgroup"]
             destination_groups: ["/infra/domains/vmc/groups/appgroup"]
             services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
+            tag: my-tag
+            tags:
+              - scope: scope-1
+                tag: tag-1
+            logged: True
+            notes: dummy-notes
+            ip_protocol: IPV4_IPV6
+            scope: my-scope
+            profiles: "encryption algorithm"
