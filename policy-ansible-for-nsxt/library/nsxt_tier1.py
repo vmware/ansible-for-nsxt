@@ -34,11 +34,78 @@ description: Creates/Updates/Deletes a Tier-1 resource using the Policy API.
              respectively.
 version_added: '2.8'
 author: 'Gautam Verma'
-extends_documentation_fragment: vmware_nsxt
 options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    display_name:
+        description:
+            - Display name.
+            - If resource ID is not specified, display_name will be used as ID.
+        required: false
+        type: str
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'.
+                    'present' is used to create or update resource.
+                    'absent' is used to delete resource."
+        required: true
+    validate_certs:
+        description: Enable server certificate verification.
+        type: bool
+        default: False
+    tags:
+        description: Opaque identifiers meaningful to the API user.
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
+    create_or_update_subresource_first:
+        type: bool
+        default: false
+        description:
+            - Can be used to create subresources first.
+            - Can be specified for each subresource.
+    delete_subresource_first:
+        type: bool
+        default: true
+        description:
+            - Can be used to delete subresources first.
+            - Can be specified for each subresource.
+    achieve_subresource_state_if_del_parent:
+        type: bool
+        default: false
+        description:
+            - Can be used to achieve the state of subresources even if
+              the parent(base) resource's state is absent.
+            - Can be specified for each subresource.
+    do_wait_till_create:
+        type: bool
+        default: false
+        description:
+            - Can be used to wait for the realization of subresource before the
+              request to create the next resource is sent to the Manager.
+            - Can be specified for each subresource.
     id:
         description: Tier-1 ID
-        required: true
+        required: false
         type: str
     description:
         description: Tier-1 description
@@ -49,7 +116,6 @@ options:
                      whitelisting rule.
         type: str
         default: false
-        type: bool
     disable_firewall:
         description: Disable or enable gateway fiewall.
         default: False
@@ -233,6 +299,20 @@ options:
                         description: Tag value.
                         required: true
                         type: str
+            achieve_subresource_state_if_del_parent:
+                type: bool
+                default: false
+                description:
+                    - Can be used to achieve the state of subresources even if
+                      the parent(base) resource's state is absent.
+                    - Can be specified for each subresource.
+            do_wait_till_create:
+                type: bool
+                default: false
+                description:
+                    - Can be used to wait for the realization of subresource
+                      before the request to create the next resource is sent to
+                      the Manager
     locale_services:
         type: list
         element: dict
@@ -273,6 +353,20 @@ options:
                         description: Tag value.
                         required: true
                         type: str
+            achieve_subresource_state_if_del_parent:
+                type: bool
+                default: false
+                description:
+                    - Can be used to achieve the state of subresources even if
+                      the parent(base) resource's state is absent.
+                    - Can be specified for each subresource.
+            do_wait_till_create:
+                type: bool
+                default: false
+                description:
+                    - Can be used to wait for the realization of subresource
+                      before the request to create the next resource is sent to
+                      the Manager
             edge_cluster_info:
                 description: Used to create path to edge cluster. Auto-assigned
                              if associated enforcement-point has only one edge
@@ -444,6 +538,21 @@ options:
                                 description: Tag value.
                                 required: true
                                 type: str
+                    achieve_subresource_state_if_del_parent:
+                        type: bool
+                        default: false
+                        description:
+                            - Can be used to achieve the state of subresources
+                              even if the parent(base) resource's state is
+                              absent.
+                            - Can be specified for each subresource.
+                    do_wait_till_create:
+                        type: bool
+                        default: false
+                        description:
+                            - Can be used to wait for the realization of
+                              subresource before the request to create the next
+                              resource is sent to the Manager
                     ipv6_ndra_profile_id:
                         description:
                             - Configrue IPv6 NDRA profile. Only one NDRA
