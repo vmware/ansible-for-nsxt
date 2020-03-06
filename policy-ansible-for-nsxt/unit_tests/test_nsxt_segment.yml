@@ -23,8 +23,10 @@
         advanced_config:
           address_pool_display_name: small-2-pool
           connectivity: "OFF"
-          hybrid: True
+          hybrid: False
           local_egress: True
+        admin_state: UP
+        connectivity_path: "/infra/tier-1s/d082bc25-a9b2-4d13-afe5-d3cecad4b854"
         subnets:
           - gateway_address: "40.1.1.1/16"
         segment_ports:
