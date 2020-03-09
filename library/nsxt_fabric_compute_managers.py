@@ -216,10 +216,14 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_compute_manager = get_compute_manager_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, compute_manager_with_ids['display_name'])
     if existing_compute_manager is None:
         return False
+    if not existing_compute_manager.__contains__('description') and compute_manager_with_ids.__contains__('description'):
+        return True
+    if existing_compute_manager.__contains__('description') and compute_manager_with_ids.__contains__('description') and \
+        existing_compute_manager['description'] != compute_manager_with_ids['description']:
+        return True
     if existing_compute_manager['server'] != compute_manager_with_ids['server'] or \
         existing_compute_manager['credential']['thumbprint'] != compute_manager_with_ids['credential']['thumbprint'] or \
-        existing_compute_manager['origin_type'] != compute_manager_with_ids['origin_type'] or \
-        existing_compute_manager['description'] != compute_manager_with_ids['description']:
+        existing_compute_manager['origin_type'] != compute_manager_with_ids['origin_type']:
         return True
     return False
 
