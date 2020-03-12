@@ -29,6 +29,11 @@
             network: '12.12.12.0/24'
             next_hops:
               - ip_address: "192.165.1.4"
+        bfd_peers:
+          - state: present
+            display_name: test-peer-1
+            peer_address: "192.100.100.5"
+            bfd_config_id: test-bfd-config
         locale_services:
           - state: present
             id: "test-t0ls"
