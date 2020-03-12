@@ -77,7 +77,7 @@ options:
         required: true
     transport_zone_endpoints:
         description: Transport zone endpoints.
-        required: true
+        required: False
         type: array of TransportZoneEndPoint
     
 '''
@@ -99,14 +99,15 @@ EXAMPLES = '''
         - name: "uplinkProfile1"
           type: "UplinkHostSwitchProfile"
         host_switch_name: "hostswitch1"
+        host_switch_mode: "STANDARD"
         pnics:
         - device_name: "vmnic1"
           uplink_name: "uplink-1"
         ip_assignment_spec:
           resource_type: "StaticIpPoolSpec"
           ip_pool_name: "IPPool-IPV4-1"
-    transport_zone_endpoints:
-    - transport_zone_name: "TZ1"
+        transport_zone_endpoints:
+        - transport_zone_name: "TZ1"
     state: "present"
 
 '''
@@ -174,10 +175,17 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         host_switch['host_switch_profile_ids'] = host_switch_profile_ids
         ip_pool_id = None
         if host_switch.__contains__('ip_assignment_spec'):
-            ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
-            host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
+            if host_switch['ip_assignment_spec'].__contains__('ip_pool_name'):
+                ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
+                host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
                                                                                         mgr_username, mgr_password, validate_certs,
                                                                                         "/pools/ip-pools", ip_pool_name)
+        if host_switch.__contains__('transport_zone_endpoints'):
+            for transport_zone_endpoint in host_switch['transport_zone_endpoints']:
+                transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
+                transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
+                                                                                    mgr_username, mgr_password, validate_certs,
+                                                                                    "/transport-zones", transport_zone_name)
     if transport_node_profile_params.__contains__('transport_zone_endpoints'):
         for transport_zone_endpoint in transport_node_profile_params['transport_zone_endpoints']:
             transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
@@ -224,7 +232,7 @@ def main():
                 host_switches=dict(required=True, type='list'),
                 resource_type=dict(required=True, type='str')),
                 resource_type=dict(required=True, type='str'),
-                transport_zone_endpoints=dict(required=True, type='list'),
+                transport_zone_endpoints=dict(required=False, type='list'),
                 state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

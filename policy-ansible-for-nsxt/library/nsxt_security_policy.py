@@ -33,11 +33,59 @@ description:
     Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
-extends_documentation_fragment: vmware_nsxt
 options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    display_name:
+        description:
+            - Display name.
+            - If resource ID is not specified, display_name will be used as ID.
+        required: false
+        type: str
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'.
+                    'present' is used to create or update resource.
+                    'absent' is used to delete resource."
+        required: true
+    validate_certs:
+        description: Enable server certificate verification.
+        type: bool
+        default: False
+    tags:
+        description: Opaque identifiers meaningful to the API user.
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
+    do_wait_till_create:
+        type: bool
+        default: false
+        description:
+            - Can be used to wait for the realization of subresource before the
+              request to create the next resource is sent to the Manager.
+            - Can be specified for each subresource.
     id:
         description: The id of the Policy Security Policy.
-        required: true
+        required: false
         type: str
     description:
         description: Security Policy description.
@@ -84,6 +132,30 @@ options:
     comments:
         type: str
         description: SecurityPolicy lock/unlock comments
+    connectivity_strategy:
+        type: str
+        description:
+            - Connectivity strategy applicable for this SecurityPolicy
+            - This field indicates the default connectivity policy for the
+              security policy. Based on the connectivitiy strategy, a default
+              rule for this security policy will be created. An appropriate
+              action will be set on the rule based on the value of the
+              connectivity strategy. If NONE is selected or no connectivity
+              strategy is specified, then no default rule for the security
+              policy gets created. The default rule that gets created will be a
+              any-any rule and applied to entities specified in the scope of
+              the security policy. Specifying the connectivity_strategy without
+              specifying the scope is not allowed. The scope has to be a
+              Group and one cannot specify IPAddress directly in the group that
+              is used as scope. This default rule is only applicable for the
+              Layer3 security policies
+            - WHITELIST - Adds a default drop rule. Administrator can then use
+              "allow" rules (aka whitelist) to allow traffic between groups
+            - BLACKLIST - Adds a default allow rule. Admin can then use "drop"
+              rules (aka blacklist) to block traffic between groups
+            - WHITELIST_ENABLE_LOGGING - Whitelising with logging enabled
+            - BLACKLIST_ENABLE_LOGGING - Blacklisting with logging enabled
+            - NONE - No default rule is created
     locked:
         type: bool
         description:
@@ -167,9 +239,50 @@ options:
                 description: Unique identifier of this resource
                 type: str
                 required: true
+            ip_protocol:
+                description:
+                    - IPv4 vs IPv6 packet type
+                    - Type of IP packet that should be matched while enforcing
+                      the rule. The value is set to IPV4_IPV6 for Layer3 rule
+                      if not specified. For Layer2/Ether rule the value must be
+                      null.
+                type: str
+                choices:
+                    - IPV4
+                    - IPV6
+                    - IPV4_IPV6
+            logged:
+                description: Flag to enable packet logging.
+                             Default is disabled.
+                type: bool
+                default: false
+            notes:
+                description: Text for additional notes on changes
+                type: str
+            profiles:
+                description:
+                    - Layer 7 service profiles
+                    - Holds the list of layer 7 service profile paths. These
+                      profiles accept attributes and sub-attributes of various
+                      network services (e.g. L4 AppId, encryption algorithm,
+                      domain name, etc) as key value pairs
+                type: list
+            scope:
+                description: The list of policy paths where the rule is applied
+                             LR/Edge/T0/T1/LRP etc. Note that a given rule can
+                             be applied on multiple LRs/LRPs
+                type: list
             sequence_number:
                 description: Sequence number of the this Rule
                 type: int
+            service_entries:
+                description:
+                    - Raw services
+                    - In order to specify raw services this can be used,
+                      along with services which contains path to services.
+                      This can be empty or null
+                type: list
+                elements: dict
             services:
                 description: Paths of services
                              In order to specify all services, use the
@@ -193,6 +306,23 @@ options:
                              to the source groups
                 type: bool
                 default: false
+            tag:
+                description:
+                    - Tag applied on the rule
+                    - User level field which will be printed in CLI and packet
+                      logs.
+                type: str
+            tags:
+                description: Opaque identifiers meaningful to the API user
+                type: list
+                elements: dict
+                suboptions:
+                    scope:
+                        description: Tag scope
+                        type: str
+                    tag:
+                        description: Tag value
+                        type: str
     tcp_strict:
         type: bool
         description:
@@ -223,6 +353,15 @@ EXAMPLES = '''
         source_groups: ["/infra/domains/vmc/groups/dbgroup"]
         destination_groups: ["/infra/domains/vmc/groups/appgroup"]
         services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
+        tag: my-tag
+        tags:
+          - scope: scope-1
+            tag: tag-1
+        logged: True
+        notes: dummy-notes
+        ip_protocol: IPV4_IPV6
+        scope: my-scope
+        profiles: "encryption algorithm"
 '''
 
 RETURN = '''# '''
@@ -247,6 +386,12 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
             comments=dict(
                 required=False,
                 type='str'
+            ),
+            connectivity_strategy=dict(
+                required=False,
+                type='str',
+                choices=['WHITELIST', 'BLACKLIST', 'WHITELIST_ENABLE_LOGGING',
+                         'BLACKLIST_ENABLE_LOGGING', 'NONE']
             ),
             domain_id=dict(
                 required=True,
@@ -312,9 +457,32 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
                     id=dict(
                         type='str'
                     ),
+                    ip_protocol=dict(
+                        type='str',
+                        choices=['IPV4', 'IPV6', 'IPV4_IPV6']
+                    ),
+                    logged=dict(
+                        type='bool',
+                        default=False
+                    ),
+                    notes=dict(
+                        type='str'
+                    ),
+                    profiles=dict(
+                        type='list',
+                        elements='str'
+                    ),
+                    scope=dict(
+                        type='list',
+                        elements='str'
+                    ),
                     sequence_number=dict(
                         required=False,
                         type='int'
+                    ),
+                    service_entries=dict(
+                        type='list',
+                        elements='dict'
                     ),
                     services=dict(
                         required=True,
@@ -328,7 +496,22 @@ class NSXTSecurityPolicy(NSXTBaseRealizableResource):
                         required=False,
                         type='bool',
                         default=False
-                    )
+                    ),
+                    tag=dict(
+                        type='str'
+                    ),
+                    tags=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            scope=dict(
+                                type='str'
+                            ),
+                            tag=dict(
+                                type='str'
+                            )
+                        )
+                    ),
                 )
             ),
             tcp_strict=dict(

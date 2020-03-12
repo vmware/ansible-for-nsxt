@@ -33,14 +33,81 @@ description:
     Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
-extends_documentation_fragment: vmware_nsxt
 options:
-    id:
-        description: The id of the Policy IP Pool.
+    hostname:
+        description: Deployed NSX manager hostname.
         required: true
         type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    display_name:
+        description:
+            - Display name.
+            - If resource ID is not specified, display_name will be used as ID.
+        required: false
+        type: str
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'.
+                    'present' is used to create or update resource.
+                    'absent' is used to delete resource."
+        required: true
+    validate_certs:
+        description: Enable server certificate verification.
+        type: bool
+        default: False
+    tags:
+        description: Opaque identifiers meaningful to the API user.
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
+    create_or_update_subresource_first:
+        type: bool
+        default: false
+        description:
+            - Can be used to create subresources first.
+            - Can be specified for each subresource.
+    delete_subresource_first:
+        type: bool
+        default: true
+        description:
+            - Can be used to delete subresources first.
+            - Can be specified for each subresource.
+    achieve_subresource_state_if_del_parent:
+        type: bool
+        default: false
+        description:
+            - Can be used to achieve the state of subresources even if
+              the parent(base) resource's state is absent.
+            - Can be specified for each subresource.
+    do_wait_till_create:
+        type: bool
+        default: false
+        description:
+            - Can be used to wait for the realization of subresource before the
+              request to create the next resource is sent to the Manager.
+            - Can be specified for each subresource.
+    id:
+        description: The id of the Policy IP Pool.
+        required: false
+        type: str
     description:
-        description: IP Pool description.
+        description: Resource description.
         type: str
     pool_block_subnets:
         type: list
@@ -48,16 +115,6 @@ options:
         description: Specify the IP Pool Block Subnets that need to be created,
                      updated, or deleted as a list of dict in this section
         suboptions:
-            ip_block_id:
-                description: The ID of the IpAddressBlock from which the subnet
-                             is to be created
-                type: str
-            ip_block_display_name:
-                description: Same as ip_block_id. Either one must be specified.
-                             If both are specified, ip_block_id takes
-                             precedence.
-                required: false
-                type: str
             auto_assign_gateway:
                 description:
                     - Indicate whether default gateway is to be reserved from
@@ -66,6 +123,36 @@ options:
                       range will be reserved for gateway.
                 type: bool
                 default: true
+            description:
+                description: Resource description.
+                type: str
+            display_name:
+                description:
+                    - Display name.
+                    - If resource ID is not specified, display_name will be
+                      used as ID.
+                required: false
+                type: str
+            do_wait_till_create:
+                type: bool
+                default: false
+                description: Can be used to wait for the realization of
+                             subresource before the request to create the next
+                             resource is sent to the Manager
+            id:
+                description: The id of the Policy IP Pool Block Subnet.
+                required: false
+                type: str
+            ip_block_display_name:
+                description: Same as ip_block_id. Either one must be specified.
+                             If both are specified, ip_block_id takes
+                             precedence.
+                required: false
+                type: str
+            ip_block_id:
+                description: The ID of the IpAddressBlock from which the subnet
+                             is to be created
+                type: str
             size:
                 description:
                     - Represents the size or number of IP addresses in the
@@ -74,6 +161,26 @@ options:
                       must be specified during creation but cannot be changed
                       later.
                 type: int
+            state:
+                choices:
+                - present
+                - absent
+                description: "State can be either 'present' or 'absent'.
+                            'present' is used to create or update resource.
+                            'absent' is used to delete resource."
+                required: true
+            tags:
+                description: Opaque identifiers meaningful to the API user.
+                type: dict
+                suboptions:
+                    scope:
+                        description: Tag scope.
+                        required: true
+                        type: str
+                    tag:
+                        description: Tag value.
+                        required: true
+                        type: str
     pool_static_subnets:
         type: list
         element: dict
@@ -99,6 +206,16 @@ options:
                              and prefix length
                 type: str
                 required: true
+            description:
+                description: Resource description.
+                type: str
+            display_name:
+                description:
+                    - Display name.
+                    - If resource ID is not specified, display_name will be
+                      used as ID.
+                required: false
+                type: str
             dns_nameservers:
                 description: The collection of upto 3 DNS servers
                              for the subnet.
@@ -107,10 +224,39 @@ options:
             dns_suffix:
                 description: The DNS suffix for the DNS server.
                 type: str
+            do_wait_till_create:
+                type: bool
+                default: false
+                description: Can be used to wait for the realization of
+                             subresource before the request to create the next
+                             resource is sent to the Manager
             gateway_ip:
                 description: The default gateway address on a
                              layer-3 router.
                 type: str
+            id:
+                description: The id of the Policy IP Pool Block Subnet.
+                required: false
+                type: str
+            state:
+                choices:
+                - present
+                - absent
+                description: "State can be either 'present' or 'absent'.
+                            'present' is used to create or update resource.
+                            'absent' is used to delete resource."
+            tags:
+                description: Opaque identifiers meaningful to the API user.
+                type: dict
+                suboptions:
+                    scope:
+                        description: Tag scope.
+                        required: true
+                        type: str
+                    tag:
+                        description: Tag value.
+                        required: true
+                        type: str
 '''
 
 EXAMPLES = '''

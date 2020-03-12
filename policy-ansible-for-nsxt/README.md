@@ -18,6 +18,7 @@ Please note that you must specify the correct vmware args in order to successful
    3. Tier-0 Interface
    4. Tier-0 BGP
    5. Tier-0 BGP Neighbors
+   6. Tier-0 VRF
 2. Tier-1 Gateway
    1. Tier-1 Locale Services
    2. Tier-1 Static Routes

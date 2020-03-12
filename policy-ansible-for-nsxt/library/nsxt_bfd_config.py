@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2018 VMware, Inc.
+# Copyright 2020 VMware, Inc.
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -26,13 +26,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_ip_block
-short_description: Create or Delete a Policy IP Block
+module: nsxt_bfd_config
+short_description: Create or Delete a Policy BFD Config
 description:
-    Creates or deletes a Policy IP Block.
+    Creates or deletes a Policy BFD Config.
     Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
+extends_documentation_fragment: vmware_nsxt
 options:
     hostname:
         description: Deployed NSX manager hostname.
@@ -84,34 +85,39 @@ options:
               request to create the next resource is sent to the Manager.
             - Can be specified for each subresource.
     id:
-        description: The id of the Policy IP Block.
-        required: false
-        type: str
-    description:
-        description: IP Block description.
-        type: str
-    cidr:
-        description:
-            - A contiguous IP address space represented by network address
-              and prefix length
-            - Represents a network address and the prefix length which will
-              be associated with a layer-2 broadcast domain. Support only IPv4
-              CIDR.
+        description: The id of the BFD Config.
         required: true
         type: str
+    description:
+        description: BFD Config description.
+        type: str
+    interval:
+        description:
+            - Time interval between heartbeat packets in milliseconds
+            - Should be in the range [50-60000]
+        type: int
+        default: 500
+    multiple:
+        description:
+            - Declare dead multiple.
+            - Number of times heartbeat packet is missed before BFD declares
+              the neighbor is down.
+            - Should be in the range [2-16]
+        type: int
+        default: 3
 '''
 
 EXAMPLES = '''
-- name: create IP Block
-  nsxt_ip_block:
+- name: Update BFD Config
+  nsxt_bfd_config:
     hostname: "10.10.10.10"
     username: "username"
     password: "password"
     validate_certs: False
-    id: test-ip-blk
-    display_name: test-ip-blk
-    state: "present"
-    cidr: "192.168.0.0/16"
+    display_name: test-bfd-config
+    state: present
+    interval: 200
+    multiple: 10
 '''
 
 RETURN = '''# '''
@@ -120,27 +126,31 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils.nsxt_resource_urls import IP_BLOCK_URL
+from ansible.module_utils.nsxt_resource_urls import BFD_CONFIG_URL
 from ansible.module_utils._text import to_native
 
 
-class NSXTIpBlock(NSXTBaseRealizableResource):
+class NSXTBFDConfig(NSXTBaseRealizableResource):
     @staticmethod
     def get_resource_spec():
-        ip_block_arg_spec = {}
-        ip_block_arg_spec.update(
-            cidr=dict(
-                required=True,
-                type='str'
+        bfd_config_arg_spec = {}
+        bfd_config_arg_spec.update(
+            interval=dict(
+                default=500,
+                type='int'
+            ),
+            multiple=dict(
+                default=3,
+                type='int'
             )
         )
-        return ip_block_arg_spec
+        return bfd_config_arg_spec
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
-        return IP_BLOCK_URL
+        return BFD_CONFIG_URL
 
 
 if __name__ == '__main__':
-    ip_block = NSXTIpBlock()
-    ip_block.realize()
+    bfd_config = NSXTBFDConfig()
+    bfd_config.realize()

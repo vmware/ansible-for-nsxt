@@ -1,0 +1,12 @@
+- hosts: localhost
+  tasks:
+    - name: Update BFD Config
+      nsxt_bfd_config:
+        hostname: "default"
+        username: "default"
+        password: "default"
+        validate_certs: False
+        display_name: test-bfd-config
+        state: present
+        interval: 200
+        multiple: 10

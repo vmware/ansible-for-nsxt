@@ -34,11 +34,78 @@ description: Creates/Updates/Deletes a Tier-1 resource using the Policy API.
              respectively.
 version_added: '2.8'
 author: 'Gautam Verma'
-extends_documentation_fragment: vmware_nsxt
 options:
+    hostname:
+        description: Deployed NSX manager hostname.
+        required: true
+        type: str
+    username:
+        description: The username to authenticate with the NSX manager.
+        required: true
+        type: str
+    password:
+        description: The password to authenticate with the NSX manager.
+        required: true
+        type: str
+    display_name:
+        description:
+            - Display name.
+            - If resource ID is not specified, display_name will be used as ID.
+        required: false
+        type: str
+    state:
+        choices:
+        - present
+        - absent
+        description: "State can be either 'present' or 'absent'.
+                    'present' is used to create or update resource.
+                    'absent' is used to delete resource."
+        required: true
+    validate_certs:
+        description: Enable server certificate verification.
+        type: bool
+        default: False
+    tags:
+        description: Opaque identifiers meaningful to the API user.
+        type: dict
+        suboptions:
+            scope:
+                description: Tag scope.
+                required: true
+                type: str
+            tag:
+                description: Tag value.
+                required: true
+                type: str
+    create_or_update_subresource_first:
+        type: bool
+        default: false
+        description:
+            - Can be used to create subresources first.
+            - Can be specified for each subresource.
+    delete_subresource_first:
+        type: bool
+        default: true
+        description:
+            - Can be used to delete subresources first.
+            - Can be specified for each subresource.
+    achieve_subresource_state_if_del_parent:
+        type: bool
+        default: false
+        description:
+            - Can be used to achieve the state of subresources even if
+              the parent(base) resource's state is absent.
+            - Can be specified for each subresource.
+    do_wait_till_create:
+        type: bool
+        default: false
+        description:
+            - Can be used to wait for the realization of subresource before the
+              request to create the next resource is sent to the Manager.
+            - Can be specified for each subresource.
     id:
         description: Tier-1 ID
-        required: true
+        required: false
         type: str
     description:
         description: Tier-1 description
@@ -47,9 +114,7 @@ options:
         description: Enable logging for whitelisted rule.
                      Indicates if logging should be enabled for the default
                      whitelisting rule.
-        type: str
         default: false
-        type: bool
     disable_firewall:
         description: Disable or enable gateway fiewall.
         default: False
@@ -68,11 +133,65 @@ options:
             - 'PREEMPTIVE'
         default: 'NON_PREEMPTIVE'
         type: str
+    enable_standby_relocation:
+        description:
+            - Flag to enable standby service router relocation.
+            - Standby relocation is not enabled until edge cluster is
+              configured for Tier1.
+        type: bool
+        default: false
     force_whitelisting:
         description: Flag to add whitelisting FW rule during
                      realization.
         default: False
         type: bool
+    intersite_config:
+        description: Inter site routing configuration when the gateway is
+                     streched.
+        type: dict
+        suboptions:
+            fallback_sites:
+                description: Fallback site to be used as new primary
+                             site on current primary site failure.
+                             Disaster recovery must be initiated via
+                             API/UI. Fallback site configuration is
+                             supported only for T0 gateway. T1 gateway
+                             will follow T0 gateway's primary site
+                             during disaster recovery
+                type: list
+            intersite_transit_subnet:
+                description:
+                    - Transit subnet in CIDR format
+                    - IPv4 subnet for inter-site transit segment
+                      connecting service routers across sites for
+                      stretched gateway. For IPv6 link local subnet is
+                      auto configured
+                type: str
+                default: "169.254.32.0/20"
+            last_admin_active_epoch:
+                description:
+                    - Epoch of last time admin changing active
+                      LocaleServices
+                    - Epoch(in seconds) is auto updated based on
+                      system current timestamp when primary locale
+                      service is updated. It is used for resolving
+                      conflict during site failover. If system clock
+                      not in sync then User can optionally override
+                      this. New value must be higher than the current
+                      value.
+                type: int
+            primary_site_path:
+                description:
+                    - Primary egress site for gateway.
+                    - Primary egress site for gateway. T0/T1 gateway in
+                      Active/Standby mode supports stateful services on primary
+                      site. In this mode primary site must be set if gateway is
+                      stretched to more than one site. For T0 gateway in
+                      Active/Active primary site is optional field. If set then
+                      secondary site prefers routes learned from primary over
+                      locally learned routes. This field is not applicable for
+                      T1 gateway with no services
+                type: str
     ipv6_ndra_profile_id:
         description: IPv6 NDRA profile configuration on Tier1.
                      Either or both NDRA and/or DAD profiles can be
@@ -101,6 +220,36 @@ options:
         description: Same as dhcp_config_id. Either one can be specified.
                      If both are specified, dhcp_config_id takes precedence.
         type: str
+    pool_allocation:
+        description:
+            - Edge node allocation size
+            - Supports edge node allocation at different sizes for routing and
+              load balancer service to meet performance and scalability
+              requirements.
+            - ROUTING - Allocate edge node to provide routing services.
+            - LB_SMALL, LB_MEDIUM, LB_LARGE, LB_XLARGE - Specify size of load
+              balancer service that will be configured on TIER1 gateway.
+        type: str
+        choices:
+            - ROUTING
+            - LB_SMALL
+            - LB_MEDIUM
+            - LB_LARGE
+            - LB_XLARGE
+        default: ROUTING
+    qos_profile:
+        description: QoS Profile configuration for Tier1 router link connected
+                     to Tier0 gateway.
+        type: dict
+        suboptions:
+            egress_qos_profile_path:
+                description: Policy path to gateway QoS profile in egress
+                             direction.
+                type: str
+            ingress_qos_profile_path:
+                description: Policy path to gateway QoS profile in ingress
+                             direction.
+                type: str
     route_advertisement_rules:
         description: Route advertisement rules and filtering
         type: list
@@ -233,6 +382,20 @@ options:
                         description: Tag value.
                         required: true
                         type: str
+            achieve_subresource_state_if_del_parent:
+                type: bool
+                default: false
+                description:
+                    - Can be used to achieve the state of subresources even if
+                      the parent(base) resource's state is absent.
+                    - Can be specified for each subresource.
+            do_wait_till_create:
+                type: bool
+                default: false
+                description:
+                    - Can be used to wait for the realization of subresource
+                      before the request to create the next resource is sent to
+                      the Manager
     locale_services:
         type: list
         element: dict
@@ -273,6 +436,20 @@ options:
                         description: Tag value.
                         required: true
                         type: str
+            achieve_subresource_state_if_del_parent:
+                type: bool
+                default: false
+                description:
+                    - Can be used to achieve the state of subresources even if
+                      the parent(base) resource's state is absent.
+                    - Can be specified for each subresource.
+            do_wait_till_create:
+                type: bool
+                default: false
+                description:
+                    - Can be used to wait for the realization of subresource
+                      before the request to create the next resource is sent to
+                      the Manager
             edge_cluster_info:
                 description: Used to create path to edge cluster. Auto-assigned
                              if associated enforcement-point has only one edge
@@ -336,30 +513,79 @@ options:
                             - either this or edge_node_id must be specified. If
                               both are specified, edge_node_id takes precedence
                         type: str
-            route_redistribution_types:
-                description: Enable redistribution of different types of routes
-                             on Tier-1.
-                choices:
-                    - TIER1_STATIC - Redistribute all subnets and static routes
-                                    advertised by Tier-1s.
-                    - TIER1_NAT - Redistribute NAT IPs advertised by Tier-1
-                                instances.
-                    - TIER1_LB_VIP - Redistribute LB VIP IPs advertised by
-                                    Tier-1 instances.
-                    - TIER1_LB_SNAT - Redistribute LB SNAT IPs advertised by
-                                    Tier-1 instances.
-                    - TIER1_DNS_FORWARDER_IP - Redistribute DNS forwarder
-                                            subnets on Tier-1 instances.
-                    - TIER1_CONNECTED - Redistribute all subnets configured on
-                                    Segments and Service Interfaces.
-                    - TIER1_SERVICE_INTERFACE - Redistribute Tier1 service
-                                            interface subnets.
-                    - TIER1_SEGMENT - Redistribute subnets configured on
-                                    Segments connected to Tier1.
-                    - TIER1_IPSEC_LOCAL_ENDPOINT - Redistribute IPSec VPN
-                                                local-endpoint  subnets
-                                                advertised by TIER1.
-                type: list
+            route_redistribution_config:
+                description: Configure all route redistribution properties like
+                             enable/disable redistributon, redistribution rule
+                             and so on.
+                type: dict
+                suboptions:
+                    enabled:
+                        description: Flag to enable route redistribution.
+                        type: bool
+                        default: false
+                    redistribution_rules:
+                        description: List of redistribution rules.
+                        type: list
+                        elements: dict
+                        suboptions:
+                            name:
+                                description: Rule name
+                                type: str
+                            route_map_path:
+                                description: Route map to be associated with
+                                             the redistribution rule
+                                type: str
+                            route_redistribution_types:
+                                description: Tier-0 route redistribution types
+                                choices:
+                                    - TIER0_STATIC - Redistribute user added
+                                      static routes.
+                                    - TIER0_CONNECTED - Redistribute all
+                                      subnets configured on Interfaces and
+                                      routes related to TIER0_ROUTER_LINK,
+                                      TIER0_SEGMENT, TIER0_DNS_FORWARDER_IP,
+                                      TIER0_IPSEC_LOCAL_IP, TIER0_NAT types.
+                                    - TIER1_STATIC - Redistribute all subnets
+                                      and static routes advertised by Tier-1s.
+                                    - TIER0_EXTERNAL_INTERFACE - Redistribute
+                                      external interface subnets on Tier-0.
+                                    - TIER0_LOOPBACK_INTERFACE - Redistribute
+                                      loopback interface subnets on Tier-0.
+                                    - TIER0_SEGMENT - Redistribute subnets
+                                      configured on Segments connected to
+                                      Tier-0.
+                                    - TIER0_ROUTER_LINK - Redistribute router
+                                      link port subnets on Tier-0.
+                                    - TIER0_SERVICE_INTERFACE - Redistribute
+                                      Tier0 service interface subnets.
+                                    - TIER0_DNS_FORWARDER_IP - Redistribute DNS
+                                      forwarder subnets.
+                                    - TIER0_IPSEC_LOCAL_IP - Redistribute IPSec
+                                      subnets.
+                                    - TIER0_NAT - Redistribute NAT IPs owned by
+                                      Tier-0.
+                                    - TIER0_EVPN_TEP_IP - Redistribute EVPN
+                                      local endpoint subnets on Tier-0.
+                                    - TIER1_NAT - Redistribute NAT IPs
+                                      advertised by Tier-1 instances.
+                                    - TIER1_LB_VIP - Redistribute LB VIP IPs
+                                      advertised by Tier-1 instances.
+                                    - TIER1_LB_SNAT - Redistribute LB SNAT IPs
+                                      advertised by Tier-1 instances.
+                                    - TIER1_DNS_FORWARDER_IP - Redistribute DNS
+                                      forwarder subnets on Tier-1 instances.
+                                    - TIER1_CONNECTED - Redistribute all
+                                      subnets configured on Segments and
+                                      Service Interfaces.
+                                    - TIER1_SERVICE_INTERFACE - Redistribute
+                                      Tier1 service interface subnets.
+                                    - TIER1_SEGMENT - Redistribute subnets
+                                      configured on Segments connected to
+                                      Tier1.
+                                    - TIER1_IPSEC_LOCAL_ENDPOINT - Redistribute
+                                      IPSec VPN local-endpoint subnets
+                                      advertised by TIER1.
+                                type: list
             ha_vip_configs:
                 type: list
                 elements: dict
@@ -444,19 +670,41 @@ options:
                                 description: Tag value.
                                 required: true
                                 type: str
+                    achieve_subresource_state_if_del_parent:
+                        type: bool
+                        default: false
+                        description:
+                            - Can be used to achieve the state of subresources
+                              even if the parent(base) resource's state is
+                              absent.
+                            - Can be specified for each subresource.
+                    do_wait_till_create:
+                        type: bool
+                        default: false
+                        description:
+                            - Can be used to wait for the realization of
+                              subresource before the request to create the next
+                              resource is sent to the Manager
                     ipv6_ndra_profile_id:
                         description:
                             - Configrue IPv6 NDRA profile. Only one NDRA
                               profile can be configured
                             - Required if I(id != null)
                         type: str
+                    mtu:
+                        description:
+                            - MTU size
+                            - Maximum transmission unit (MTU) specifies the
+                              size of the largest packet that a network
+                              protocol can transmit.
+                        type: int
                     segment_id:
                         description:
                             - Specify Segment to which this interface is
                               connected to.
                             - Required if I(id != null)
                         type: str
-                    t0iface_segment_display_name:
+                    segment_display_name:
                         description:
                             - Same as segment_id
                             - Either this or segment_id must be specified. If
@@ -469,6 +717,21 @@ options:
                               interface
                             - Required if I(id != null)
                         type: list
+                        elements: dict
+                        suboptions:
+                            ip_addresses:
+                                description: IP addresses assigned to interface
+                                type: str
+                            prefix_len:
+                                description: Subnet prefix length
+                                type: str
+                    urpf_mode:
+                        description: Unicast Reverse Path Forwarding mode
+                        type: str
+                        choices:
+                            - NONE
+                            - STRICT
+                        default: STRICT
 '''
 
 EXAMPLES = '''
@@ -483,6 +746,7 @@ EXAMPLES = '''
     failover_mode: "PREEMPTIVE"
     disable_firewall: True
     force_whitelisting: True
+    enable_standby_relocation: False
     tags:
       - scope: "a"
         tag: "b"
@@ -497,11 +761,11 @@ EXAMPLES = '''
     tier0_display_name: "node-t0"
     locale_services:
       - state: present
-        display_name: test-t1ls-1
-        route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
-      - state: present
         display_name: test-t1ls-2
-        route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+        route_redistribution_config:
+          redistribution_rules:
+            - name: abc
+              route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
         interfaces:
           - id: "test-t1-t1ls-iface-2"
             display_name: "test-t1-t1ls-iface"
@@ -510,6 +774,9 @@ EXAMPLES = '''
               - ip_addresses: ["35.1.1.1"]
                 prefix_len: 24
             segment_id: "test-seg-2"
+            ipv6_ndra_profile_id: test
+            mtu: 1400
+            urpf_mode: NONE
 '''
 
 RETURN = '''# '''
@@ -550,6 +817,11 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 type='bool',
                 default=False
             ),
+            enable_standby_relocation=dict(
+                required=False,
+                type='bool',
+                default=False
+            ),
             failover_mode=dict(
                 required=False,
                 type='str',
@@ -560,6 +832,28 @@ class NSXTTier1(NSXTBaseRealizableResource):
                 required=False,
                 type='bool',
                 default=False
+            ),
+            intersite_config=dict(
+                required=False,
+                type='dict',
+                options=dict(
+                    fallback_sites=dict(
+                        required=False,
+                        type='list'
+                    ),
+                    intersite_transit_subnet=dict(
+                        default="169.254.32.0/20",
+                        type='str'
+                    ),
+                    last_admin_active_epoch=dict(
+                        required=False,
+                        type='int'
+                    ),
+                    primary_site_path=dict(
+                        required=False,
+                        type='str'
+                    ),
+                )
             ),
             ipv6_ndra_profile_id=dict(
                 required=False,
@@ -576,6 +870,23 @@ class NSXTTier1(NSXTBaseRealizableResource):
             ipv6_dad_profile_display_name=dict(
                 required=False,
                 type='str'
+            ),
+            pool_allocation=dict(
+                type='str',
+                choices=['ROUTING', 'LB_SMALL', 'LB_MEDIUM', 'LB_LARGE',
+                         'LB_XLARGE'],
+                default='ROUTING'
+            ),
+            qos_profile=dict(
+                type='dict',
+                options=dict(
+                    egress_qos_profile_path=dict(
+                        type='str'
+                    ),
+                    ingress_qos_profile_path=dict(
+                        type='str'
+                    )
+                )
             ),
             route_advertisement_rules=dict(
                 required=False,
@@ -776,9 +1087,35 @@ class NSXTTier1(NSXTBaseRealizableResource):
                         )
                     )
                 ),
-                route_redistribution_types=dict(
+                route_redistribution_config=dict(
+                    type='dict',
                     required=False,
-                    type='list'
+                    options=dict(
+                        enabled=dict(
+                            type='bool',
+                            default=False
+                        ),
+                        redistribution_rules=dict(
+                            type='list',
+                            required=False,
+                            elements='dict',
+                            options=dict(
+                                name=dict(
+                                    type='str',
+                                    required=False
+                                ),
+                                route_map_path=dict(
+                                    type='str',
+                                    required=False
+                                ),
+                                route_redistribution_types=dict(
+                                    type='list',
+                                    elements='str',
+                                    required=False
+                                ),
+                            )
+                        )
+                    )
                 ),
                 ha_vip_configs=dict(
                     type='list',
@@ -931,6 +1268,9 @@ class NSXTTier1(NSXTBaseRealizableResource):
                         required=False,
                         type='str'
                     ),
+                    mtu=dict(
+                        type='int'
+                    ),
                     segment_id=dict(
                         required=False,
                         type='str'
@@ -941,7 +1281,22 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     ),
                     subnets=dict(
                         required=True,
-                        type='list'
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            ip_addresses=dict(
+                                type='list',
+                                elements='str'
+                            ),
+                            prefix_len=dict(
+                                type='int'
+                            )
+                        )
+                    ),
+                    urpf_mode=dict(
+                        type='str',
+                        default='STRICT',
+                        choices=['NONE', 'STRICT']
                     )
                 )
                 return tier1_ls_int_arg_spec

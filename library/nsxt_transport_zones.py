@@ -158,8 +158,26 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_transport_zone = get_tz_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, transport_zone_params['display_name'])
     if existing_transport_zone is None:
         return False
-    if existing_transport_zone.__contains__('transport_type') and transport_zone_params.__contains__('transport_type') and \
-        existing_transport_zone['transport_type'] != transport_zone_params['transport_type']:
+    if not existing_transport_zone.__contains__('is_default') and transport_zone_params.__contains__('is_default'):
+        return True
+    if existing_transport_zone.__contains__('is_default') and not transport_zone_params.__contains__('is_default'):
+        return True
+    if existing_transport_zone.__contains__('is_default') and transport_zone_params.__contains__('is_default') and \
+        existing_transport_zone['is_default'] != transport_zone_params['is_default']:
+        return True
+    if not existing_transport_zone.__contains__('description') and transport_zone_params.__contains__('description'):
+        return True
+    if existing_transport_zone.__contains__('description') and not transport_zone_params.__contains__('description'):
+        return True
+    if existing_transport_zone.__contains__('description') and transport_zone_params.__contains__('description') and \
+        existing_transport_zone['description'] != transport_zone_params['description']:
+        return True
+    if not existing_transport_zone.__contains__('uplink_teaming_policy_names') and transport_zone_params.__contains__('uplink_teaming_policy_names'):
+        return True
+    if existing_transport_zone.__contains__('uplink_teaming_policy_names') and not transport_zone_params.__contains__('uplink_teaming_policy_names'):
+        return True
+    if existing_transport_zone.__contains__('uplink_teaming_policy_names') and transport_zone_params.__contains__('uplink_teaming_policy_names') and \
+        existing_transport_zone['uplink_teaming_policy_names'] != transport_zone_params['uplink_teaming_policy_names']:
         return True
     return False
 
