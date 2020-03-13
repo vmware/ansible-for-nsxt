@@ -35,41 +35,41 @@ uplink_profiles:
 #     policy: FAILOVER_ORDER
 #   transport_vlan: 0
 
-transport_nodes:
+host_transport_nodes:
 - display_name: TN1
   host_switches:
   - host_switch_profiles:
     - name: uplinkProfile1
       type: UplinkHostSwitchProfile
     host_switch_name: hostswitch1
-    # pnics:
-    # - device_name: "vmnic1"
-    #   uplink_name: "uplink-1"
+    pnics:
+    - device_name: "vmnic1"
+      uplink_name: "uplink-1"
     ip_assignment_spec:
       resource_type: StaticIpPoolSpec
       ip_pool_name: "IPPool-IPV4-1"
+    transport_zone_endpoints:
+    - transport_zone_name: "TZ1"
   transport_zone_endpoints:
   - transport_zone_name: "TZ1"
   node_deployment_info:
-    # Host node deployment info ESXI
-    # resource_type: "HostNode"
-    # display_name: "Host_1"
-    # ip_addresses: ["10.161.136.35"]
-    # os_type: "ESXI"
-    # os_version: "6.5.0"
-    # host_credential:
-    #   username: "root"
-    #   password: "ca$hc0w"
-    #   thumbprint: "aba87c8b3a042435e0f3d60784c1fbc6f1aba5ce71f6efb2601fd26fb5453bb0"
     resource_type: "HostNode"
-    display_name: "Host_3"
-    ip_addresses: ["10.192.44.93"]
-    os_type: "UBUNTUKVM"
-    os_version: "16.04"
+    display_name: "Host_1"
+    ip_addresses: ["10.161.136.35"]
+    os_type: "ESXI"
+    os_version: "6.5.0"
     host_credential:
       username: "root"
       password: "ca$hc0w"
-      thumbprint: "3fS+Ik4O0GOMuQ8Chbxfn7KBLjmLhhnEHPKDXnt/AFQ="
+    # resource_type: "HostNode"
+    # display_name: "Host_3"
+    # ip_addresses: ["10.192.44.93"]
+    # os_type: "UBUNTUKVM"
+    # os_version: "16.04"
+    # host_credential:
+    #   username: "root"
+    #   password: "ca$hc0w"
+    #   thumbprint: "3fS+Ik4O0GOMuQ8Chbxfn7KBLjmLhhnEHPKDXnt/AFQ="
   # host_switches:
   # - host_switch_profiles:
   #   - name: uplinkProfile1
@@ -125,6 +125,47 @@ transport_nodes:
 #   - transport_zone_name: "TZ2"
 #   fabric_node_name: "Host_2"
 
+edge_transport_nodes:
+- display_name: TN1
+  host_switches:
+  - host_switch_profiles:
+    - name: uplinkProfile1
+      type: UplinkHostSwitchProfile
+    host_switch_name: hostswitch1
+    pnics:
+    - device_name: "vmnic1"
+      uplink_name: "uplink-1"
+    ip_assignment_spec:
+      resource_type: StaticIpPoolSpec
+      ip_pool_name: "IPPool-IPV4-1"
+    transport_zone_endpoints:
+    - transport_zone_name: "TZ1"
+  transport_zone_endpoints:
+  - transport_zone_name: "TZ1"
+  node_deployment_info:
+    resource_type: "EdgeNode"
+    display_name: "EdegeNode1"
+    ip_addresses:
+    deployment_type: "VIRTUAL_MACHINE"
+    deployment_config:
+      form_factor: "SMALL"
+      node_user_settings:
+        cli_password: "Admin!23Admin"
+        root_password: "Admin!23Admin"
+      vm_deployment_config:
+        placement_type: VsphereDeploymentConfig
+        vc_name: "VC2"
+        data_network_ids:
+        - network-16
+        - network-16
+        - network-16
+        management_network_id: "network-16"
+        hostname: "EdgeVM1"
+        compute_id: "domain-c7"
+        storage_id: "datastore-15"
+        host_id: "host-14"
+        default_gateway_addresses: X.Y.Z.A
+        management_port_subnets: P.Q.R.s/S
 
 transport_node_profiles:
 - display_name: TNP1
