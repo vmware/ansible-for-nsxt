@@ -10,9 +10,10 @@
     - name: Update Tier0
       nsxt_tier0:
         hostname: "default"
-        username: "default"
-        password: "default"
-        validate_certs: False
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
         display_name: test-tier0-1
         state: present
         ha_mode: "ACTIVE_STANDBY"

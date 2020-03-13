@@ -10,9 +10,10 @@
     - name: create IP Block
       nsxt_ip_block:
         hostname: "default"
-        username: "default"
-        password: "default"
-        validate_certs: False
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
         display_name: test-ip-blk
         state: "absent"
         cidr: "192.168.0.0/16"

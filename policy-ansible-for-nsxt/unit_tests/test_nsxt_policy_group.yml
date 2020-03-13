@@ -10,9 +10,10 @@
     - name: create Policy Group
       nsxt_policy_group:
         hostname: "default"
-        username: "default"
-        password: "default"
-        validate_certs: False
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
         id: test-policy-group
         display_name: test-policy-group
         state: "present"
