@@ -40,12 +40,31 @@ options:
         type: str
     username:
         description: The username to authenticate with the NSX manager.
-        required: true
         type: str
     password:
-        description: The password to authenticate with the NSX manager.
-        required: true
+        description:
+            - The password to authenticate with the NSX manager.
+            - Must be specified if username is specified
         type: str
+    ca_path:
+        description: Path to the CA bundle to be used to verify host's SSL
+                     certificate
+        type: str
+    nsx_cert_path:
+        description: Path to the certificate created for the Principal
+                     Identity using which the CRUD operations should be
+                     performed
+        type: str
+    nsx_key_path:
+        description:
+            - Path to the certificate key created for the Principal Identity
+              using which the CRUD operations should be performed
+            - Must be specified if nsx_cert_path is specified
+        type: str
+    request_headers:
+        description: HTTP request headers to be sent to the host while making
+                     any request
+        type: dict
     display_name:
         description:
             - Display name.
@@ -336,8 +355,8 @@ EXAMPLES = '''
 - name: create Security Policy
   nsxt_security_policy:
     hostname: "10.10.10.10"
-    username: "username"
-    password: "password"
+    nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+    nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
     validate_certs: False
     id: test-sec-pol
     display_name: test-sec-pol

@@ -10,10 +10,10 @@
     - name: Update Segment
       nsxt_segment:
         hostname: "default"
-        username: "default"
-        password: "default"
-        validate_certs: False
-        display_name: test-seg-4
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
         state: present
         domain_name: dn1
         transport_zone_display_name: "1-transportzone-730"

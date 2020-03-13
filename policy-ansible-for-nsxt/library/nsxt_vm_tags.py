@@ -39,16 +39,35 @@ options:
         type: str
     username:
         description: The username to authenticate with the NSX manager.
-        required: true
         type: str
     password:
-        description: The password to authenticate with the NSX manager.
-        required: true
+        description:
+            - The password to authenticate with the NSX manager.
+            - Must be specified if username is specified
         type: str
     validate_certs:
         description: Enable server certificate verification.
         type: bool
         default: False
+    ca_path:
+        description: Path to the CA bundle to be used to verify host's SSL
+                     certificate
+        type: str
+    nsx_cert_path:
+        description: Path to the certificate created for the Principal
+                     Identity using which the CRUD operations should be
+                     performed
+        type: str
+    nsx_key_path:
+        description:
+            - Path to the certificate key created for the Principal Identity
+              using which the CRUD operations should be performed
+            - Must be specified if nsx_cert_path is specified
+        type: str
+    request_headers:
+        description: HTTP request headers to be sent to the host while making
+                     any request
+        type: dict
     add_tags:
         type: list
         element: dict
@@ -91,8 +110,8 @@ EXAMPLES = '''
 - name: Update Tags on VMs
   nsxt_vm_tags:
     hostname: "10.10.10.10"
-    username: "username"
-    password: "password"
+    nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+    nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
     validate_certs: False
     virtual_machine_display_name: App-VM-1
     remove_other_tags: False
@@ -145,10 +164,9 @@ class TagElement(object):
 
 
 def _fetch_all_tags_on_vm_and_infer_id(
-        vm_id, policy_communicator, validate_certs,
-        vm_display_name, module):
+        vm_id, policy_communicator, vm_display_name, module):
     _, resp = policy_communicator.request(
-            VM_URL, validate_certs=validate_certs)
+            VM_URL)
     vms = resp['results']
     target_vm = None
     if vm_id:
@@ -208,15 +226,22 @@ def realize():
     mgr_username = module.params.pop('username')
     mgr_password = module.params.pop('password')
 
+    nsx_cert_path = module.params['nsx_cert_path']
+    nsx_key_path = module.params['nsx_key_path']
+
+    request_headers = module.params['request_headers']
+    ca_path = module.params['ca_path']
+
     validate_certs = module.params.pop('validate_certs')
 
     try:
         # Each manager has an associated PolicyCommunicator
         policy_communicator = PolicyCommunicator.get_instance(
-            mgr_username, mgr_hostname, mgr_password)
+            mgr_hostname, mgr_username, mgr_password, nsx_cert_path,
+            nsx_key_path, request_headers, ca_path, validate_certs)
 
         all_tags, virtual_machine_id = _fetch_all_tags_on_vm_and_infer_id(
-            virtual_machine_id, policy_communicator, validate_certs,
+            virtual_machine_id, policy_communicator,
             virtual_machine_display_name, module)
         init_tags_set = _get_tags_as_set(tags=all_tags)
         if module.params.get('remove_other_tags'):
@@ -259,7 +284,7 @@ def realize():
         }
         _, resp = policy_communicator.request(
             VM_URL + '?action=update_tags', data=post_body,
-            method="POST", validate_certs=validate_certs)
+            method="POST")
         module.exit_json(msg="Successfully updated tags on VM {}".format(
             virtual_machine_id), changed=True)
     except Exception as err:
