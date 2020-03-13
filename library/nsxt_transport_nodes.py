@@ -421,10 +421,6 @@ options:
             required: true
             type: str
         type: dict
-    node_id:
-        description: Unique Id of the fabric node
-        required: false
-        type: str
     state:
         choices:
         - present
@@ -477,7 +473,6 @@ EXAMPLES = '''
         username: "root"
         password: "ca$hc0w"
         thumbprint: "e7fd7dd84267da10f991812ca62b2bedea3a4a62965396a04728da1e7f8e1cb9"
-    node_id: null
     state: "present"
 
 '''
@@ -540,17 +535,25 @@ def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, v
       while True:
           (rc, resp) = request(manager_url+ '/transport-nodes/%s/state'% node_id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-          if any(resp['state'] in progress_status for progress_status in IN_PROGRESS_STATES):
+          if any(resp['state'] in progress_status for progress_status in IN_PROGRESS_STATES) and \
+          any(resp['node_deployment_state']['state'] in progress_status for progress_status in IN_PROGRESS_STATES):
               time.sleep(10)
               count = count + 1
               if count == 90:
                   #Wait for max 15 minutes for host to realize
-                  module.fail_json(msg= 'Error creating transport node: %s'%(str(resp['state'])))
-          elif any(resp['state'] in progress_status for progress_status in SUCCESS_STATES):
+                  module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
+          elif any(resp['state'] in progress_status for progress_status in SUCCESS_STATES) and\
+          any(resp['node_deployment_state']['state'] in progress_status for progress_status in SUCCESS_STATES):
               time.sleep(5)
               return
+          elif any(resp['state'] in progress_status for progress_status in FAILED_STATES) or\
+          any(resp['node_deployment_state']['state'] in progress_status for progress_status in FAILED_STATES):
+              module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
           else:
-              module.fail_json(msg= 'Error creating transport node: %s'%(str(resp['state'])))
+              time.sleep(10)
+              count = count + 1
+              if count == 90:
+                   module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
     except Exception as err:
       module.fail_json(msg='Error accessing transport node. Error [%s]' % (to_native(err)))
 
@@ -621,13 +624,32 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_transport_node = get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_with_ids['display_name'])
     if existing_transport_node is None:
         return False
-    if existing_transport_node.__contains__('transport_zone_endpoints') and transport_node_with_ids.__contains__('transport_zone_endpoints'):
-        return not id_exist_in_list_dict_obj('transport_zone_id', existing_transport_node['transport_zone_endpoints'], transport_node_with_ids['transport_zone_endpoints'])
+    if not existing_transport_node.__contains__('description') and transport_node_with_ids.__contains__('description'):
+        return True
+    if existing_transport_node.__contains__('description') and transport_node_with_ids.__contains__('description') and existing_transport_node['description'] != transport_node_with_ids['description']:
+        return True
+    if existing_transport_node.__contains__('description') and not transport_node_with_ids.__contains__('description'):
+        return True
     if existing_transport_node.__contains__('host_switch_spec') and existing_transport_node['host_switch_spec'].__contains__('host_switches') and \
         transport_node_with_ids.__contains__('host_switch_spec') and transport_node_with_ids['host_switch_spec'].__contains__('host_switches') and \
         existing_transport_node['host_switch_spec']['host_switches'] != transport_node_with_ids['host_switch_spec']['host_switches']:
         return True
     return False
+
+def update_host_switch_with_tz_endpoints(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, body):
+    '''
+    Transport zone endpoint is added to all the host switches
+    '''
+    transport_node = get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
+    if transport_node.__contains__('transport_zone_endpoints'):
+        transport_zone_endpoints = transport_node['transport_zone_endpoints']
+    if not body.__contains__('transport_zone_endpoints'):
+        body['transport_zone_endpoints'] = transport_zone_endpoints
+    if body.__contains__('host_switch_spec'):
+        for host_switch in body['host_switch_spec']['host_switches']:
+            host_switch['transport_zone_endpoints'] = transport_zone_endpoints
+    return body
+
 
 def get_api_cert_thumbprint(ip_address, module):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -716,6 +738,7 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                       description=dict(required=False, type='str'),
                        host_switch_spec=dict(required=False, type='dict',
                        host_switches=dict(required=True, type='list'),
                        resource_type=dict(required=True, type='str')),
@@ -772,7 +795,6 @@ def main():
                        deployment_type=dict(required=False, type='str')),
                        maintenance_mode=dict(required=False, type='str'),
                        transport_zone_endpoints=dict(required=False, type='list'),
-                       node_id=dict(required=False, type='str'),
                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -803,6 +825,7 @@ def main():
       # add the node
       if module.check_mode:
         module.exit_json(changed=True, debug_out=str(json.dumps(logical_switch_params)), id='12345')
+
       if body["node_deployment_info"].__contains__('host_credential'):
         if body["node_deployment_info"]["host_credential"].__contains__("thumbprint"):
           thumbprint = body["node_deployment_info"]["host_credential"]["thumbprint"]
@@ -831,8 +854,16 @@ def main():
           module.exit_json(changed=True, debug_out=str(json.dumps(body)), id=transport_node_id)
 
       body['_revision'] = revision # update current revision
+      # node deployment revision is also important - node id also has a revision
+      if body.__contains__('node_deployment_info'):
+          body['node_deployment_info']['_revision'] = revision
+      #update node id with tn id - as result of FN TN unification
+      body['node_id'] = transport_node_id
+
+      body = update_host_switch_with_tz_endpoints(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, body)
       request_data = json.dumps(body)
       id = transport_node_id
+      #raise Exception(request_data)
       try:
           (rc, resp) = request(manager_url+ '/transport-nodes/%s' % id, data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
