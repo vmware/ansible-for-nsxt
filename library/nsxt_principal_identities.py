@@ -200,7 +200,7 @@ def main():
     if principal_id_with_display_name:
       module.fail_json(msg="Principal id with display name \'%s\' already exists." % display_name)  
     try:
-        (rc, resp) = request(manager_url+ '/trust-management/principal-identities', data=request_data, headers=headers, method='POST',
+        (rc, resp) = request(manager_url+ '/trust-management/principal-identities/with-certificate', data=request_data, headers=headers, method='POST',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
         module.fail_json(msg="Failed to add principal identity. Error[%s]. Request body [%s]." % (request_data, to_native(err)))
