@@ -181,6 +181,23 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
       time.sleep(5)
       return
 
+def get_node_id_from_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name):
+    '''
+        Given Name of the auto deployed node, This function retrieves the node id. If not found it fails.
+    '''
+    try:
+        (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+        module.fail_json(msg='Error accessing vm id for host name %s. Error [%s]' % (display_name, to_native(err)))
+    for result in resp['results']:
+        if result.__contains__('deployment_config') and result['deployment_config'].__contains__('hostname') and \
+        result['deployment_config']['hostname'] == display_name:
+            if result.__contains__('vm_id'):
+              return result['vm_id']
+    module.fail_json(msg='No auto deployed node exist with display name %s' % display_name)
+
+
 def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, node_params):
   '''
   params:
@@ -247,11 +264,11 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(deployment_requests=dict(required=True, type='list'),
-                    node_id=dict(required=False, type='str'),
+                    node_name=dict(required=False, type='str'),
                     state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
-                         required_if=[['state', 'absent', ['node_id']]])
+                         required_if=[['state', 'absent', ['node_name']]])
   node_params = get_node_params(module.params.copy())
   state = module.params['state']
   mgr_hostname = module.params['hostname']
@@ -287,7 +304,7 @@ def main():
     module.exit_json(changed=True, body= str(resp), message="Controller-manager node deployed.")
 
   elif state == 'absent':
-    id = module.params['node_id']
+    id = get_node_id_from_name(module, manager_url, mgr_username, mgr_password, validate_certs, '/cluster/nodes/deployments', module.params['node_name'])
     if is_node_exist:
       # delete node
       if module.check_mode:
