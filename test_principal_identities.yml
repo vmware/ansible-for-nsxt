@@ -11,10 +11,10 @@
         password: "{{password}}"
         validate_certs: False
         display_name: "Principal_display_name"
-        description: 'Foo bar blah blah'
-        certificate_name: 'Certificate_file-kau'
+        description: 'Foo bar'
+        certificate_name: 'Certificate_file'
         name: "Principal_name"
-        certificate_pem_file: "/home/akhilesh/work/certificates/nsx_certificate.p12"
+        certificate_pem_file: "/Path/to/cert/file"
         is_protected: True
         node_id: "node-1"
         role: "enterprise_admin"
