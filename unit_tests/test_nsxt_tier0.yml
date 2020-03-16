@@ -8,7 +8,7 @@
   become: yes
   tasks:
     - name: Update Tier0
-      nsxt_tier0:
+      nsxt_policy_tier0:
         hostname: "default"
         nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
         nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

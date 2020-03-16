@@ -7,7 +7,7 @@
     - build_topology_vars.yml
   tasks:
     - name: Modify Segment
-      nsxt_segment:
+      nsxt_policy_segment:
         hostname: "{{ nsx_manager }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"
