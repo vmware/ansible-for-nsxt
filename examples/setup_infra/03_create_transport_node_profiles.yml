@@ -1,0 +1,25 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - setup_infra_vars.yml
+  tasks:
+    - name: Create Transport Node Profiles
+      nsxt_transport_node_profiles:
+        hostname: "{{ nsx_node1.mgmt_ip }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        resource_type: TransportNodeProfile
+        display_name: "{{ item.display_name }}"
+        description: "{{ item.description }}"
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches: "{{ item.host_switches }}"
+        transport_zone_endpoints: "{{ item.transport_zone_endpoints }}"
+        state: "{{ state }}"
+      with_items:
+        - "{{ transport_node_profiles }}"

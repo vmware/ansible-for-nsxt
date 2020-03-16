@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
 # BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -126,6 +127,14 @@ options:
     display_name:
         description: Display name
         required: true
+        type: str
+    description:
+        description: Description of this resource
+        required: False
+        type: str
+    resource_type:
+        description: Must be set to the value TransportNode
+        required: False
         type: str
     host_switch_spec:
         description: 'This property is used to either create standard host switches

@@ -1,0 +1,57 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Create transport node
+      nsxt_transport_nodes:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "{{item.display_name}}"
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches: "{{item.host_switches}}"
+        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
+        node_deployment_info: "{{item.node_deployment_info}}"
+          # Host node deployment info
+          # resource_type: "{{item.node_deployment_info.resource_type}}"
+          # display_name: "{{item.node_deployment_info.display_name}}"
+          # ip_addresses: "{{item.node_deployment_info.ip_addresses}}"
+          # os_type: "{{item.node_deployment_info.os_type}}"
+          # os_version: "{{item.node_deployment_info.os_version}}"
+          # host_credential:
+          #   username: "{{item.node_deployment_info.host_credential.username}}"
+          #   password: "{{item.node_deployment_info.host_credential.password}}"
+          #   thumbprint: "{{item.node_deployment_info.host_credential.thumbprint}}"
+          # Edge node deployment info
+          # resource_type: "{{item.node_deployment_info.resource_type}}"
+          # display_name: "{{item.node_deployment_info.display_name}}"
+          # ip_addresses: "{{item.node_deployment_info.ip_addresses}}"
+          # deployment_type: "{{item.node_deployment_info.deployment_type}}"
+          # deployment_config:
+          #   form_factor: "{{item.node_deployment_info.deployment_config.form_factor}}"
+          #   node_user_settings:
+          #     cli_password: "{{item.node_deployment_info.deployment_config.node_user_settings.cli_password}}"
+          #     root_password: "{{item.node_deployment_info.deployment_config.node_user_settings.root_password}}"
+          #   vm_deployment_config:
+          #     placement_type: "{{item.node_deployment_info.deployment_config.vm_deployment_config.placement_type}}"
+          #     vc_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.vc_id}}"
+          #     data_network_ids: "{{item.node_deployment_info.deployment_config.vm_deployment_config.data_network_ids}}"
+          #     management_network_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_network_id}}"
+          #     hostname: "{{item.node_deployment_info.deployment_config.vm_deployment_config.hostname}}"
+          #     compute_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.compute_id}}"
+          #     storage_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.storage_id}}"
+          #     host_id: "{{item.node_deployment_info.deployment_config.vm_deployment_config.host_id}}"
+          #     default_gateway_addresses: "{{item.node_deployment_info.deployment_config.vm_deployment_config.default_gateway_addresses}}"
+              # management_port_subnets:
+              # - ip_addresses: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_port_subnets.ip_addresses}}"
+              #   prefix_length: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_port_subnets.prefix_length}}"
+        state: present
+      with_items:
+        - "{{transport_nodes}}"

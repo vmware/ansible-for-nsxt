@@ -1,0 +1,25 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Toggle tier 1 route advertisement
+      nsxt_route_advertise:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        display_name: "{{item.display_name}}"
+        validate_certs: False
+        enabled: "{{item.enabled}}"
+        advertise_dns_forwarder: "{{item.advertise_dns_forwarder}}"
+        advertise_lb_snat_ip: "{{item.advertise_lb_snat_ip}}"
+        advertise_lb_vip: "{{item.advertise_lb_vip}}"
+        advertise_nat_routes: "{{item.advertise_nat_routes}}"
+        advertise_nsx_connected_routes: "{{item.advertise_nsx_connected_routes}}"
+        advertise_static_routes: "{{item.advertise_static_routes}}"
+      with_items:
+        - "{{route_advertise}}"

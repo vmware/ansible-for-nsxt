@@ -17,6 +17,11 @@ Documentation on the NSX platform can be found at the [NSX-T Documentation page]
 ### Supported NSX Objects/Workflows
 The modules in this repository are focused on enabling automation of installation workflows of NSX-T.
 
+### Branch Information
+This repository has different branches with each branch providing support for upto a specific NSX-T release. Below is the list:
+* v1.1.0: NSX-T 2.4, NSX-T 2.5
+* v1.0.0: NSX-T 2.3
+
 #### Deployment and installation modules
 
 * nsxt_deploy_ova
@@ -141,5 +146,5 @@ The NSX-T Ansible modules in this repository are community supported. For bugs a
 # License
 Copyright (c) 2018 VMware, Inc.  All rights reserved
 
-The NSX-T Ansible modules in this repository are available under [BSD-2 license](https://github.com/vmware/ansible-for-nsxt/blob/master/LICENSE.txt) applies to all parts of the ansible-for-nsxt.
-You may not use them except in compliance with the License.†
+The NSX-T Ansible modules in this repository are available under [BSD-2 license or GPLv3](LICENSE.txt) applies to all parts of the ansible-for-nsxt.
+You may not use them except in compliance with the License.
