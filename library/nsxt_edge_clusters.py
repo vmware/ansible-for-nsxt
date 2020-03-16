@@ -51,6 +51,10 @@ options:
         description: 'Display name'
         required: true
         type: str
+    description:
+        description: Description of the resource
+        required: false
+        type: str
     members:
         description: "EdgeCluster only supports homogeneous members.
         These member should be backed by either EdgeNode or PublicCloudGatewayNode.
@@ -182,6 +186,7 @@ def update_params_with_profile_id(module, manager_url, mgr_username, mgr_passwor
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                        description=dict(required=False, type='str'),
                         cluster_profile_bindings=dict(required=False, type='list'),
                         members=dict(required=False, type='list'), # tranpost_node_name
                         state=dict(required=True, choices=['present', 'absent']))

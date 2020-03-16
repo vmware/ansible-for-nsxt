@@ -74,6 +74,10 @@ options:
         description: 'Must be set to the value TrustObjectData'
         required: false
         type: str
+    tags:
+        description: Opaque identifier meaninful to API user
+        required: false
+        type: Array of Tag
     state:
         choices:
             - present
@@ -164,6 +168,7 @@ def main():
                        id=dict(required=False, type='str'),
                        key_algo=dict(required=False, type='str'),
                        resource_type=dict(required=False, type='str'),
+                       tags=dict(required=False, type='list'),
                     state=dict(required=True, choices=['present', 'absent']))
   '''
   Core function of the module reponsible for adding and deleting the certififcate.
