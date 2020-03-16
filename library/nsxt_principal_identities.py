@@ -161,7 +161,6 @@ def get_principal_ids(module, manager_url, mgr_username, mgr_password, validate_
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
   except Exception as err:
     module.fail_json(msg='Error accessing principal identities. Error [%s]' % (to_native(err)))
-  #raise Exception(resp)
   return resp
 
 def get_principal_id_with_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
@@ -183,7 +182,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
   '''
   existing_principal_id = get_principal_id_with_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   if existing_principal_id is None:
-    #raise Exception('Point 1')
     return False
   if not existing_principal_id.__contains__('description') and principal_id_params.__contains__('description'):
     return True
@@ -192,7 +190,9 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
   if existing_principal_id.__contains__('description') and principal_id_params.__contains__('description') and\
   existing_principal_id['description'] != principal_id_params['description']:
     return True
-  #raise Exception('Point 2')
+  if existing_principal_id.__contains__('certificate_id') and principal_id_params.__contains__('certificate_id') and\
+  existing_principal_id['certificate_id'] != principal_id_params['certificate_id']:
+    return True
   return False
 
 def get_certificate_id_with_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
@@ -246,7 +246,7 @@ def main():
   principal_id_with_display_name = get_principal_id_with_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
 
   if state == 'present':
-    # add the principal identity
+    # update the principal identity
     if check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, principal_id_params):
       if principal_id_with_display_name:
         principal_id_params['principal_identity_id'] = principal_id_with_display_name['id']
@@ -259,10 +259,9 @@ def main():
           module.fail_json(msg="Failed to update principal identity. Error[%s]. Request body [%s]." % (request_data, to_native(err)))
         time.sleep(5)
         module.exit_json(changed=True, result=resp, message="Principal identity updated.")
-    #raise Exception("Check for update is false")
+    # add the principal identity
     if principal_id_with_display_name:
       module.fail_json(msg="Principal id with display name \'%s\' already exists." % display_name)  
-    #raise Exception(request_data)
     request_data = json.dumps(principal_id_params)
     try:
         (rc, resp) = request(manager_url+ '/trust-management/principal-identities/with-certificate', data=request_data, headers=headers, method='POST',
