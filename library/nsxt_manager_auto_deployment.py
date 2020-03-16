@@ -48,6 +48,10 @@ options:
         description: 'Unique node-id of a principal'
         required: false
         type: str
+    node_name:
+        description: 'Unique node-name of a principal'
+        required: false
+        type: str
     state:
         choices:
             - present
@@ -265,10 +269,10 @@ def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(deployment_requests=dict(required=True, type='list'),
                     node_name=dict(required=False, type='str'),
+                    node_id=dict(required=False, type='str'),
                     state=dict(required=True, choices=['present', 'absent']))
+  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
-                         required_if=[['state', 'absent', ['node_name']]])
   node_params = get_node_params(module.params.copy())
   state = module.params['state']
   mgr_hostname = module.params['hostname']
@@ -304,7 +308,15 @@ def main():
     module.exit_json(changed=True, body= str(resp), message="Controller-manager node deployed.")
 
   elif state == 'absent':
-    id = get_node_id_from_name(module, manager_url, mgr_username, mgr_password, validate_certs, '/cluster/nodes/deployments', module.params['node_name'])
+    id = None
+    if module.params['node_id']:
+      id = module.params['node_id']
+    elif module.params['node_name']:
+      node_name = module.params['node_name']
+    else:
+      module.fail_json(msg="Failed to delete manager node as non of node_id, node_name is provided.")
+    if not id:
+      id = get_node_id_from_name(module, manager_url, mgr_username, mgr_password, validate_certs, '/cluster/nodes/deployments', node_name)
     if is_node_exist:
       # delete node
       if module.check_mode:
