@@ -261,7 +261,7 @@ def main():
         module.exit_json(changed=True, result=resp, message="Principal identity updated.")
     # add the principal identity
     if principal_id_with_display_name:
-      module.fail_json(msg="Principal id with display name \'%s\' already exists." % display_name)  
+      module.exit_json(changed=False, msg="Principal id with display name \'%s\' already exists." % display_name) 
     request_data = json.dumps(principal_id_params)
     try:
         (rc, resp) = request(manager_url+ '/trust-management/principal-identities/with-certificate', data=request_data, headers=headers, method='POST',
