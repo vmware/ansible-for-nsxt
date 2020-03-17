@@ -421,6 +421,62 @@ options:
             required: true
             type: str
         type: dict
+    remote_tunnel_endpoint:
+        description: Configuration for a remote tunnel endpoin
+        required: False 
+        type: 'dict'
+        host_switch_name:
+            description: The host switch name to be used for the remote tunnel endpoint
+            required: True
+            type: 'str'
+        named_teaming_policy:
+            description: The named teaming policy to be used by the remote tunnel endpoint
+            required: False
+            type:'str'
+        rtep_vlan:
+            description: VLAN id for remote tunnel endpoint
+            required:True
+            type:'dict'
+            VlanID:
+                description: Virtual Local Area Network Identifier
+                required:False
+                type:'int'
+        ip_assignment_spec:
+            description: Specification for IPs to be used with host switch remote tunnel endpoints
+            required:True
+            type:'dict'
+            resource_type:
+                description: Resource type
+                required:True
+                type:'str'
+            ip_pool_id:
+                description: IP pool id
+                required:False
+                type:'str'
+            ip_list:
+                description: List of IPs for transport node host switch virtual tunnel endpoints
+                required:False
+                type:'list'
+            ip_mac_list:
+                description: List of IPs and MACs for transport node host switch virtual tunnel endpoints 
+                required:False
+                type:'list'
+            default_gateway:
+                description: Default gateway
+                required:False
+                type:'dict'
+                IPAddress:
+                    description: IPv4 or IPv6 address
+                    required:False
+                    type:'str'
+            subnet_mask:
+                description: Subnet mask
+                required:False
+                type:'dict'
+                IPAddress:
+                    description: IPv4 IPv6 address
+                    required:False
+                    type:'str'
     tags: 
         description: Opaque identifiers meaningful to the API user
         required: False
@@ -494,7 +550,7 @@ import ssl
 
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
-SUCCESS_STATES = ["partial_success", "success"]
+SUCCESS_STATES = ["partial_success", "success", "NODE_READY"]
 
 def get_transport_node_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -545,7 +601,7 @@ def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, v
               count = count + 1
               if count == 90:
                   #Wait for max 15 minutes for host to realize
-                  module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
+                  module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s, Failure message: %s'%(str(resp['state']), str(resp['node_deployment_state']['state']), str(resp['failure_message'])))
           elif any(resp['state'] in progress_status for progress_status in SUCCESS_STATES) and\
           any(resp['node_deployment_state']['state'] in progress_status for progress_status in SUCCESS_STATES):
               time.sleep(5)
@@ -783,6 +839,20 @@ def main():
                        resource_type=dict(required=True, type='str'),
                        deployment_type=dict(required=False, type='str')),
                        maintenance_mode=dict(required=False, type='str'),
+                       remote_tunnel_endpoint=dict(required=False, type='dict',
+                       host_switch_name=dict(required=True, type='str'),
+                       named_teaming_policy=dict(required=False, type='str'),
+                       rtep_vlan=dict(required=True, type='dict',
+                       VlanID=dict(required=False, type='int')),
+                       ip_assignment_spec=dict(required=True, type='dict',
+                       resource_type=dict(required=True, type='str'),
+                       ip_pool_id=dict(required=False, type='str'),
+                       ip_list=dict(required=False, type='list'),
+                       ip_mac_list=dict(required=False, type='list'),
+                       default_gateway=dict(required=False, type='dict',
+                       IPAddress=dict(required=False, type='str')),
+                       subnet_mask=dict(required=False, type='dict',
+                       IPAddress=dict(required=False, type='str')))),
                        tags=dict(required=False, type='list'),
                        transport_zone_endpoints=dict(required=False, type='list'),
                        state=dict(required=True, choices=['present', 'absent']))
