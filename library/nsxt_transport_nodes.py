@@ -421,6 +421,10 @@ options:
             required: true
             type: str
         type: dict
+    tags: 
+        description: Opaque identifiers meaningful to the API user
+        required: False
+        type: array of Tag
     state:
         choices:
         - present
@@ -636,21 +640,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     return False
 
-def update_host_switch_with_tz_endpoints(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, body):
-    '''
-    Transport zone endpoint is added to all the host switches
-    '''
-    transport_node = get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
-    if transport_node.__contains__('transport_zone_endpoints'):
-        transport_zone_endpoints = transport_node['transport_zone_endpoints']
-    if not body.__contains__('transport_zone_endpoints'):
-        body['transport_zone_endpoints'] = transport_zone_endpoints
-    if body.__contains__('host_switch_spec'):
-        for host_switch in body['host_switch_spec']['host_switches']:
-            host_switch['transport_zone_endpoints'] = transport_zone_endpoints
-    return body
-
-
 def get_api_cert_thumbprint(ip_address, module):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
@@ -794,6 +783,7 @@ def main():
                        resource_type=dict(required=True, type='str'),
                        deployment_type=dict(required=False, type='str')),
                        maintenance_mode=dict(required=False, type='str'),
+                       tags=dict(required=False, type='list'),
                        transport_zone_endpoints=dict(required=False, type='list'),
                        state=dict(required=True, choices=['present', 'absent']))
 
@@ -860,10 +850,8 @@ def main():
       #update node id with tn id - as result of FN TN unification
       body['node_id'] = transport_node_id
 
-      body = update_host_switch_with_tz_endpoints(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, body)
       request_data = json.dumps(body)
       id = transport_node_id
-      #raise Exception(request_data)
       try:
           (rc, resp) = request(manager_url+ '/transport-nodes/%s' % id, data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
