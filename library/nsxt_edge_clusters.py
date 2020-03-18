@@ -182,6 +182,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     if existing_edge_cluster.__contains__('description') and edge_cluster_with_id.__contains__('description') and \
         existing_edge_cluster['description'] != edge_cluster_with_id['description']:
+        return True
     if existing_edge_cluster.__contains__('members') and not edge_cluster_with_id.__contains__('members'):
         return True
     if not existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members'):
