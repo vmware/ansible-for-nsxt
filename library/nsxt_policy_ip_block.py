@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_ip_block
+module: nsxt_policy_ip_block
 short_description: Create or Delete a Policy IP Block
 description:
     Creates or deletes a Policy IP Block.
@@ -122,7 +122,7 @@ options:
 
 EXAMPLES = '''
 - name: create IP Block
-  nsxt_ip_block:
+  nsxt_policy_ip_block:
     hostname: "10.10.10.10"
     nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
     nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
