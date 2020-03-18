@@ -64,6 +64,34 @@ options:
         deployment types."
         required: false
         type: 'array of EdgeClusterMember'
+    allocation_rules:
+        description: Allocation rules for auto placement
+        required: false
+        type: list
+    enable_inter_site_forwarding:
+        description: Flag to enable inter site forwarding
+        required: false
+        type: bool
+    node_rtep_ips:
+        description: Remote tunnel endpoint ip address
+        required: false
+        type: list
+    member_node_type:
+        description: Node type of the cluster members
+        required: false
+        type: dict
+        EdgeDeploymentType:
+            description: Supported edge deployment type.
+            required: false
+            type: str
+    deployment_type:
+        description: Deplloyment type of the cluster members
+        required: false
+        type: dict
+        EdgeDeploymentType:
+            description: Supported edge deployment type.
+            required: false
+            type: str
     state:
         choices:
             - present
@@ -148,6 +176,12 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_edge_cluster = get_edge_clusters_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_with_id['display_name'])
     if existing_edge_cluster is None:
         return False
+    if existing_edge_cluster.__contains__('description') and not edge_cluster_with_id.__contains__('description'):
+        return True
+    if not existing_edge_cluster.__contains__('description') and edge_cluster_with_id.__contains__('description'):
+        return True
+    if existing_edge_cluster.__contains__('description') and edge_cluster_with_id.__contains__('description') and \
+        existing_edge_cluster['description'] != edge_cluster_with_id['description']:
     if existing_edge_cluster.__contains__('members') and not edge_cluster_with_id.__contains__('members'):
         return True
     if not existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members'):
@@ -193,6 +227,14 @@ def main():
                         description=dict(required=False, type='str'),
                         cluster_profile_bindings=dict(required=False, type='list'),
                         members=dict(required=False, type='list'), # tranpost_node_name
+                        allocation_rules=dict(required=False, type='list'),
+                        deployment_type=dict(required=False, type='dict',
+                        EdgeDeploymentType=dict(required=False, type='str')),
+                        enable_inter_site_forwarding=dict(required=False, type='bool'),
+                        member_node_type=dict(required=False, type='dict',
+                        EdgeClusterNodeType=dict(required=False, type='str')),
+                        node_rtep_ips=dict(required=False, type='str'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
