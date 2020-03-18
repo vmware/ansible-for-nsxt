@@ -152,14 +152,15 @@ def main():
     time.sleep(5)
     changed = False
     try:
-      (rc, resp) = request(manager_url+ '/upgrade/pre-upgrade-checks?format=csv', 
+      (rc, resp) = request(manager_url+ '/upgrade/pre-upgrade-checks/failures',
                            url_username=mgr_username, url_password=mgr_password, 
                            validate_certs=validate_certs)
     except Exception as err:
       module.fail_json(msg='Pre upgrade checks were executed successfully but error'
                   ' occured while retrieving the results. Error [%s]' % (to_native(err)))
-    module.exit_json(changed=changed, message='Pre upgrade checks are performed successfully:\n'
-                     '----------------------------\n' + str(resp))
+    module.exit_json(changed=changed, message='Pre upgrade checks are performed successfully:'
+                     ' Failures are listed. To get full report run upgrade groups '
+                     'facts module.' + str(resp))
   elif state == 'absent':
     # Aborts pre upgrade checks
     try:
