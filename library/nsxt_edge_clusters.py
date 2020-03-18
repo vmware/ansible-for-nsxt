@@ -148,6 +148,10 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_edge_cluster = get_edge_clusters_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_with_id['display_name'])
     if existing_edge_cluster is None:
         return False
+    if existing_edge_cluster.__contains__('members') and not edge_cluster_with_id.__contains__('members'):
+        return True
+    if not existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members'):
+        return True
     if existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members') and \
         existing_edge_cluster['members'] != edge_cluster_with_id['members']:
         return True

@@ -123,6 +123,7 @@ from ansible.module_utils._text import to_native
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
 SUCCESS_STATES = ["partial_success", "success"]
+FABRIC_VIRTUAL_SWITCH_TYPE = ["VDS"]
 
 def get_transport_node_profile_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -140,6 +141,19 @@ def get_transport_node_profiles(module, manager_url, mgr_username, mgr_password,
     except Exception as err:
       module.fail_json(msg='Error accessing transport node profiles. Error [%s]' % (to_native(err)))
     return resp
+
+def get_host_switch_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['uuid']
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
     try:
@@ -164,6 +178,13 @@ def get_tnp_from_display_name(module, manager_url, mgr_username, mgr_password, v
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_profile_params ):
     for host_switch in transport_node_profile_params['host_switch_spec']['host_switches']:
+        if host_switch.__contains__('host_switch_type') and host_switch['host_switch_type'] in FABRIC_VIRTUAL_SWITCH_TYPE:
+            if host_switch.__contains__('host_switch_name'):
+                host_switch['host_switch_id'] = get_host_switch_id_from_display_name(module, manager_url, mgr_username, 
+                                                                     mgr_password, validate_certs,
+                                                                     '/fabric/virtual-switches', host_switch['host_switch_name'])
+            else:
+                module.fail_json(msg='Failing as host_switch_name is not provided for host switch of type: %s' % host_switch['host_switch_type'])
         host_switch_profiles = host_switch.pop('host_switch_profiles', None)
         host_switch_profile_ids = []
         for host_switch_profile in host_switch_profiles:
