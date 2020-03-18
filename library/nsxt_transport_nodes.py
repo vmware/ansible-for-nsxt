@@ -920,7 +920,7 @@ def main():
       if body.__contains__('node_deployment_info') and node_deployment_revision is not None:
           body['node_deployment_info']['_revision'] = node_deployment_revision
       else:
-          module.fail_json(msg="Either node deployment info is not provided or "
+          module.fail_json(msg="Failed to update Transport Node. Either node deployment info is not provided or "
             "node deployement revision couldn't be retrieved.")
       #update node id with tn id - as result of FN TN unification
       body['node_id'] = transport_node_id
