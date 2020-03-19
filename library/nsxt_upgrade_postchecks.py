@@ -20,10 +20,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_upgrade_prechecks
-short_description: 'Execute pre-upgrade checks'
+module: nsxt_upgrade_postchecks
+short_description: 'Execute post-upgrade checks'
 description: "Run pre-defined checks to identify potential issues which can be 
-              encountered during an upgrade or can cause an upgrade to fail. The results 
+              encountered after an upgrade. The results
               of the checks are added to the respective upgrade units aggregate-info. The 
               progress and status of operation is part of upgrade status summary of 
               individual components."
@@ -42,24 +42,23 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
-    state:
+    component_type:
         choices:
-            - present
-            - absent
-        description: "State can be either 'present' or 'absent'.
-                      'present' is used to run pre upgrade checks.
-                      'absent' is used to abort preupgrade checks."
+            - host
+            - mp
+            - edge
+        description: "Component type on which post upgrade is to be run.
         required: true   
 '''
 
 EXAMPLES = '''
-- name: Runs and aborts pre-upgrade checks
-  nsxt_upgrade_prechecks:
+- name: Runs post-upgrade checks
+  nsxt_upgrade_postchecks:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
-      state: 'present'
+      component_type: 'mp'
 '''
 
 RETURN = '''# '''
@@ -71,7 +70,7 @@ from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils.common_utils import get_attribute_from_endpoint, clean_and_get_params, get_upgrade_orchestrator_node
 from ansible.module_utils._text import to_native
 
-def wait_for_post_upgrade_checks_to_execute(manager_url, endpoint, mgr_username,
+def wait_for_post_upgrade_checks_to_execute(module, manager_url, endpoint, mgr_username,
                                   mgr_password, validate_certs, component_type, 
                                   time_out=10800):
   '''
@@ -90,13 +89,13 @@ def wait_for_post_upgrade_checks_to_execute(manager_url, endpoint, mgr_username,
                            url_username=mgr_username, url_password=mgr_password, 
                            validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-       pass
+       module.fail_json(msg="Failed while polling for post upgrade checks to complete. Error[%s]." % to_native(err))
     if resp.__contains__('results'):
       flag = True
       results = resp['results']
       for result in results:
-        if result['post_upgrade_status']['status'] != 'COMPLETED'
-                             '' and result['type']= component_type.upper():
+        if result['post_upgrade_status']['status'] != 'COMPLETED' and \
+           result['type'] == component_type.upper():
           flag = False
       if flag:
         return None
@@ -111,7 +110,6 @@ def main():
                       component_type=dict(required=True, choices=['mp', 'host', 'edge']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-  state = module.params['state']
   mgr_hostname = module.params['hostname']
   mgr_username = module.params['username']
   mgr_password = module.params['password']
@@ -128,10 +126,10 @@ def main():
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
   #if state == 'present':
-  # Runs pre upgrade checks
+  # Runs post upgrade checks
   if module.check_mode:
     module.exit_json(changed=False, debug_out='Post upgrade checks will be executed.', 
-                     id='Pre upgrade checks')
+                     id='Post upgrade checks')
   try:
     (rc, resp) = request(manager_url + '/upgrade/%s?action=execute_post_upgrade_'
                         'checks' % component_type.upper(), data='', headers=headers,
@@ -143,11 +141,11 @@ def main():
 
   try:
     if timeout is None:
-      wait_for_post_upgrade_checks_to_execute(manager_url, '/upgrade/upgrade-unit-groups'
+      wait_for_post_upgrade_checks_to_execute(module, manager_url, '/upgrade/upgrade-unit-groups'
                                              '/aggregate-info', mgr_username, mgr_password, 
                                              validate_certs, component_type)
     else:
-      wait_for_post_upgrade_checks_to_execute(manager_url, '/upgrade/upgrade-unit-groups'
+      wait_for_post_upgrade_checks_to_execute(module, manager_url, '/upgrade/upgrade-unit-groups'
                                              '/aggregate-info', mgr_username, mgr_password,
                                              validate_certs, component_type, timeout)
   except Exception as err:
