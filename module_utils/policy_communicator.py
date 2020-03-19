@@ -23,6 +23,7 @@ import hashlib
 
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.vmware_nsxt import get_certificate_file_path
 
 
 class PolicyCommunicator:
@@ -43,12 +44,17 @@ class PolicyCommunicator:
                 raise InvalidInstanceRequest("mgr_password ")
             key = tuple([mgr_hostname, mgr_username, mgr_password])
         elif nsx_cert_path is not None:
-            if nsx_key_path is None:
+            if not nsx_cert_path.endswith('.p12') and nsx_key_path is None:
                 raise InvalidInstanceRequest("nsx_key_path")
             key = tuple([mgr_hostname, nsx_cert_path, nsx_key_path])
+        elif get_certificate_file_path('NSX_MANAGER_CERT_PATH') is not None:
+            nsx_cert_path = get_certificate_file_path('NSX_MANAGER_CERT_PATH')
+            key = tuple([mgr_hostname, nsx_cert_path])
         else:
             raise InvalidInstanceRequest("(mgr_username, mgr_password) or"
-                                         "(nsx_cert_path, nsx_key_path)")
+                                         "(nsx_cert_path, nsx_key_path), or "
+                                         "environment variable "
+                                         "'NSX_MANAGER_CERT_PATH'")
         if key not in PolicyCommunicator.__instances:
             PolicyCommunicator(key, mgr_hostname, mgr_username, mgr_password,
                                nsx_cert_path, nsx_key_path, request_headers,

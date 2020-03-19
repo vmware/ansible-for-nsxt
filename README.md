@@ -160,7 +160,7 @@ Note: usr_cert tells OpenSSL to generate a client certificate. This must be defi
 All the Policy API based Ansible Modules provide the following authentication mechanisms:
 
 ##### Basic Authentication
-By specifying the following fields in the playbook:
+This is the same as in MP API. It can be used by specifying the following fields in the playbook:
 1. **username**: The username to authenticate with the NSX manager
 2. **password**: The password to authenticate with the NSX manager
 
@@ -179,8 +179,14 @@ For example:
 ```
 
 ##### Prinicipal Identity
+There are 2 ways to consume the Principal Identity certificates.
+
+###### Using Environment variable
+This is same as explained in the previous section: **Certificate based authentication**
+
+###### Specying in the playbook
 By specifying the following fields in the playbook:
-1. **nsx_cert_path**: Path to the certificate created for the Principal Identity using which the CRUD operations should be performed
+1. **nsx_cert_path**: Path to the certificate created for the Principal Identity using which the CRUD operations should be performed. If the certificate is a .p12 file, only this attribute is required. Otherwise, *nsx_key_path* is also required.
 2. **nsx_key_path**: Path to the certificate key created for the Principal Identity using which the CRUD operations should be performed
 
 For example:
