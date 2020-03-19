@@ -90,6 +90,10 @@ options:
         description: The transport type of this transport zone.
         required: true
         type: str
+    tags:
+        description: Opaque identifier meaningful to API user
+        required: false
+        type: Array of Tag
     transport_zone_profile_ids:
         description: Identifiers of the transport zone profiles associated with this 
                      TransportZone.
@@ -193,8 +197,9 @@ def main():
                         uplink_teaming_policy_names=dict(required=False, type='list'),
                         transport_zone_profile_ids=dict(required=False, type='list'),
                         is_default=dict(required=False, type='boolean'),
-                        resource_type=dict(required=False),
-                        description=dict(required=False),
+                        resource_type=dict(required=False, type='str'),
+                        description=dict(required=False, type='str'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
