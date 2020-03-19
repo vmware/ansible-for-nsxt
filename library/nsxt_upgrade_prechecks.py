@@ -42,6 +42,10 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
+    timeout:
+        description: 'Timeout while polling for prechecks to complete'
+        required: false
+        type: int
     state:
         choices:
             - present
@@ -71,7 +75,7 @@ from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils.common_utils import get_attribute_from_endpoint, clean_and_get_params, get_upgrade_orchestrator_node
 from ansible.module_utils._text import to_native
 
-def wait_for_pre_upgrade_checks_to_execute(manager_url, endpoint, mgr_username,
+def wait_for_pre_upgrade_checks_to_execute(module, manager_url, endpoint, mgr_username,
                                   mgr_password, validate_certs, time_out=10800):
   '''
     params:
@@ -94,6 +98,9 @@ def wait_for_pre_upgrade_checks_to_execute(manager_url, endpoint, mgr_username,
       flag = True
       component_statuses = resp['component_status']
       for component_status in component_statuses:
+        if component_status['pre_upgrade_status']['status'] == 'ABORTED':
+          module.exit_json(changed= False, message='Pre upgrade checks started to run,'
+                                                   ' but aborted before they could finish.')
         if component_status['pre_upgrade_status']['status'] != 'COMPLETED':
           flag = False
       if flag:
@@ -141,10 +148,10 @@ def main():
 
     try:
       if timeout is None:
-        wait_for_pre_upgrade_checks_to_execute(manager_url, '/upgrade/status-summary', 
+        wait_for_pre_upgrade_checks_to_execute(module, manager_url, '/upgrade/status-summary',
                           mgr_username, mgr_password, validate_certs)
       else:
-        wait_for_pre_upgrade_checks_to_execute(manager_url, '/upgrade/status-summary', 
+        wait_for_pre_upgrade_checks_to_execute(module, manager_url, '/upgrade/status-summary',
                           mgr_username, mgr_password, validate_certs, timeout)
     except Exception as err:
         module.fail_json(msg='Error while polling for execution of pre upgrade'
