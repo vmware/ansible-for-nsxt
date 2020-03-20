@@ -20,9 +20,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_upgrade_plan
-short_description: 'Upgrade plan settings for the component'
-description: 'Upgrade plan settings for the component'
+module: nsxt_upgrade_groups
+short_description: 'Create a group of upgrade units.'
+description: 'Create a group of upgrade units.'
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:
@@ -38,29 +38,39 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
-    component_type:
-        description: 'Component whose upgrade plan is to be changed'
-        choices:
-            - host
-            - edge
-            - mp
+    type:
+        description: 'Component type'
         required: true
         type: str
     parallel:
         description: 'Upgrade Method to specify whether the upgrade is 
                       to be performed serially or in parallel'
-        required: true
+        required: false
         type: boolean
-    pause_after_each_group:
-        description: 'Flag to indicate whether to pause the upgrade after
-                      upgrade of each group is completed'
-        required: true
+    upgrade_unit_count:
+        description: 'Count of upgrade units in the group'
+        required: false
+        type: int
+    upgrade_units:
+        description: 'List of upgrade units in the group'
+        required: false
+        type: list
+    enabled:
+        description: 'Flag to indicate whether upgrade of this group is enabled or not'
+        required: false
         type: boolean
-    pause_on_error:
-        description: 'Flag to indicate whether to pause the upgrade plan 
-                      execution when an error occurs'
-        required: true
-        type: boolean
+    extended_configuration:
+        description: 'Extended configuration for the group'
+        required: false
+        type: list
+    resource_type:
+        description: 'Resource type'
+        required: false
+        type: str
+    tags:
+        description: 'Opaque identifiers meaningful to the API user'
+        required: false
+        type: list
     state:
         choices:
             - present
@@ -72,16 +82,17 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Modifies default upgrade plan
-  nsxt_upgrade_plan:
+- name: Modifies default upgrade Group
+  nsxt_upgrade_groups:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
-      component_type: 'host'
+      display_name: "MyUpgradeGroup"
+      type: 'MP'
       parallel: True
-      pause_after_each_group: True
-      pause_on_error: True
+      enabled: True
+      state: Present
 '''
 
 RETURN = '''# '''
@@ -167,7 +178,7 @@ def main():
     else:
       try:
         (rc, resp) = request(manager_url + '/upgrade/upgrade-unit-'
-                            'groups/%s' % upgrade_group_params, 
+                            'groups/%s' % upgrade_unit_group_id,
                             data=request_data, headers=headers, method='PUT', 
                             url_username=mgr_username, url_password=mgr_password, 
                             validate_certs=validate_certs, ignore_errors=True)
