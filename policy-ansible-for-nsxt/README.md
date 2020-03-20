@@ -4,7 +4,7 @@ This project supports the creation, update, and deletion of NSX-T resources usin
 
 ## Prerequisites
 1. Python3 >= 3.5.2
-2. Ansible >= 2.8.1
+2. Ansible >= 2.9.0
 
 ## NSX-T Resources Supported
 1. Tier-0 Gateway
