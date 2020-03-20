@@ -66,6 +66,7 @@ EXAMPLES = '''
     display_name: "IPBlock-Tenant-1",
     description: "IPBlock-Tenant-1 Description",
     cidr: "192.168.0.0/16"
+    state: present
 '''
 
 RETURN = '''# '''
