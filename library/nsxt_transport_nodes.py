@@ -521,8 +521,6 @@ EXAMPLES = '''
           ip_pool_name: "IPPool-IPV4-1"
         transport_zone_endpoints:
         - transport_zone_name: "TZ1"
-    transport_zone_endpoints:
-    - transport_zone_name: "TZ1"
     node_deployment_info:
       resource_type: "HostNode"
       display_name: "Host_1"

@@ -60,6 +60,14 @@ options:
         description: 'Opaque identifiers meaningful to the API user'
         required: false
         type: str
+    description:
+        description: 'description of the resource'
+        required: false
+        type: str
+    ip_release_delay:
+        description: 'IP address release delay'
+        required: false
+        type: int
 
     
 '''
@@ -132,7 +140,9 @@ def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
                         subnets=dict(required=False, type='list'),
-                        tags=dict(required=False, type='str'),
+                        tags=dict(required=False, type='list'),
+                        description=(required=False, type='str'),
+                        ip_release_delay=(required=False, type='int'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
