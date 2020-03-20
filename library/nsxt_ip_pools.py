@@ -141,8 +141,8 @@ def main():
   argument_spec.update(display_name=dict(required=True, type='str'),
                         subnets=dict(required=False, type='list'),
                         tags=dict(required=False, type='list'),
-                        description=(required=False, type='str'),
-                        ip_release_delay=(required=False, type='int'),
+                        description=dict(required=False, type='str'),
+                        ip_release_delay=dict(required=False, type='int'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
