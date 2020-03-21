@@ -95,7 +95,9 @@ def wait_for_post_upgrade_checks_to_execute(module, manager_url, endpoint, mgr_u
       results = resp['results']
       for result in results:
         if result['post_upgrade_status']['status'] != 'COMPLETED' and \
-           result['type'] == component_type.upper():
+           result['type'] == component_type.upper() and \
+           result['upgrade_unit_count'] > 0 and \
+           result['status'] != 'NOT_STARTED':
           flag = False
       if flag:
         return None
