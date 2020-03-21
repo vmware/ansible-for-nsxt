@@ -21,11 +21,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nsxt_logical_switches_facts
-short_description: List All Logical Ports
-description: Returns information about all configured logical switch ports. Logical
-             switch ports connect to VM virtual network interface cards (NICs). Each
-             logical port is associated with one logical switch.
-
+short_description: List All Logical Switches
+description: Returns information about all configured logical switches.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

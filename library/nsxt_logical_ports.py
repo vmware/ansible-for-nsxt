@@ -139,6 +139,14 @@ options:
         description: Name of logical Switch
         required: true
         type: str
+    description:
+        description: 'Description of the resource'
+        required: false
+        type: str
+    tags:
+        description: 'Opaque identifiers meaningful to the API user'
+        required: false
+        type: str
     state:
         choices:
         - present
@@ -148,7 +156,7 @@ options:
                      'absent' is used to delete resource."
         required: true
     switching_profiles:
-        description: Switching Profiles
+        description: List of Switching Profiles name
         required: false
         type: list 
 '''
@@ -294,6 +302,8 @@ def main():
                         extra_configs=dict(required=False, type='list'),
                         address_bindings=dict(required=False, type='list'),
                         ignore_address_bindings=dict(required=False, type='list'),
+                        description=dict(required=False, type='str'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
