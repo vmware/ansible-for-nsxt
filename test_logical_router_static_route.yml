@@ -10,6 +10,7 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
+        display_name: "static_route"
         logical_router_name: "tier-0"
         next_hops:
         - administrative_distance: '2'
