@@ -93,6 +93,18 @@ options:
         description: Replication mode of the Logical Switch
         required: false
         type: str
+    description:
+        description: Description of the resource
+        required: False
+        type: str
+    span:
+        description: List of Local Manager IDs the logical switch extends
+        required: False
+        type: list
+    tags:
+        description: Opaque identifiers meaningful to the API user
+        required: False
+        type: list
     state:
         choices:
         - present
@@ -112,7 +124,7 @@ options:
         required: false
         type: str
     switching_profiles:
-        description: Switching Profiles
+        description: List of Switching Profile Names
         required: false
         type: list
     transport_zone_name:
@@ -271,6 +283,9 @@ def main():
                         address_bindings=dict(required=False, type='list'),
                         switching_profiles=dict(required=False, type='list'),
                         lswitch_id=dict(required=False, type='str'),
+                        description=dict(required=False, type='str'),
+                        span=dict(required=False, type='list'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

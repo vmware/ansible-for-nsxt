@@ -103,7 +103,7 @@ options:
         required: false
         type: dict
     description:
-        description: Description of the pre/post-upgrade check
+        description: Description of the resource
         required: false
         type: str
     display_name:
@@ -160,6 +160,22 @@ options:
         description: Type of Logical Router
         required: true
         type: str
+    ipv6_profiles:
+        description: IPv6 Profiles
+        required: false
+        type: dict
+        dad_profile_id:
+            description: DAD profile id
+            required: False
+            type: str
+        ndra_profile_id:
+            description: NDRA profile id
+            required: False
+            type: str
+    tags:
+        description: Opaque identifiers meaningful to the API user
+        required: false
+        type: list
     state:
         choices:
         - present
@@ -285,6 +301,10 @@ def main():
                         preferred_edge_cluster_member_index=dict(required=False, type='int'),
                         high_availability_mode=dict(required=False, type='str'),
                         edge_cluster_name=dict(required=False, type='str'),
+                        tags=dict(required=False, type='list'),
+                        ipv6_profiles=dict(required=False, type='dict',
+                        dad_profile_id=dict(required=False, type='str'),
+                        ndra_profile_id=dict(required=False, type='str')),
                         resource_type=dict(required=False, type='str', choices=['LogicalRouter']),
                         state=dict(required=True, choices=['present', 'absent']))
 
