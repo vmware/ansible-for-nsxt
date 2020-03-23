@@ -156,7 +156,7 @@ options:
                      'absent' is used to delete resource."
         required: true
     switching_profiles:
-        description: List of Switching Profiles name
+        description: List of Switching Profiles name and type
         required: false
         type: list 
 '''
@@ -245,7 +245,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         for host_switch_profile in host_switch_profiles:
             profile_obj = {}
             profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                    "/host-switch-profiles", host_switch_profile['name'])
+                                                    "/switching-profiles", host_switch_profile['name'])
             profile_obj['key'] = host_switch_profile['type']
             host_switch_profile_ids.append(profile_obj)
     logical_port_params['switching_profile_ids'] = host_switch_profile_ids
