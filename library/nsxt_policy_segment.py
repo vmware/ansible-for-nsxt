@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_segment
+module: nsxt_policy_segment
 short_description: Create or Delete a Policy Segment
 description:
     Creates or deletes a Policy Segment.
@@ -568,7 +568,7 @@ options:
 
 EXAMPLES = '''
 - name: create Segment
-  nsxt_segment:
+  nsxt_policy_segment:
     hostname: "10.10.10.10"
     nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
     nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
@@ -882,7 +882,8 @@ class NSXTSegment(NSXTBaseRealizableResource):
             nsx_resource_params["transport_zone_path"] = (
                 transport_zone_base_url + "/" + transport_zone_id)
 
-        if nsx_resource_params['advanced_config']:
+        if 'advanced_config' in nsx_resource_params and nsx_resource_params[
+                'advanced_config']:
             if nsx_resource_params['advanced_config'][
                     'address_pool_id']:
                 address_pool_id = nsx_resource_params['advanced_config'].pop(

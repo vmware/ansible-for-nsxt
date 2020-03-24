@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: nsxt_tier0
+module: nsxt_policy_tier0
 short_description: 'Create/Update/Delete a Tier-0 and associated resources'
 description: Creates/Updates/Deletes a Tier-0 resource using the Policy API.
              Assocaited resources include 'Tier-0 Locale Service' and
@@ -1189,7 +1189,7 @@ options:
 
 EXAMPLES = '''
 - name: create Tier0
-  nsxt_tier0:
+  nsxt_policy_tier0:
     hostname: "10.10.10.10"
     nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
     nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

@@ -8,7 +8,7 @@
   become: yes
   tasks:
     - name: create Security Policy
-      nsxt_security_policy:
+      nsxt_policy_security_policy:
         hostname: "default"
         nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
         nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

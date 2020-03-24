@@ -1,6 +1,6 @@
 # Ansible for NSX-T
 
-# Overview
+## Overview
 This repository contains NSX-T Ansible Modules, which one can use with
 Ansible to work with [VMware NSX-T Data Center][vmware-nsxt].
 
@@ -14,10 +14,22 @@ These modules are maintained by [VMware](https://www.vmware.com/).
 
 Documentation on the NSX platform can be found at the [NSX-T Documentation page](https://docs.vmware.com/en/VMware-NSX-T/index.html)
 
-### Supported NSX Objects/Workflows
-The modules in this repository are focused on enabling automation of installation workflows of NSX-T.
 
-#### Deployment and installation modules
+## Prerequisites
+We assume that ansible is already installed.
+These modules support ansible version 2.8.1 and onwards.
+
+* Python3 >= 3.5.2
+* PyVmOmi - Python library for vCenter api.
+* OVF Tools - Ovftool is used for ovf deployment.
+
+### Supported NSX Objects/Workflows
+The modules in this repository are focused on enabling automation of installation workflows of NSX-T. We have modules that support the legacy MP and new Policy API.
+
+#### MP API
+MP API modules can be used to configure an NSX resource with one-to-one mapping.
+
+##### Deployment and installation modules
 
 * nsxt_deploy_ova
 * nsxt_licenses
@@ -47,7 +59,7 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_compute_collection_transport_templates_facts
 * nsxt_controller_manager_auto_deployment
 
-##### Logical networking modules
+###### Logical networking modules
 * nsxt_logical_ports
 * nsxt_logical_ports_facts
 * nsxt_logical_routers
@@ -60,17 +72,35 @@ The modules in this repository are focused on enabling automation of installatio
 * nsxt_ip_blocks
 * nsxt_ip_blocks_facts
 
+#### Policy API
+Policy API modules are aggregated such that logical constructs related to an NSX resource can be configured using a single playbook. They can be identified with prefix *nsxt_policy_*. The below list outlines the supported modules and the resources that can be configured through a module.
 
-# Prerequisites
-We assume that ansible is already installed. 
-These modules support ansible version 2.7 and onwards. 
+1. Tier-0 Gateway (nsxt_policy_tier0)
+   1. Tier-0 Locale Services
+   2. Tier-0 Static Routes
+   3. Tier-0 Interface
+   4. Tier-0 BGP
+   5. Tier-0 BGP Neighbors
+   6. Tier-0 VRF
+   7. Tier-0 BFD Peers
+2. Tier-1 Gateway (nsxt_policy_tier1)
+   1. Tier-1 Locale Services
+   2. Tier-1 Static Routes
+   3. Tier-1 Interface
+3. Segment (nsxt_policy_segment)
+   1. Segment Port
+4. Policy Group (nsxt_policy_group)
+5. Security Policy and Firewall rules (nsxt_policy_security_policy)
+6. IP Pools (nsxt_policy_ip_pool)
+   1. IP Address Pool Block Subnet
+   2. IP Address Pool Static Subnet
+7. IP Blocks (nsxt_policy_ip_block)
+8. BFD Config (nsxt_policy_bfd_config)
+9. VM Tags (nsxt_vm_tags)
 
-* PyVmOmi - Python library for vCenter api.
+Note that to add a new modules in Policy API, it's base class name should be added in the BASE_RESOURCES in module_utils/nsxt_base_resource.py
 
-* OVF Tools - Ovftool is used for ovf deployment. 
-
-
-# Build & Run
+## Build & Run
 
 ### Install PyVmOmi
 ```
@@ -79,10 +109,10 @@ pip install --upgrade pyvmomi pyvim requests ssl
 ### Download and Install Ovf tool 4.3 - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL430&productId=742)
 (Note: Using ovftool version 4.0/4.1 causes OVA/OVF deployment failure with Error: cURL error: SSL connect error\nCompleted with errors\n)
 
-### Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/master.zip).
+### Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/dev.zip).
 ```
-unzip ansible-for-nsxt-master.zip
-cd ansible-for-nsxt-master
+unzip ansible-for-nsxt-dev.zip
+cd ansible-for-nsxt-dev
 ```
 To run a sample Ansible playbook - To create a sample test topology using deployments and install module.
 
@@ -92,14 +122,16 @@ ansible-playbook test_basic_topology.yml -vvv
 ```
 
 ### Authentication
-Ansible-for-nsxt supports two types of authentication.
-* Basic server authentication
-* Certificate based authentication
 
-#### Basic server authentication
+#### Using MP API
+Ansible-for-nsxt supports two types of authentication using MP API.
+1. Basic server authentication
+2. Certificate based authentication
+
+##### Basic server authentication
 In basic server authentication, client has to explicitly provide NSX username and password for the NSX manager. The credentials have to be listed in ansible-playbook.
 
-#### Certificate based authentication
+##### Certificate based authentication
 In certificate based authentication, client has to register their certificates to NSX manager using nsxt_certificates task. After registering the certificates, client has to create its own principal identity on NSX manager using nsxt_principal_identities taks.
 The process of certificate registration and creation of principal identity has to be done using basic server authentication. Use test_certificates.yml and test_principal_identities.yml to match the values according to the client's environment.
 ```
@@ -109,7 +141,7 @@ ansible-playbook test_principal_identities -vvv
 The path of the .p12 file i.e the file containing public and private key has to be set to an environment variable named NSX_MANAGER_CERT_PATH. 
 **Note:** Make sure NSX_MANAGER_CERT_PATH is set in the same remote host, where modules would be executed. 
 
-##### Generating certificates?
+###### Generating certificates?
 Following commands can be used in order to generate certificates.
 ```
 openssl req -newkey rsa:2048 -extensions usr_cert -nodes -keyout nsx_certificate.key -x509 -days 365 -out nsx_certificate.crt -subj "/C=US/ST=California/L=PaloAlto/O=VMware/CN=certauth-test" -sha256
@@ -123,12 +155,103 @@ The nsx_certificate.crt file generated as output from the above command contains
 the file nsx_certificate.p12 file contains the public and private key generated. The path of nsx_certificate.p12 file has to be set in the environment variable NSX_MANAGER_CERT_PATH.
 
 Note: usr_cert tells OpenSSL to generate a client certificate. This must be defined in openssl.cnf.
+
+#### Using Policy API
+All the Policy API based Ansible Modules provide the following authentication mechanisms:
+
+##### Basic Authentication
+This is the same as in MP API. It can be used by specifying the following fields in the playbook:
+1. **username**: The username to authenticate with the NSX manager
+2. **password**: The password to authenticate with the NSX manager
+
+For example:
+```yaml
+- hosts: localhost
+  tasks:
+    - name: Update Tier0
+      nsxt_policy_tier0:
+        hostname: "default"
+        username: admin
+        password: my-password
+        validate_certs: False
+        display_name: test-tier0-1
+        state: present
+```
+
+##### Prinicipal Identity
+There are 2 ways to consume the Principal Identity certificates.
+
+###### Using Environment variable
+This is same as explained in the previous section: **Certificate based authentication**
+
+###### Specying in the playbook
+By specifying the following fields in the playbook:
+1. **nsx_cert_path**: Path to the certificate created for the Principal Identity using which the CRUD operations should be performed. If the certificate is a .p12 file, only this attribute is required. Otherwise, *nsx_key_path* is also required.
+2. **nsx_key_path**: Path to the certificate key created for the Principal Identity using which the CRUD operations should be performed
+
+For example:
+```yaml
+- hosts: localhost
+  tasks:
+    - name: Update Tier0
+      nsxt_policy_tier0:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: False
+        display_name: test-tier0-1
+        state: present
+```
+
+##### vIDM
+When NSX-T is configured to use VMware Identity Manager (vIDM) for authentication, you can supply an Authorization header with an authentication type of *Remote*. The header content should consist of a base64-encoded string containing the username@domain and password separated by a single colon (":") character, as specified in RFC 1945 section 11.1.
+
+For example, to authenticate a request using the credentials of user jsmith@example.com with password Sk2LkPM!, include the following key:value pair under **request_headers** in the playbook::
+- Authorization: 'Remote anNtaXRoQGV4YW1wbGUuY29tOlNrMkxrUE0h'
+
+For example:
+```yaml
+- hosts: localhost
+  tasks:
+    - name: Update Tier0
+      nsxt_policy_tier0:
+        hostname: "default"
+        request_headers:
+          Authorization: 'Remote anNtaXRoQGV4YW1wbGUuY29tOlNrMkxrUE0h'
+        validate_certs: False
+        display_name: test-tier0-1
+        state: present
+```
+
+##### SSL Verification
+You can use the flag *validate_certs* to perform SSL verification. You can also specify the path to a CA bundle using the paratemer *ca_path* in the playbook.
+
+For example:
+```yaml
+- hosts: localhost
+  tasks:
+    - name: Update Tier0
+      nsxt_policy_tier0:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        display_name: test-tier0-1
+        state: present
+```
+
+# Unit Testing
+To test the Ansible modules or see examples of playbooks, please put the respective playbook from unit_tests folder to the base folder and run the ansible-playbook.
+
+Please note that you must specify the correct vmware args in order to successfully update the resources.
+
 # Interoperability
 
 The following versions of NSX are supported:
 
  * NSX-T 2.4
- * Ansible 2.7
+ * Ansible 2.8.1
 
 # Contributing
 

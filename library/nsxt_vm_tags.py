@@ -101,7 +101,7 @@ options:
     remove_other_tags:
         description:
             - Remove the tags that are not specified in the add_tags
-            - Caution: If this is True, all tags that are not in add_tags will
+            - Caution; If this is True, all tags that are not in add_tags will
               be removed
         default: false
 '''

@@ -6,18 +6,17 @@
   vars_files:
     - build_topology_vars.yml
   tasks:
-    - name: Modify Segment
-      nsxt_segment:
+    - name: Modify Security Policy
+      nsxt_policy_security_policy:
         hostname: "{{ nsx_manager }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"
-        state: "{{ state }}"
         validate_certs: "{{ validate_certs }}"
+        state: "{{ state }}"
         display_name: "{{ item.display_name }}"
-        tier1_id: "{{ item.tier1_display_name }}"
-        domain_name: "{{ item.domain_name }}"
-        transport_zone_display_name: "{{ item.tz }}"
-        subnets: "{{ item.subnets }}"
+        domain_id: "{{ item.domain_id }}"
+        category: "{{ item.category }}"
+        rules: "{{ item.rules }}"
         tags: "{{ item.tags }}"
       with_items:
-        - "{{ segments }}"
+        - "{{ security_policies }}"
