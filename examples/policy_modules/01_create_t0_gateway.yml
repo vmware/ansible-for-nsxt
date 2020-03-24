@@ -6,17 +6,16 @@
   vars_files:
     - build_topology_vars.yml
   tasks:
-    - name: Modify Security Policy
-      nsxt_security_policy:
+    - name: Modify Tier0
+      nsxt_policy_tier0:
         hostname: "{{ nsx_manager }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"
         validate_certs: "{{ validate_certs }}"
         state: "{{ state }}"
         display_name: "{{ item.display_name }}"
-        domain_id: "{{ item.domain_id }}"
-        category: "{{ item.category }}"
-        rules: "{{ item.rules }}"
+        ha_mode: "{{ item.ha_mode }}"
         tags: "{{ item.tags }}"
+        locale_services: "{{ item.locale_services }}"
       with_items:
-        - "{{ security_policies }}"
+        - "{{ tier0_gateways }}"

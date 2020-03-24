@@ -7,7 +7,7 @@
     - build_topology_vars.yml
   tasks:
     - name: Modify Tier1
-      nsxt_tier1:
+      nsxt_policy_tier1:
         hostname: "{{ nsx_manager }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"

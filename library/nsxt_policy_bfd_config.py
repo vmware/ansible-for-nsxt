@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_bfd_config
+module: nsxt_policy_bfd_config
 short_description: Create or Delete a Policy BFD Config
 description:
     Creates or deletes a Policy BFD Config.
@@ -128,7 +128,7 @@ options:
 
 EXAMPLES = '''
 - name: Update BFD Config
-  nsxt_bfd_config:
+  nsxt_policy_bfd_config:
     hostname: "10.10.10.10"
     nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
     nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

@@ -8,7 +8,7 @@
   become: yes
   tasks:
     - name: Update Segment
-      nsxt_segment:
+      nsxt_policy_segment:
         hostname: "default"
         nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
         nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

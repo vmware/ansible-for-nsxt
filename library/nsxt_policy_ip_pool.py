@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_ip_pool
+module: nsxt_policy_ip_pool
 short_description: Create or Delete a Policy IP Pool
 description:
     Creates or deletes a Policy IP Pool.
@@ -280,7 +280,7 @@ options:
 
 EXAMPLES = '''
 - name: create IP Pool
-  nsxt_ip_pool:
+  nsxt_policy_ip_pool:
     hostname: "10.10.10.10"
     nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
     nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

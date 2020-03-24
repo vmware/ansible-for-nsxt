@@ -8,7 +8,7 @@
   become: yes
   tasks:
     - name: create IP Pool
-      nsxt_ip_pool:
+      nsxt_policy_ip_pool:
         hostname: "default"
         nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
         nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key

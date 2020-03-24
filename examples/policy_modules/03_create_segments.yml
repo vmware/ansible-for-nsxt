@@ -6,16 +6,18 @@
   vars_files:
     - build_topology_vars.yml
   tasks:
-    - name: Modify Tier0
-      nsxt_tier0:
+    - name: Modify Segment
+      nsxt_policy_segment:
         hostname: "{{ nsx_manager }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"
-        validate_certs: "{{ validate_certs }}"
         state: "{{ state }}"
+        validate_certs: "{{ validate_certs }}"
         display_name: "{{ item.display_name }}"
-        ha_mode: "{{ item.ha_mode }}"
+        tier1_id: "{{ item.tier1_display_name }}"
+        domain_name: "{{ item.domain_name }}"
+        transport_zone_display_name: "{{ item.tz }}"
+        subnets: "{{ item.subnets }}"
         tags: "{{ item.tags }}"
-        locale_services: "{{ item.locale_services }}"
       with_items:
-        - "{{ tier0_gateways }}"
+        - "{{ segments }}"
