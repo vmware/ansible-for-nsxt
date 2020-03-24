@@ -274,7 +274,7 @@ def main():
                         transport_zone_name=dict(required=True, type='str'),
                         ip_pool_name=dict(required=False, type='str'),
                         vlan=dict(required=False, type='int'),
-                        hybrid=dict(required=False, type='boolean'),
+                        hybrid=dict(required=False, type='bool'),
                         mac_pool_id=dict(required=False, type='str'),
                         vni=dict(required=False, type='int'),
                         vlan_trunk_spec=dict(required=False, type='dict',
