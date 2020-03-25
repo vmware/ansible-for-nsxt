@@ -651,7 +651,7 @@ options:
                              and so on.
                 type: dict
                 suboptions:
-                    enabled:
+                    bgp_enabled:
                         description: Flag to enable route redistribution.
                         type: bool
                         default: false
@@ -1683,7 +1683,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     type='dict',
                     required=False,
                     options=dict(
-                        enabled=dict(
+                        bgp_enabled=dict(
                             type='bool',
                             default=False
                         ),
