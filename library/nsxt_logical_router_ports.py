@@ -321,6 +321,43 @@ options:
         description: Associated VPN session identifier.
         required: false
         type: str
+    description:
+        description: Description of the resou
+        required: False
+        type: 'str'
+    ndra_profile_id:
+        description: NDRA Profile id
+        required: False
+        type: 'str'
+    enable_multicast:
+        description: Flag to enable/disable Multicast
+        required: False
+        type: 'bool'
+    routing_policies:
+        description: Routing policies used to specify how the traffic, which matches the
+                     policy routes, will be processed.
+        required: False
+        type: 'list'
+    ndra_prefix_config:
+        description: Configuration to override the neighbor discovery router advertisement
+                      prefix time parameters at the subnet level. Note that users are allowed
+                      to override the prefix time only for IPv6 subnets which are configured
+                      on the port.
+        required: False
+        type: 'list'
+    pim_config:
+        description: PIM configuration parameters
+        required: False
+        type: 'dict'
+        enabled:
+            description: Flag to enable/disable PIM
+            required: False
+            type: 'bool'
+            default: False
+    tags:
+        description: Opaque identifiers meaningful to the API user
+        required: False
+        type: list
     
 '''
 
@@ -396,6 +433,13 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_lr_port = get_lr_port_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params['display_name'])
     if existing_lr_port is None:
         return False
+    if existing_lr_port.__contains__('description') and logical_router_port_params.__contains__('description') and\
+       existing_lr_port['description'] != logical_router_port_params['description']:
+       return True
+    if existing_lr_port.__contains__('description') and not logical_router_port_params.__contains__('description'):
+        return True
+    if not existing_lr_port.__contains__('description') and logical_router_port_params.__contains__('description'):
+        return True
     if existing_lr_port['resource_type'] != logical_router_port_params['resource_type']:
         return True
     if existing_lr_port['logical_router_id'] != logical_router_port_params['logical_router_id']:
@@ -411,12 +455,19 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                        description=dict(required=False, type='str'),
+                        ndra_profile_id=dict(required=False, type='str'),
+                        enable_multicast=dict(required=False, type='bool'),
+                        routing_policies=dict(required=False, type='list'),
+                        ndra_prefix_config=dict(required=False, type='list'),
+                        pim_config=dict(required=False, type='dict',
+                        enabled=dict(required=False, type='bool', default=False)),
                         subnets=dict(required=False, type='list'),
                         urpf_mode=dict(required=False, type='str'),
                         mac_address=dict(required=False, type='str'),
                         linked_logical_switch_port_id=dict(required=False, type='dict',
                         profile_type=dict(required=True, type='str'),
-                        selected=dict(required=True, type='boolean'),
+                        selected=dict(required=True, type='bool'),
                         service=dict(required=False, type='dict',
                         ether_type=dict(required=True, type='int'),
                         destination_ports=dict(required=False, type='list'),
@@ -429,17 +480,17 @@ def main():
                         alg=dict(required=True, type='str'),
                         resource_type=dict(required=True, type='str')),
                         target_display_name=dict(required=False, type='str'),
-                        is_valid=dict(required=False, type='boolean'),
+                        is_valid=dict(required=False, type='bool'),
                         target_id=dict(required=False, type='str'),
                         target_type=dict(required=False, type='str')),
                         admin_state=dict(required=False, type='str'),
                         vpn_session_id=dict(required=False, type='str'),
-                        enable_netx=dict(required=False, type='boolean'),
+                        enable_netx=dict(required=False, type='bool'),
                         edge_cluster_member_index=dict(required=False, type='list'),
                         mtu=dict(required=False, type='int'),
                         linked_logical_router_port_id=dict(required=False, type='dict',
                         profile_type=dict(required=True, type='str'),
-                        selected=dict(required=True, type='boolean'),
+                        selected=dict(required=True, type='bool'),
                         service=dict(required=False, type='dict',
                         ether_type=dict(required=True, type='int'),
                         destination_ports=dict(required=False, type='list'),
@@ -452,12 +503,13 @@ def main():
                         alg=dict(required=True, type='str'),
                         resource_type=dict(required=True, type='str')),
                         target_display_name=dict(required=False, type='str'),
-                        is_valid=dict(required=False, type='boolean'),
+                        is_valid=dict(required=False, type='bool'),
                         target_id=dict(required=False, type='str'),
                         target_type=dict(required=False, type='str')),
                         logical_router_name=dict(required=True, type='str'),
                         service_bindings=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
