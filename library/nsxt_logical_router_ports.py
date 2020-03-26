@@ -427,6 +427,11 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params ):
     logical_router_port_params['logical_router_id'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
                 '/logical-routers', logical_router_port_params.pop('logical_router_name', None))
+    if logical_router_port_params.__contains__('linked_logical_switch_port_id') and \
+        logical_router_port_params['linked_logical_switch_port_id'].__contains__('target_display_name'):
+        if not logical_router_port_params['linked_logical_switch_port_id'].__contains__('target_id'):
+            logical_router_port_params['linked_logical_switch_port_id']['target_id'] = get_id_from_display_name(module, manager_url, mgr_username,
+                  mgr_password, validate_certs, '/logical-ports', logical_router_port_params['linked_logical_switch_port_id']['target_display_name'])
     return logical_router_port_params
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_port_params):
