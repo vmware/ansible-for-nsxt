@@ -10,9 +10,9 @@
     - name: Update Segment
       nsxt_policy_segment:
         hostname: "default"
-        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
-        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
-        validate_certs: True
+        username: "default"
+        password: "default"
+        validate_certs: False
         ca_path: /path/to/my/ca-bundle
         state: present
         domain_name: dn1

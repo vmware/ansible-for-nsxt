@@ -41,31 +41,12 @@ options:
         type: str
     username:
         description: The username to authenticate with the NSX manager.
+        required: true
         type: str
     password:
-        description:
-            - The password to authenticate with the NSX manager.
-            - Must be specified if username is specified
+        description: The password to authenticate with the NSX manager
+        required: true
         type: str
-    ca_path:
-        description: Path to the CA bundle to be used to verify host's SSL
-                     certificate
-        type: str
-    nsx_cert_path:
-        description: Path to the certificate created for the Principal
-                     Identity using which the CRUD operations should be
-                     performed
-        type: str
-    nsx_key_path:
-        description:
-            - Path to the certificate key created for the Principal Identity
-              using which the CRUD operations should be performed
-            - Must be specified if nsx_cert_path is specified
-        type: str
-    request_headers:
-        description: HTTP request headers to be sent to the host while making
-                     any request
-        type: dict
     display_name:
         description:
             - Display name.
@@ -538,7 +519,7 @@ options:
                              and so on.
                 type: dict
                 suboptions:
-                    enabled:
+                    bgp_enabled:
                         description: Flag to enable route redistribution.
                         type: bool
                         default: false
@@ -757,8 +738,8 @@ EXAMPLES = '''
 - name: create Tier1
   nsxt_policy_tier1:
     hostname: "10.10.10.10"
-    nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
-    nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+    username: "username"
+    password: "password"
     validate_certs: False
     display_name: test-tier22222
     state: present
@@ -1110,7 +1091,7 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     type='dict',
                     required=False,
                     options=dict(
-                        enabled=dict(
+                        bgp_enabled=dict(
                             type='bool',
                             default=False
                         ),
