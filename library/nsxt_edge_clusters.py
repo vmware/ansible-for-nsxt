@@ -52,6 +52,10 @@ options:
         description: 'Display name'
         required: true
         type: str
+    description:
+        description: Description of the resource
+        required: false
+        type: str
     members:
         description: "EdgeCluster only supports homogeneous members.
         These member should be backed by either EdgeNode or PublicCloudGatewayNode.
@@ -61,6 +65,34 @@ options:
         deployment types."
         required: false
         type: 'array of EdgeClusterMember'
+    allocation_rules:
+        description: Allocation rules for auto placement
+        required: false
+        type: list
+    enable_inter_site_forwarding:
+        description: Flag to enable inter site forwarding
+        required: false
+        type: bool
+    node_rtep_ips:
+        description: Remote tunnel endpoint ip address
+        required: false
+        type: list
+    member_node_type:
+        description: Node type of the cluster members
+        required: false
+        type: dict
+        EdgeDeploymentType:
+            description: Supported edge deployment type.
+            required: false
+            type: str
+    deployment_type:
+        description: Deplloyment type of the cluster members
+        required: false
+        type: dict
+        EdgeDeploymentType:
+            description: Supported edge deployment type.
+            required: false
+            type: str
     state:
         choices:
             - present
@@ -80,9 +112,9 @@ EXAMPLES = '''
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
-      display_name: edge-cluster-1
+      display_name: edge-cluster-1  `
       cluster_profile_bindings:
-        - profile_id: "ee7e2008-3626-4373-9ba4-521887840984"
+        - profile_name: "nsx-edge-profile"
           resource_type: EdgeHighAvailabilityProfile
       members:
         - transport_node_name: "TN_1"
@@ -145,12 +177,23 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_edge_cluster = get_edge_clusters_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_with_id['display_name'])
     if existing_edge_cluster is None:
         return False
+    if existing_edge_cluster.__contains__('description') and not edge_cluster_with_id.__contains__('description'):
+        return True
+    if not existing_edge_cluster.__contains__('description') and edge_cluster_with_id.__contains__('description'):
+        return True
+    if existing_edge_cluster.__contains__('description') and edge_cluster_with_id.__contains__('description') and \
+        existing_edge_cluster['description'] != edge_cluster_with_id['description']:
+        return True
+    if existing_edge_cluster.__contains__('members') and not edge_cluster_with_id.__contains__('members'):
+        return True
+    if not existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members'):
+        return True
     if existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members') and \
         existing_edge_cluster['members'] != edge_cluster_with_id['members']:
         return True
     return False
 
-def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params ):
+def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params):
     if edge_cluster_params.__contains__('members'):
         for transport_node in edge_cluster_params['members']:
             transport_node_name = transport_node.pop('transport_node_name', None)
@@ -158,11 +201,42 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
                                                     "/transport-nodes", transport_node_name)
     return edge_cluster_params
 
+def get_cluster_profiles(module, manager_url, mgr_username, mgr_password, validate_certs):
+    try:
+      (rc, resp) = request(manager_url+ '/cluster-profiles', headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing edge clusters. Error [%s]' % (to_native(err)))
+    return resp
+
+def get_profile_id_from_profile_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
+    cluster_profiles = get_cluster_profiles(module, manager_url, mgr_username, mgr_password, validate_certs)
+    for cluster_profile in cluster_profiles['results']:
+        if cluster_profile.__contains__('display_name') and cluster_profile['display_name'] == display_name:
+            return cluster_profile['id']
+    module.fail_json(msg='No id exist with display name %s' % display_name)
+
+def update_params_with_profile_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params):
+    if edge_cluster_params.__contains__('cluster_profile_bindings'):
+        for cluster_profile in edge_cluster_params['cluster_profile_bindings']:
+            cluster_profile_name = cluster_profile.pop('profile_name', None)
+            cluster_profile['profile_id'] = get_profile_id_from_profile_name(module, manager_url, mgr_username, mgr_password, validate_certs, cluster_profile_name)
+    return edge_cluster_params
+
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                        description=dict(required=False, type='str'),
                         cluster_profile_bindings=dict(required=False, type='list'),
                         members=dict(required=False, type='list'), # tranpost_node_name
+                        allocation_rules=dict(required=False, type='list'),
+                        deployment_type=dict(required=False, type='dict',
+                        EdgeDeploymentType=dict(required=False, type='str')),
+                        enable_inter_site_forwarding=dict(required=False, type='bool'),
+                        member_node_type=dict(required=False, type='dict',
+                        EdgeClusterNodeType=dict(required=False, type='str')),
+                        node_rtep_ips=dict(required=False, type='str'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -184,6 +258,7 @@ def main():
 
   if state == 'present':
     body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params)
+    body = update_params_with_profile_id(module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params)
     updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'

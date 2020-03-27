@@ -1,0 +1,21 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - build_topology_vars.yml
+  tasks:
+    - name: Modify Groups
+      nsxt_policy_group:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        state: "{{ state }}"
+        validate_certs: "{{ validate_certs }}"
+        domain_id: "{{ item.domain_id }}"
+        display_name: "{{ item.display_name }}"
+        expression: "{{ item.expression }}"
+        tags: "{{ item.tags }}"
+      with_items:
+        - "{{ mygroups }}"

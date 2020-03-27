@@ -90,10 +90,26 @@ options:
         description: Mac pool id that associated with a LogicalSwitch.
         required: false
         type: str
+    mac_pool_name:
+        description: Mac pool name that associated with a LogicalSwitch.
+        required: false
+        type: str
     replication_mode:
         description: Replication mode of the Logical Switch
         required: false
         type: str
+    description:
+        description: Description of the resource
+        required: False
+        type: str
+    span:
+        description: List of Local Manager IDs the logical switch extends
+        required: False
+        type: list
+    tags:
+        description: Opaque identifiers meaningful to the API user
+        required: False
+        type: list
     state:
         choices:
         - present
@@ -113,7 +129,7 @@ options:
         required: false
         type: str
     switching_profiles:
-        description: Switching Profiles
+        description: List of Switching Profile Names and type
         required: false
         type: list
     transport_zone_name:
@@ -213,17 +229,22 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         logical_switch_params['ip_pool_id'] = get_id_from_display_name (module, manager_url,
                                                                 mgr_username, mgr_password, validate_certs,
                                                                 "/pools/ip-pools", logical_switch_params.pop('ip_pool_name', None))
+    if 'mac_pool_name' in logical_switch_params and 'mac_pool_id' not in logical_switch_params:
+        logical_switch_params['mac_pool_id'] = get_id_from_display_name (module, manager_url,
+                                                                mgr_username, mgr_password, validate_certs,
+                                                                "/pools/mac-pools", logical_switch_params.pop('mac_pool_name', None))
+    if 'mac_pool_name' in logical_switch_params and 'mac_pool_id' in logical_switch_params:
+        logical_switch_params.pop('mac_pool_name', None)
     logical_switch_params['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                 mgr_username, mgr_password, validate_certs,
                                                                 "/transport-zones", logical_switch_params.pop('transport_zone_name', None))
-
     switch_profiles = logical_switch_params.pop('switching_profiles', None)
 
     switch_profile_ids = []
     for switch_profile in switch_profiles or []:
         profile_obj = {}
         profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                "/host-switch-profiles", switch_profile['name'])
+                                                "/switching-profiles", switch_profile['name'])
         profile_obj['key'] = switch_profile['type']
         switch_profile_ids.append(profile_obj)
     logical_switch_params['switching_profile_ids'] = switch_profile_ids
@@ -263,8 +284,9 @@ def main():
                         transport_zone_name=dict(required=True, type='str'),
                         ip_pool_name=dict(required=False, type='str'),
                         vlan=dict(required=False, type='int'),
-                        hybrid=dict(required=False, type='boolean'),
+                        hybrid=dict(required=False, type='bool'),
                         mac_pool_id=dict(required=False, type='str'),
+                        mac_pool_name=dict(required=False, type='str'),
                         vni=dict(required=False, type='int'),
                         vlan_trunk_spec=dict(required=False, type='dict',
                         vlan_ranges=dict(required=True, type='list')),
@@ -272,6 +294,9 @@ def main():
                         address_bindings=dict(required=False, type='list'),
                         switching_profiles=dict(required=False, type='list'),
                         lswitch_id=dict(required=False, type='str'),
+                        description=dict(required=False, type='str'),
+                        span=dict(required=False, type='list'),
+                        tags=dict(required=False, type='list'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

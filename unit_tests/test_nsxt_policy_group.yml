@@ -1,0 +1,26 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Policy Group
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create Policy Group
+      nsxt_policy_group:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        id: test-policy-group
+        display_name: test-policy-group
+        state: "present"
+        domain_id: "default"
+        expression:
+          - member_type: "VirtualMachine"
+            value: "webvm"
+            key: "Tag"
+            operator: "EQUALS"
+            resource_type: "Condition"

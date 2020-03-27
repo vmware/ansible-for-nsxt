@@ -8,7 +8,7 @@
     - answerfile.yml
   tasks:
     - name: Deploy and register a cluster node VM
-      nsxt_controller_manager_auto_deployment:
+      nsxt_manager_auto_deployment:
           hostname: "{{hostname}}"
           username: "{{username}}"
           password: "{{password}}"
@@ -24,9 +24,11 @@
             deployment_config:
               placement_type: VsphereClusterNodeVMDeploymentConfig
               vc_name: "VC1"
-              management_network_id: "network-16"
+              vc_username: "administrator@vsphere.local"
+              vc_password: "Admin!23"
+              management_network: "VM Network"
               hostname: "manager5.vmware.com"
-              compute_id: "domain-c8"
-              storage_id: "datastore-13"
+              compute: "HostCluster"
+              storage: "datastore01"
           #node_id: 7503e86e-c502-46fc-8d91-45a06d314d88
           state: present

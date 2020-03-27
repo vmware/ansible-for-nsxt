@@ -78,7 +78,7 @@ options:
         required: true
     transport_zone_endpoints:
         description: Transport zone endpoints.
-        required: true
+        required: False
         type: array of TransportZoneEndPoint
     
 '''
@@ -100,14 +100,15 @@ EXAMPLES = '''
         - name: "uplinkProfile1"
           type: "UplinkHostSwitchProfile"
         host_switch_name: "hostswitch1"
+        host_switch_mode: "STANDARD"
         pnics:
         - device_name: "vmnic1"
           uplink_name: "uplink-1"
         ip_assignment_spec:
           resource_type: "StaticIpPoolSpec"
           ip_pool_name: "IPPool-IPV4-1"
-    transport_zone_endpoints:
-    - transport_zone_name: "TZ1"
+        transport_zone_endpoints:
+        - transport_zone_name: "TZ1"
     state: "present"
 
 '''
@@ -123,6 +124,7 @@ from ansible.module_utils._text import to_native
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
 SUCCESS_STATES = ["partial_success", "success"]
+FABRIC_VIRTUAL_SWITCH_TYPE = ["VDS"]
 
 def get_transport_node_profile_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -140,6 +142,19 @@ def get_transport_node_profiles(module, manager_url, mgr_username, mgr_password,
     except Exception as err:
       module.fail_json(msg='Error accessing transport node profiles. Error [%s]' % (to_native(err)))
     return resp
+
+def get_host_switch_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and result['display_name'] == display_name:
+            return result['uuid']
+    if exit_if_not_found:
+        module.fail_json(msg='No id exist with display name %s' % display_name)
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
     try:
@@ -164,6 +179,13 @@ def get_tnp_from_display_name(module, manager_url, mgr_username, mgr_password, v
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_profile_params ):
     for host_switch in transport_node_profile_params['host_switch_spec']['host_switches']:
+        if host_switch.__contains__('host_switch_type') and host_switch['host_switch_type'] in FABRIC_VIRTUAL_SWITCH_TYPE:
+            if host_switch.__contains__('host_switch_name'):
+                host_switch['host_switch_id'] = get_host_switch_id_from_display_name(module, manager_url, mgr_username, 
+                                                                     mgr_password, validate_certs,
+                                                                     '/fabric/virtual-switches', host_switch['host_switch_name'])
+            else:
+                module.fail_json(msg='Failing as host_switch_name is not provided for host switch of type: %s' % host_switch['host_switch_type'])
         host_switch_profiles = host_switch.pop('host_switch_profiles', None)
         host_switch_profile_ids = []
         for host_switch_profile in host_switch_profiles:
@@ -175,10 +197,17 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         host_switch['host_switch_profile_ids'] = host_switch_profile_ids
         ip_pool_id = None
         if host_switch.__contains__('ip_assignment_spec'):
-            ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
-            host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
+            if host_switch['ip_assignment_spec'].__contains__('ip_pool_name'):
+                ip_pool_name = host_switch['ip_assignment_spec'].pop('ip_pool_name', None)
+                host_switch['ip_assignment_spec']['ip_pool_id'] = get_id_from_display_name (module, manager_url,
                                                                                         mgr_username, mgr_password, validate_certs,
                                                                                         "/pools/ip-pools", ip_pool_name)
+        if host_switch.__contains__('transport_zone_endpoints'):
+            for transport_zone_endpoint in host_switch['transport_zone_endpoints']:
+                transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
+                transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
+                                                                                    mgr_username, mgr_password, validate_certs,
+                                                                                    "/transport-zones", transport_zone_name)
     if transport_node_profile_params.__contains__('transport_zone_endpoints'):
         for transport_zone_endpoint in transport_node_profile_params['transport_zone_endpoints']:
             transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
@@ -225,7 +254,7 @@ def main():
                 host_switches=dict(required=True, type='list'),
                 resource_type=dict(required=True, type='str')),
                 resource_type=dict(required=True, type='str'),
-                transport_zone_endpoints=dict(required=True, type='list'),
+                transport_zone_endpoints=dict(required=False, type='list'),
                 state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

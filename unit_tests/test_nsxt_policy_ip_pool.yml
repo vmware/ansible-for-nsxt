@@ -1,0 +1,51 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test IP Pool
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create IP Pool
+      nsxt_policy_ip_pool:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        display_name: test-ip-pool-1
+        state: "present"
+        tags:
+        - tag: "a"
+          scope: "b"
+        pool_block_subnets:
+          - id: test-ip-subnet-1
+            state: present
+            ip_block_id: "test-ip-blk-1"
+            size: 16
+          - display_name: test-ip-subnet-2
+            state: present
+            ip_block_id: "test-ip-blk-1"
+            size: 16
+          - display_name: test-ip-subnet-3
+            state: present
+            ip_block_id: "test-ip-blk-1"
+            size: 8
+        pool_static_subnets:
+          - id: test-ip-static-subnet-1
+            state: present
+            allocation_ranges:
+              - start: '192.116.0.10'
+                end: '192.116.0.20'
+              - start: '192.116.0.30'
+                end: '192.116.0.40'
+            cidr: '192.116.0.0/26'
+          - display_name: test-ip-static-subnet-2
+            state: present
+            allocation_ranges:
+              - start: '192.116.1.10'
+                end: '192.116.1.20'
+              - start: '192.116.1.30'
+                end: '192.116.1.40'
+            cidr: '192.116.1.0/26'
