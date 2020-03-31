@@ -73,7 +73,7 @@ def main():
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
   changed = False
-  wait_time = 10
+  wait_time = 10 # wait till 30 min
   while wait_time < (module.params['wait_time'] *60):
       try:
         current_time = datetime.now()
