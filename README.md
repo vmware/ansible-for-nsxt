@@ -14,12 +14,19 @@ These modules are maintained by [VMware](https://www.vmware.com/).
 
 Documentation on the NSX platform can be found at the [NSX-T Documentation page](https://docs.vmware.com/en/VMware-NSX-T/index.html)
 
+## NSX Compatibility
+
+The following versions of NSX are supported:
+
+ * NSX-T 2.5.1
+ * NSX-T 2.5
+ * NSX-T 2.4
 
 ## Prerequisites
 We assume that ansible is already installed.
-These modules support ansible version 2.8.1 and onwards.
+These modules support ansible version 2.9.0 and onwards.
 
-* Python3 >= 3.5.2
+* Python3 >= 3.6.8
 * PyVmOmi - Python library for vCenter api.
 * OVF Tools - Ovftool is used for ovf deployment.
 
@@ -250,13 +257,6 @@ For example:
 To test the Ansible modules or see examples of playbooks, please put the respective playbook from unit_tests folder to the base folder and run the ansible-playbook.
 
 Please note that you must specify the correct vmware args in order to successfully update the resources.
-
-# Interoperability
-
-The following versions of NSX are supported:
-
- * NSX-T 2.4
- * Ansible 2.8.1
 
 # Contributing
 
