@@ -38,7 +38,7 @@ import inspect
 # Policy API here. Required to infer base resource params.
 BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
                   "NSXTSecurityPolicy", "NSXTPolicyGroup",
-                  "NSXTIpBlock", "NSXTIpPool", "NSXTBFDConfig"}
+                  "NSXTIpBlock", "NSXTIpPool"}
 
 
 class NSXTBaseRealizableResource(ABC):
@@ -69,23 +69,17 @@ class NSXTBaseRealizableResource(ABC):
         mgr_hostname = self.module.params['hostname']
         mgr_username = self.module.params['username']
         mgr_password = self.module.params['password']
-        nsx_cert_path = self.module.params['nsx_cert_path']
-        nsx_key_path = self.module.params['nsx_key_path']
-
-        request_headers = self.module.params['request_headers']
-        ca_path = self.module.params['ca_path']
-        validate_certs = self.module.params['validate_certs']
 
         # Each manager has an associated PolicyCommunicator
         self.policy_communicator = PolicyCommunicator.get_instance(
-            mgr_hostname, mgr_username, mgr_password, nsx_cert_path,
-            nsx_key_path, request_headers, ca_path, validate_certs)
+            mgr_username, mgr_hostname, mgr_password)
 
         if resource_params is None:
             resource_params = self.module.params
 
         self.resource_params = resource_params
 
+        self.validate_certs = self.module.params['validate_certs']
         self._state = self.get_attribute('state', resource_params)
         if not (hasattr(self, 'id') and self.id):
             if self.get_resource_name() in BASE_RESOURCES:
@@ -678,7 +672,7 @@ class NSXTBaseRealizableResource(ABC):
                                          get_resource_base_url(
                                              baseline_args=self.baseline_args))
             (rc, resp) = self.policy_communicator.request(
-                resource_base_url + suffix,
+                resource_base_url + suffix, validate_certs=self.validate_certs,
                 ignore_errors=ignore_error, method=method, data=data)
             return (rc, resp)
         except Exception as e:

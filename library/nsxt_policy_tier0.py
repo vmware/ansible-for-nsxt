@@ -41,31 +41,12 @@ options:
         type: str
     username:
         description: The username to authenticate with the NSX manager.
+        required: true
         type: str
     password:
-        description:
-            - The password to authenticate with the NSX manager.
-            - Must be specified if username is specified
+        description: The password to authenticate with the NSX manager
+        required: true
         type: str
-    ca_path:
-        description: Path to the CA bundle to be used to verify host's SSL
-                     certificate
-        type: str
-    nsx_cert_path:
-        description: Path to the certificate created for the Principal
-                     Identity using which the CRUD operations should be
-                     performed
-        type: str
-    nsx_key_path:
-        description:
-            - Path to the certificate key created for the Principal Identity
-              using which the CRUD operations should be performed
-            - Must be specified if nsx_cert_path is specified
-        type: str
-    request_headers:
-        description: HTTP request headers to be sent to the host while making
-                     any request
-        type: dict
     display_name:
         description:
             - Display name.
@@ -265,97 +246,6 @@ options:
         description: Same as dhcp_config_id. Either one can be specified.
                      If both are specified, dhcp_config_id takes precedence.
         type: str
-    vrf_config:
-        type: dict
-        description: VRF config, required for VRF Tier0
-        suboptions:
-            description:
-                description: Description of this resource
-                type: str
-            display_name:
-                description:
-                    - Identifier to use when displaying entity in logs or GUI
-                    - Defaults to id if not set
-                    - Error if both not specified
-                type: str
-            evpn_transit_vni:
-                description:
-                    - L3 VNI associated with the VRF for overlay traffic.
-                    - VNI must be unique and belong to configured VNI pool.
-                type: int
-            id:
-                description:
-                    - Unique identifier of this resource
-                    - Defaults to display_name if not set
-                    - Error if both not specified
-                type: str
-            route_distinguisher:
-                description: Route distinguisher. 'ASN:<>' or 'IPAddress:<>'.
-                type: str
-            route_targets:
-                description: Route targets
-                type: list
-                element: dict
-                suboptions:
-                    description:
-                        description: Description of this resource
-                        type: str
-                    display_name:
-                        description:
-                            - Identifier to use when displaying entity in logs
-                              or GUI
-                            - Defaults to id if not set
-                            - Error if both not specified
-                        type: str
-                    export_route_targets:
-                        description: Export route targets. 'ASN:' or
-                                     'IPAddress:<>'
-                        type: list
-                        element: str
-                    id:
-                        description:
-                            - Unique identifier of this resource
-                            - Defaults to display_name if not set
-                            - Error if both not specified
-                        type: str
-                    import_route_targets:
-                        description: Import route targets. 'ASN:' or
-                                     'IPAddress:<>'
-                        type: list
-                        element: str
-                    tags:
-                        description: Opaque identifiers meaningful to the API
-                                     user
-                        type: list
-                        element: dict
-                        suboptions:
-                            scope:
-                                description: Tag scope
-                                type: str
-                            tag:
-                                description: Tag value
-                                type: str
-            tags:
-                description: Opaque identifiers meaningful to the API user
-                type: list
-                element: dict
-                suboptions:
-                    scope:
-                        description: Tag scope
-                        type: str
-                    tag:
-                        description: Tag value
-                        type: str
-            tier0_display_name:
-                description: Default tier0 display name. Cannot be modified
-                             after realization. Either this or tier0_id must
-                             be specified
-                type: str
-            tier0_id:
-                description: Default tier0 id. Cannot be modified after
-                             realization. Either this or tier0_id must
-                             be specified
-                type: str
     static_routes:
         type: list
         element: dict
@@ -434,87 +324,6 @@ options:
                     - Can be used to wait for the realization of subresource
                       before the request to create the next resource is sent to
                       the Manager
-    bfd_peers:
-        type: list
-        element: dict
-        description: This is a list of BFD Peers that need to be created,
-                     updated, or deleted
-        suboptions:
-            id:
-                description: Tier-0 BFD Peer ID.
-                required: false
-                type: str
-            display_name:
-                description:
-                    - Tier-0 BFD Peer display name.
-                    - Either this or id must be specified. If both are
-                      specified, id takes precedence.
-                required: false
-                type: str
-            description:
-                description:
-                    - Tier-0 BFD Peer description. config
-                type: str
-            state:
-                description:
-                    - State can be either 'present' or 'absent'. 'present' is
-                      used to create or update resource. 'absent' is used to
-                      delete resource.
-                    - Must be specified in order to modify the resource
-                choices:
-                    - present
-                    - absent
-            bfd_config_id:
-                description:
-                    - The associated BFD Config ID
-                    - Either this, bfd_config_display_name, or bfd_config_path
-                      must be specified
-                    - BFD configuration is not supported for IPv6 networks.
-                type: str
-            bfd_config_display_name:
-                description:
-                    - The associated BFD Config display name
-                    - Either this, bfd_config_id, or bfd_config_path
-                      must be specified
-                    - BFD configuration is not supported for IPv6 networks.
-                type: str
-            bfd_config_path:
-                description:
-                    - The associated BFD Config policy path
-                    - Either this, bfd_config_display_name, or bfd_config_id
-                      must be specified
-                    - BFD configuration is not supported for IPv6 networks.
-                type: str
-            enabled:
-                description: Flag to enable BFD peer.
-                type: list
-                elements: dict
-                suboptions:
-                    admin_distance:
-                        description: Cost associated with next hop route
-                        type: int
-                        default: 1
-                ip_address:
-                    description: Next hop gateway IP address
-                    type: str
-                scope:
-                    description:
-                        - Interface path associated with current route
-                        - For example, specify a policy path referencing the
-                          IPSec VPN Session
-                    type: list
-            tags:
-                description: Opaque identifiers meaningful to the API user
-                type: dict
-                suboptions:
-                    scope:
-                        description: Tag scope.
-                        required: true
-                        type: str
-                    tag:
-                        description: Tag value.
-                        required: true
-                        type: str
     locale_services:
         type: list
         element: dict
@@ -1191,8 +1000,8 @@ EXAMPLES = '''
 - name: create Tier0
   nsxt_policy_tier0:
     hostname: "10.10.10.10"
-    nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
-    nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+    username: "username"
+    password: "password"
     validate_certs: False
     display_name: test-tier0-1
     state: present
@@ -1210,11 +1019,6 @@ EXAMPLES = '''
         network: '12.12.12.0/24'
         next_hops:
           - ip_address: "192.165.1.4"
-    bfd_peers:
-      - state: present
-        display_name: test-peer-1
-        peer_address: "192.100.100.5"
-        bfd_config_id: test-bfd-config
     locale_services:
       - state: present
         id: "test-t0ls"
@@ -1260,15 +1064,6 @@ EXAMPLES = '''
             multicast:
               enabled: True
             ipv6_ndra_profile_display_name: test
-    vrf_config:
-      display_name: my-vrf
-      id: my-vrf2
-      tier0_display_name: node-t0
-      tags:
-        - scope: scope-tag-1
-          tag: value-tag-1
-      route_distinguisher: 'ASN:4000'
-      evpn_transit_vni: 6000
 '''
 
 RETURN = '''# '''
@@ -1283,7 +1078,7 @@ from ansible.module_utils.nsxt_resource_urls import (
     TIER_0_URL, IPV6_DAD_PROFILE_URL, IPV6_NDRA_PROFILE_URL,
     DHCP_RELAY_CONFIG_URL, EDGE_CLUSTER_URL, EDGE_NODE_URL, SEGMENT_URL,
     TIER_0_STATIC_ROUTE_URL, TIER_0_LOCALE_SERVICE_URL,
-    TIER_0_LS_INTERFACE_URL, TIER_0_BGP_NEIGHBOR_URL, TIER_0_BFD_PEERS)
+    TIER_0_LS_INTERFACE_URL, TIER_0_BGP_NEIGHBOR_URL)
 
 
 class NSXTTier0(NSXTBaseRealizableResource):
@@ -1375,82 +1170,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 required=False,
                 type='str'
             ),
-            vrf_config=dict(
-                required=False,
-                type='dict',
-                options=dict(
-                    # Note that only default site_id and
-                    # enforcementpoint_id are used
-                    description=dict(
-                        type='str',
-                        default=""
-                    ),
-                    display_name=dict(
-                        type='str',
-                    ),
-                    evpn_transit_vni=dict(
-                        type='int'
-                    ),
-                    id=dict(
-                        type='str'
-                    ),
-                    route_distinguisher=dict(
-                        type='str'
-                    ),
-                    route_targets=dict(
-                        type='list',
-                        elements='dict',
-                        options=dict(
-                            description=dict(
-                                type='str',
-                                default=""
-                            ),
-                            display_name=dict(
-                                type='str',
-                            ),
-                            export_route_targets=dict(
-                                type='list',
-                            ),
-                            id=dict(
-                                type='str',
-                            ),
-                            import_route_targets=dict(
-                                type='list',
-                            ),
-                            tags=dict(
-                                type='list',
-                                elements='dict',
-                                options=dict(
-                                    scope=dict(
-                                        type='str',
-                                    ),
-                                    tag=dict(
-                                        type='str',
-                                    ),
-                                )
-                            ),
-                        )
-                    ),
-                    tags=dict(
-                        type='list',
-                        elements='dict',
-                        options=dict(
-                            scope=dict(
-                                type='str',
-                            ),
-                            tag=dict(
-                                type='str',
-                            ),
-                        )
-                    ),
-                    tier0_display_name=dict(
-                        type='str'
-                    ),
-                    tier0_id=dict(
-                        type='str'
-                    ),
-                )
-            ),
         )
         return tier0_arg_spec
 
@@ -1484,32 +1203,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 DHCP_RELAY_CONFIG_URL, "DhcpRelayConfig")
             nsx_resource_params["dhcp_config_paths"] = [
                 DHCP_RELAY_CONFIG_URL + "/" + dhcp_config_id]
-
-        if 'vrf_config' in nsx_resource_params:
-            # vrf config is attached
-            vrf_config = nsx_resource_params['vrf_config']
-
-            vrf_id = vrf_config.get('id')
-            vrf_display_name = vrf_config.get('display_name')
-            if not (vrf_display_name or vrf_id):
-                self.exit_with_failure(msg="Please specify either the ID or "
-                                       "display_name of the VRF in the "
-                                       "vrf_config using id or display_name")
-
-            tier0_id = vrf_config.pop('tier0_id', None)
-            if not tier0_id:
-                tier0_id = self.get_id_using_attr_name_else_fail(
-                    'tier0', vrf_config, NSXTTier0.get_resource_base_url(),
-                    'Tier0')
-            vrf_config['tier0_path'] = (
-                NSXTTier0.get_resource_base_url() + "/" + tier0_id)
-
-            vrf_config['resource_type'] = 'Tier0VrfConfig'
-
-            if 'route_targets' in vrf_config:
-                route_targets = vrf_config['route_targets'] or []
-                for route_target in route_targets:
-                    route_target['resource_type'] = 'VrfRouteTargets'
 
     def update_parent_info(self, parent_info):
         parent_info["tier0_id"] = self.id
@@ -1563,58 +1256,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
 
         def update_parent_info(self, parent_info):
             parent_info["sr_id"] = self.id
-
-    class NSXTTier0SRBFDPeer(NSXTBaseRealizableResource):
-        def get_spec_identifier(self):
-            return (NSXTTier0.NSXTTier0StaticRoutes.NSXTTier0SRVFDPeer.
-                    get_spec_identifier())
-
-        @classmethod
-        def get_spec_identifier(cls):
-            return "bfd_peers"
-
-        @staticmethod
-        def get_resource_spec():
-            tier0_sr_bfd_peer_arg_spec = {}
-            tier0_sr_bfd_peer_arg_spec.update(
-                bfd_config_id=dict(
-                    type='str'
-                ),
-                bfd_config_display_name=dict(
-                    type='str'
-                ),
-                bfd_config_path=dict(
-                    type='str'
-                ),
-                enabled=dict(
-                    type='bool',
-                    default=True
-                ),
-                peer_address=dict(
-                    type='str',
-                    required=True
-                ),
-                source_addresses=dict(
-                    type='list',
-                ),
-            )
-            return tier0_sr_bfd_peer_arg_spec
-
-        @staticmethod
-        def get_resource_base_url(parent_info):
-            tier0_id = parent_info.get("tier0_id", 'default')
-            return TIER_0_BFD_PEERS.format(tier0_id)
-
-        def update_resource_params(self, nsx_resource_params):
-            if 'bfd_config_path' in nsx_resource_params:
-                return
-            bfd_config_id = self.get_id_using_attr_name_else_fail(
-                "bfd_config", nsx_resource_params, '/infra/bfd-configs',
-                'BFD Config')
-            nsx_resource_params.pop('bfd_config_id', None)
-            nsx_resource_params.pop('bfd_config_display_name', None)
-            nsx_resource_params['bfd_config_path'] = (
-                '/infra/bfd-configs/{}'.format(bfd_config_id))
 
     class NSXTTier0LocaleService(NSXTBaseRealizableResource):
         def get_spec_identifier(self):

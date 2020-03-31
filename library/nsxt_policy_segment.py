@@ -41,31 +41,12 @@ options:
         type: str
     username:
         description: The username to authenticate with the NSX manager.
+        required: true
         type: str
     password:
-        description:
-            - The password to authenticate with the NSX manager.
-            - Must be specified if username is specified
+        description: The password to authenticate with the NSX manager
+        required: true
         type: str
-    ca_path:
-        description: Path to the CA bundle to be used to verify host's SSL
-                     certificate
-        type: str
-    nsx_cert_path:
-        description: Path to the certificate created for the Principal
-                     Identity using which the CRUD operations should be
-                     performed
-        type: str
-    nsx_key_path:
-        description:
-            - Path to the certificate key created for the Principal Identity
-              using which the CRUD operations should be performed
-            - Must be specified if nsx_cert_path is specified
-        type: str
-    request_headers:
-        description: HTTP request headers to be sent to the host while making
-                     any request
-        type: dict
     display_name:
         description:
             - Display name.
@@ -570,8 +551,8 @@ EXAMPLES = '''
 - name: create Segment
   nsxt_policy_segment:
     hostname: "10.10.10.10"
-    nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
-    nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+    username: "username"
+    password: "password"
     validate_certs: False
     display_name: test-seg-4
     state: present
@@ -734,8 +715,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
             ),
             enforcementpoint_id=dict(
                 required=False,
-                type='str',
-                default="default"
+                type='str'
             ),
             extra_configs=dict(
                 type='list',
@@ -800,8 +780,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
             ),
             site_id=dict(
                 required=False,
-                type='str',
-                default="default"
+                type='str'
             ),
             subnets=dict(
                 required=False,
@@ -871,9 +850,9 @@ class NSXTSegment(NSXTBaseRealizableResource):
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "transport_zone"):
-            site_id = nsx_resource_params.pop("site_id")
+            site_id = nsx_resource_params.pop("site_id", 'default')
             enforcementpoint_id = nsx_resource_params.pop(
-                "enforcementpoint_id")
+                "enforcementpoint_id", 'default')
             transport_zone_base_url = (
                 TRANSPORT_ZONE_URL.format(site_id, enforcementpoint_id))
             transport_zone_id = self.get_id_using_attr_name_else_fail(
