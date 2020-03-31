@@ -14,12 +14,19 @@ These modules are maintained by [VMware](https://www.vmware.com/).
 
 Documentation on the NSX platform can be found at the [NSX-T Documentation page](https://docs.vmware.com/en/VMware-NSX-T/index.html)
 
+## NSX Compatibility
+
+The following versions of NSX are supported:
+
+ * NSX-T 2.5.1
+ * NSX-T 2.5
+ * NSX-T 2.4
 
 ## Prerequisites
 We assume that ansible is already installed.
-These modules support ansible version 2.8.1 and onwards.
+These modules support ansible version 2.8.3 and onwards.
 
-* Python3 >= 3.5.2
+* Python3 >= 3.6.8
 * PyVmOmi - Python library for vCenter api.
 * OVF Tools - Ovftool is used for ovf deployment.
 
@@ -105,10 +112,10 @@ pip install --upgrade pyvmomi pyvim requests ssl
 ### Download and Install Ovf tool 4.3 - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL430&productId=742)
 (Note: Using ovftool version 4.0/4.1 causes OVA/OVF deployment failure with Error: cURL error: SSL connect error\nCompleted with errors\n)
 
-### Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/dev.zip).
+### Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/v3.0.0.zip).
 ```
-unzip ansible-for-nsxt-dev.zip
-cd ansible-for-nsxt-dev
+unzip ansible-for-nsxt-3.0.0.zip
+cd ansible-for-nsxt-3.0.0
 ```
 To run a sample Ansible playbook - To create a sample test topology using deployments and install module.
 
@@ -178,13 +185,6 @@ For example:
 To test the Ansible modules or see examples of playbooks, please put the respective playbook from unit_tests folder to the base folder and run the ansible-playbook.
 
 Please note that you must specify the correct vmware args in order to successfully update the resources.
-
-# Interoperability
-
-The following versions of NSX are supported:
-
- * NSX-T 2.4
- * Ansible 2.8.1
 
 # Contributing
 
