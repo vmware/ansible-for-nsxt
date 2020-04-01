@@ -81,6 +81,8 @@ def main():
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
         if 'healthy' in resp.keys() and resp['healthy'] ==  True: 
           module.exit_json(changed=changed, msg= "NSX Manager is Up") 
+        else:
+          raise Exception("NSX Manager is not healthy")
       except Exception as err:
         time_diff = datetime.now() - current_time
         time.sleep(10)
@@ -89,3 +91,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
+  
