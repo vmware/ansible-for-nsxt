@@ -81,7 +81,7 @@
       "origin_type": "vCenter",
       "credential_type": "UsernamePasswordLoginCredential",
       "username": "administrator@madhu.local",
-      "password": "VMware1!"
+      "password": "myPassword1!"
     }
   ],
 
