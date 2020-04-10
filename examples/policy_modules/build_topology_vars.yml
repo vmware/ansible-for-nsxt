@@ -25,14 +25,18 @@
           {
             "state": "present",
             "id": "test-t0ls",
-            "route_redistribution_types": ["TIER0_STATIC", "TIER0_NAT"],
+            "route_redistribution_config": {
+              "redistribution_rules": [
+                "route_redistribution_types": ["TIER0_STATIC", "TIER0_NAT"]
+              ]
+            },
             "edge_cluster_info": {
-              "edge_cluster_id": "7ef91a10-c780-4f48-a279-a5662db4ffa3"
+              "edge_cluster_display_name": "Edge-Cluster-01",
             },
             "preferred_edge_nodes_info": [
               {
-                "edge_cluster_id": "7ef91a10-c780-4f48-a279-a5662db4ffa3",
-                "edge_node_id": "e10c42dc-db27-11e9-8cd0-000c291af7ee"
+                "edge_cluster_display_name": "Edge-Cluster-01",
+                "edge_node_display_name": "EdgeNode-01"
               }
             ],
             "BGP": {
