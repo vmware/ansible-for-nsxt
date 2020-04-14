@@ -4,12 +4,12 @@
 # Variables file to deploy a simple topology
 
 {
-    "nsx_manager": "nsx_manager_IP",
-    "nsx_username": "nsx_username",
-    "nsx_password": "nsx_password",
+    "nsx_manager": "10.114.200.11",
+    "nsx_username": "admin",
+    "nsx_password": "myPassword1!myPassword1!",
     "validate_certs": "false",
 
-    "state": "absent",
+    "state": "present",
 
     "tier0_gateways": [
       {
