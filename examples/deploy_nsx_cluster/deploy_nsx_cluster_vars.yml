@@ -11,12 +11,13 @@
   "nsx_username": "admin",
   "nsx_password": "myPassword1!myPassword1!",
   "validate_certs": False,
+  "state": "present",
 
   #
   # OVA/OVF Information. Path can be on local file system or a HTTP URL
   #
   "nsx_ova_path": "/home/vmware",
-  "nsx_ova": "nsx-unified-appliance-2.5.0.0.0.14663978.ova",
+  "nsx_ova": "nsx-unified-appliance-3.0.0.0.0.15946739.ova",
 
   #
   # Common network details. This assumes all NSX appliance nodes are on the
@@ -82,5 +83,14 @@
       "username": "administrator@madhu.local",
       "password": "myPassword1!"
     }
-  ]
+  ],
+
+  #
+  # NSX-T licenses
+  #
+  "nsxt_licenses": [
+    {
+      "license_key": "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
+    }
+  ],
 }
