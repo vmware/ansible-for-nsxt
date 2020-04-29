@@ -114,7 +114,8 @@ class NSXTBaseRealizableResource(ABC):
         try:
             # get existing resource schema
             _, self.existing_resource = self._send_request_to_API(
-                "/" + self.id, ignore_error=False)
+                "/" + self.id, ignore_error=False,
+                accepted_error_codes=set([404]))
             # As Policy API's PATCH requires all attributes to be filled,
             # we fill the missing resource params (the params not specified)
             # by user using the existing params
@@ -666,7 +667,8 @@ class NSXTBaseRealizableResource(ABC):
 
     def _send_request_to_API(self, suffix="", ignore_error=True,
                              method='GET', data=None,
-                             resource_base_url=None):
+                             resource_base_url=None,
+                             accepted_error_codes=set()):
         try:
             if not resource_base_url:
                 if self.get_resource_name() not in BASE_RESOURCES:
@@ -682,6 +684,13 @@ class NSXTBaseRealizableResource(ABC):
                 ignore_errors=ignore_error, method=method, data=data)
             return (rc, resp)
         except Exception as e:
+            if (e.args[0] not in accepted_error_codes and
+                    self.get_resource_name() in BASE_RESOURCES):
+                msg='Received {} from NSX Manager. Please try again. '.format(
+                    e.args[0])
+                if e.args[1] and 'error_message' in e.args[1]:
+                    msg += e.args[1]['error_message']
+                self.module.fail_json(msg=msg)
             raise e
 
     def _achieve_state(self, resource_params,
@@ -751,7 +760,8 @@ class NSXTBaseRealizableResource(ABC):
         """
         while True:
             try:
-                self._send_request_to_API("/" + self.id)
+                self._send_request_to_API(
+                    "/" + self.id, accepted_error_codes=set([600]))
                 time.sleep(10)
             except DuplicateRequestError:
                 self.module.fail_json(msg='Duplicate request')
@@ -765,7 +775,8 @@ class NSXTBaseRealizableResource(ABC):
         try:
             count = 0
             while True:
-                rc, resp = self._send_request_to_API("/" + self.id)
+                rc, resp = self._send_request_to_API(
+                    "/" + self.id, accepted_error_codes=set([404]))
                 if 'state' in resp:
                     if any(resp['state'] in progress_status for progress_status
                             in IN_PROGRESS_STATES):
