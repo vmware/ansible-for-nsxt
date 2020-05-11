@@ -1,0 +1,23 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - build_topology_vars.yml
+  tasks:
+    - name: Modify Segment
+      nsxt_policy_segment:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        state: "{{ state }}"
+        validate_certs: "{{ validate_certs }}"
+        display_name: "{{ item.display_name }}"
+        tier1_id: "{{ item.tier1_display_name }}"
+        domain_name: "{{ item.domain_name }}"
+        transport_zone_display_name: "{{ item.tz }}"
+        subnets: "{{ item.subnets }}"
+        tags: "{{ item.tags }}"
+      with_items:
+        - "{{ segments }}"

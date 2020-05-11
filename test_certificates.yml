@@ -7,14 +7,13 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Create logical router
-      nsxt_logical_routers:
+    - name: Add a new certificate
+      nsxt_certificates:
         hostname: "{{hostname}}"
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        display_name: "tier-0"
-        edge_cluster_name: edge-cluster-1
-        router_type: TIER0
-        high_availability_mode: ACTIVE_ACTIVE
+        display_name: "Certificate_file"
+        pem_encoded_file: "/Path/to/certificate/file"
+        #private_key_file: "/Path/to/p12/private/key/file"
         state: "present"

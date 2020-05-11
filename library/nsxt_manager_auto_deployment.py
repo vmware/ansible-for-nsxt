@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_controller_manager_auto_deployment
+module: nsxt_manager_auto_deployment
 short_description: 'Deploy and register a cluster node VM'
 description: "Deploys a cluster node VM as specified by the deployment config.
               Once the VM is deployed and powered on, it will automatically join the
@@ -49,6 +49,10 @@ options:
         description: 'Unique node-id of a principal'
         required: false
         type: str
+    node_name:
+        description: 'Unique node-name of a principal'
+        required: false
+        type: str
     state:
         choices:
             - present
@@ -62,7 +66,7 @@ options:
 
 EXAMPLES = '''
   - name: Deploy and register a cluster node VM
-    nsxt_manager_controllers:
+    nsxt_manager_auto_deployment:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
@@ -78,10 +82,11 @@ EXAMPLES = '''
         deployment_config:
           placement_type: VsphereClusterNodeVMDeploymentConfig
           vc_id: "7503e86e-c502-46fc-8d91-45a06d314d88"
-          management_network_id: "network-44"
+          management_network: "network-44"
+          disk_provisioning: "LAZY_ZEROED_THICK"
           hostname: "manager-2"
-          compute_id: "domain-c49"
-          storage_id: "datastore-43"
+          compute: "domain-c49"
+          storage: "datastore-43"
           default_gateway_addresses:
           - 10.112.203.253
           management_port_subnets:
@@ -95,7 +100,8 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, get_vc_ip_from_display_name
+from ansible.module_utils.vcenter_utils import get_resource_id_from_name
 from ansible.module_utils._text import to_native
 
 FAILED_STATES = ["UNKNOWN_STATE", "VM_DEPLOYMENT_FAILED", "VM_POWER_ON_FAILED", "VM_ONLINE_FAILED", "VM_CLUSTERING_FAILED",
@@ -180,14 +186,94 @@ def wait_till_delete(vm_id, module, manager_url, mgr_username, mgr_password, val
       time.sleep(5)
       return
 
+def get_node_id_from_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name):
+    '''
+        Given Name of the auto deployed node, This function retrieves the node id. If not found it fails.
+    '''
+    try:
+        (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
+                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+        module.fail_json(msg='Error accessing vm id for host name %s. Error [%s]' % (display_name, to_native(err)))
+    for result in resp['results']:
+        if result.__contains__('deployment_config') and result['deployment_config'].__contains__('hostname') and \
+        result['deployment_config']['hostname'] == display_name:
+            if result.__contains__('vm_id'):
+              return result['vm_id']
+    module.fail_json(msg='No auto deployed node exist with display name %s' % display_name)
+
+
+def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, node_params):
+  '''
+  params:
+  - transport_node_params: These are the transport node parameters passed from playbook file
+  result:
+  - takes the vecenter parameters accepted by playbook and converts it into the form accepted
+    by cluster node deployment api using pyvmomi functions.
+  '''
+  for deployment_request in node_params['deployment_requests']:
+    deployment_config = deployment_request['deployment_config']
+    if deployment_config.__contains__('vc_username') and deployment_config.__contains__('vc_password'):
+      vc_name = deployment_config['vc_name']
+      vc_ip = get_vc_ip_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+                                         "/fabric/compute-managers", vc_name)
+
+
+      vc_username = deployment_config.pop('vc_username', None)
+
+      vc_password = deployment_config.pop('vc_password', None)
+
+      if deployment_config.__contains__('host'):
+        host = deployment_config.pop('host', None)
+        host_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                      'host', host)
+        deployment_request['deployment_config']['host_id'] = str(host_id)
+
+      storage = deployment_config.pop('storage')
+      storage_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'storage', storage)
+
+      deployment_request['deployment_config']['storage_id'] = str(storage_id)
+
+      cluster = deployment_config.pop('compute')
+      cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'cluster', cluster)
+
+      deployment_request['deployment_config']['compute_id'] = str(cluster_id)
+
+      management_network = deployment_config.pop('management_network')
+      management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                               'network', management_network)
+
+      deployment_request['deployment_config']['management_network_id'] = str(management_network_id)
+
+      if deployment_config.__contains__('host'):
+        deployment_request['deployment_config'].pop('host', None)
+      deployment_request['deployment_config'].pop('cluster', None)
+      deployment_request['deployment_config'].pop('storage', None)
+      deployment_request['deployment_config'].pop('management_network', None)
+    else:
+      if deployment_config.__contains__('host'):
+        host_id = deployment_request['deployment_config'].pop('host', None)
+        deployment_request['deployment_config']['host_id'] = host_id
+ 
+      cluster_id = deployment_request['deployment_config'].pop('compute', None)
+      storage_id = deployment_request['deployment_config'].pop('storage', None)
+      management_network_id = deployment_request['deployment_config'].pop('management_network', None)
+ 
+      deployment_request['deployment_config']['compute_id'] = cluster_id
+      deployment_request['deployment_config']['storage_id'] = storage_id
+      deployment_request['deployment_config']['management_network_id'] = management_network_id
+
+
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(deployment_requests=dict(required=True, type='list'),
+                    node_name=dict(required=False, type='str'),
                     node_id=dict(required=False, type='str'),
                     state=dict(required=True, choices=['present', 'absent']))
+  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
-                         required_if=[['state', 'absent', ['node_id']]])
   node_params = get_node_params(module.params.copy())
   state = module.params['state']
   mgr_hostname = module.params['hostname']
@@ -199,7 +285,9 @@ def main():
 
   headers = dict(Accept="application/json")
   headers['Content-Type'] = 'application/json'
+  inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, node_params)
   update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, node_params)
+
   request_data = json.dumps(node_params)
   results = get_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
   is_node_exist, hostname = check_node_exist(results, module)
@@ -221,7 +309,15 @@ def main():
     module.exit_json(changed=True, body= str(resp), message="Controller-manager node deployed.")
 
   elif state == 'absent':
-    id = module.params['node_id']
+    id = None
+    if module.params['node_id']:
+      id = module.params['node_id']
+    elif module.params['node_name']:
+      node_name = module.params['node_name']
+    else:
+      module.fail_json(msg="Failed to delete manager node as non of node_id, node_name is provided.")
+    if not id:
+      id = get_node_id_from_name(module, manager_url, mgr_username, mgr_password, validate_certs, '/cluster/nodes/deployments', node_name)
     if is_node_exist:
       # delete node
       if module.check_mode:

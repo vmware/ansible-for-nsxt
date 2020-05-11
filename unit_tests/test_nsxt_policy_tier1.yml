@@ -1,0 +1,66 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Tier1
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: Update Tier1
+      nsxt_policy_tier1:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        display_name: test-tier22222
+        state: present
+        failover_mode: "PREEMPTIVE"
+        disable_firewall: True
+        force_whitelisting: True
+        enable_standby_relocation: False
+        tags:
+          - scope: "a"
+            tag: "b"
+        route_advertisement_rules:
+          - name: "test-route-advertisement-rules"
+            route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED']
+            subnets: ["35.1.1.1/23"]
+        route_advertisement_types: ['TIER1_STATIC_ROUTES', 'TIER1_CONNECTED', 'TIER1_NAT']
+        tier0_display_name: "node-t0"
+        static_routes:
+          - state: present
+            display_name: test-sr
+            network: '12.12.12.0/24'
+            next_hops:
+              - ip_address: "192.165.1.4"
+        locale_services:
+          - state: present
+            display_name: test-t1ls-2
+            route_redistribution_config:
+              redistribution_rules:
+                - name: abc
+                  route_redistribution_types: ["TIER0_STATIC", "TIER0_NAT"]
+            ha_vip_configs:
+              - external_interface_info:
+                # Either of the two ways below can be used
+                - external_interface_path: /infra/tier-0s/pepsi/locale-services/1-policyconnectivity-706/interfaces/2-policyconnectivity-1411
+                - tier0_display_name: pepsi
+                  tier0_ls_display_name: 1-policyconnectivity-706
+                  tier0_ls_interface_display_name: 1-policyconnectivity-1649
+                vip_subnets:
+                  - ip_addresses:
+                      - '12.12.12.12'
+                    prefix_len: 23
+            interfaces:
+              - id: "test-t1-t1ls-iface-2"
+                display_name: "test-t1-t1ls-iface"
+                state: present
+                subnets:
+                  - ip_addresses: ["35.1.1.1"]
+                    prefix_len: 24
+                segment_id: "test-seg-2"
+                ipv6_ndra_profile_id: test
+                mtu: 1400
+                urpf_mode: NONE

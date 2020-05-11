@@ -1,0 +1,8 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- import_playbook: 01_create_t0_gateway.yml
+- import_playbook: 02_create_t1_gateway.yml
+- import_playbook: 03_create_segments.yml
+- import_playbook: 04_create_groups.yml
+- import_playbook: 05_create_security_policy.yml

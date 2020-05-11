@@ -43,6 +43,18 @@ options:
         description: unique id
         required: false
         type: str
+    display_name:
+        description: Display name of the resource
+        required: True
+        type: str
+    description:
+        description: Description of the resource
+        required: false
+        type: str
+    tags:
+        description: Opaque identifier meaningful to API user
+        required: false
+        type: Array of Tag
     logical_router_name:
         description: Name of the logical router
         required: false
@@ -73,6 +85,7 @@ EXAMPLES = '''
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
+        display_name: "static_route"
         logical_router_name: "tier-0"
         next_hops:
         - administrative_distance: '2'
@@ -145,6 +158,40 @@ def get_lr_static_route_from_network(module, manager_url, mgr_username, mgr_pass
             return logical_router_st_route
     return None
 
+def get_lr_static_route_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params):
+  logical_router_static_routes = get_logical_router_static_routes(module, manager_url, mgr_username, mgr_password, validate_certs,logical_router_static_route_params['logical_router_id'])
+  for result in logical_router_static_routes['results']:
+    if result.__contains__('display_name') and result['display_name'] == logical_router_static_route_params['display_name']:
+      return result
+  return None
+
+def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params):
+  existing_lr_static_route = get_lr_static_route_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params)
+  if existing_lr_static_route is None:
+    return False
+  if existing_lr_static_route.__contains__('description') and not logical_router_static_route_params.__contains__('description'):
+    return True
+  if not existing_lr_static_route.__contains__('description') and logical_router_static_route_params.__contains__('description'):
+    return True
+  if existing_lr_static_route.__contains__('description') and logical_router_static_route_params.__contains__('description') and\
+     existing_lr_static_route['description'] != logical_router_static_route_params['description']:
+    return True
+  if existing_lr_static_route.__contains__('next_hops') and not logical_router_static_route_params.__contains__('next_hops'):
+    return True
+  if not existing_lr_static_route.__contains__('next_hops') and logical_router_static_route_params.__contains__('next_hops'):
+    return True
+  if existing_lr_static_route.__contains__('next_hops') and logical_router_static_route_params.__contains__('next_hops') and\
+     existing_lr_static_route['next_hops'] != logical_router_static_route_params['next_hops']:
+    return True
+  if existing_lr_static_route.__contains__('network') and not logical_router_static_route_params.__contains__('network'):
+    return True
+  if not existing_lr_static_route.__contains__('network') and logical_router_static_route_params.__contains__('network'):
+    return True
+  if existing_lr_static_route.__contains__('network') and logical_router_static_route_params.__contains__('network') and\
+     existing_lr_static_route['network'] != logical_router_static_route_params['network']:
+    return True
+  return False
+
 
 def main():
   argument_spec = vmware_argument_spec()
@@ -152,6 +199,9 @@ def main():
                 logical_router_name=dict(required=False, type='str'),
                 network=dict(required=True, type='str'),
                 id=dict(required=False, type= 'str'),
+                display_name=dict(required=True, type='str'),
+                description=dict(required=False, type='str'),
+                tags=dict(required=False, type='list'),
                 state=dict(required=True, choices=['present', 'absent']))
 
 
@@ -162,24 +212,20 @@ def main():
   mgr_username = module.params['username']
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
-  network = module.params['network']
+  display_name = module.params['display_name']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
   update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params)
   logical_router_id = logical_router_static_route_params["logical_router_id"]
-  logical_router_static_route_id = module.params["id"]
-
-
-  if logical_router_static_route_id is None:
-  	logical_router_static_route_dict = get_lr_static_route_from_network (module, manager_url, mgr_username, mgr_password, validate_certs, network,logical_router_id)
-  	logical_router_static_route_id = None
-  	if logical_router_static_route_dict:
-    		logical_router_static_route_id = logical_router_static_route_dict['id']
+  logical_router_static_route_id = get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs,
+    '/logical-routers/' + logical_router_id + '/routing/static-routes', display_name, False)
+  logical_router_static_route = get_lr_static_route_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params)
+  if logical_router_static_route:
+    revision = logical_router_static_route['_revision']
 
   if state == 'present':
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-    #updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params)
-    updated = 0
+    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_static_route_params)
 
     if not updated:
       # add the logical_router_static_route
@@ -199,10 +245,10 @@ def main():
       module.exit_json(changed=True, id=resp["id"], body= str(resp), message="Logical router static route  with network %s created." % module.params['network'])
     else:
       if module.check_mode:
-          module.exit_json(changed=True, debug_out=str(json.dumps(logical_router_static_route_params)), id=logical_router_port_id)
+          module.exit_json(changed=True, debug_out=str(json.dumps(logical_router_static_route_params)), id=logical_router_static_route_id)
       logical_router_static_route_params['_revision'] = revision # update current revision
       request_data = json.dumps(logical_router_static_route_params)
-      id = logical_router_port_id
+      id = logical_router_static_route_id
       try:
           (rc, resp) = request(manager_url+ '/logical-routers/%s/routing/static-routes/%s' % (logical_router_id,id), data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)

@@ -35,7 +35,7 @@
     "mgmt_ip": "10.114.200.11",
     "datacenter": "Datacenter",
     "cluster": "Management",
-    "datastore": "datastore1",
+    "datastore": "datastore7",
     "portgroup": "VM Network"
   },
 
@@ -166,6 +166,17 @@
               "network-16",
               "dvportgroup-24",
               "dvportgroup-24"
+            "vc_username": "administrator@madhu.local",
+            "vc_password": "myPassword1!",
+            "compute": "Management",
+            "storage": "datastore7",
+            "host": "10.114.200.7",
+            "management_network": "VM Network",
+            "hostname": "edgenode-01.lab.local",
+            "data_networks": [
+              "VM Network",
+              "lab-dvpg",
+              "lab-dvpg"
             ],
             "management_port_subnets": [
               {
@@ -230,15 +241,17 @@
         "deployment_config": {
           "vm_deployment_config": {
             "vc_name": "vcenter",
-            "compute_id": "domain-c7",
-            "storage_id": "datastore-21",
-            "host_id": "host-20",
-            "management_network_id": "network-16",
+            "vc_username": "administrator@madhu.local",
+            "vc_password": "myPassword1!",
+            "compute": "Management",
+            "storage": "datastore7",
+            "host": "10.114.200.7",
+            "management_network": "VM Network",
             "hostname": "edgenode-02.lab.local",
-            "data_network_ids": [
-              "network-16",
-              "dvportgroup-24",
-              "dvportgroup-24"
+            "data_networks": [
+              "VM Network",
+              "lab-dvpg",
+              "lab-dvpg"
             ],
             "management_port_subnets": [
               {
@@ -311,8 +324,7 @@
         "os_type": "ESXI",
         "host_credential": {
           "username": "root",
-          "password": "VMware1!",
-          "thumbprint": "64:C7:59:F1:6E:80:94:7A:1C:23:04:9F:BC:FE:E0:4E:6C:EC:23:26:F6:FF:F5:72:A6:CC:D9:0B:A7:29:B5:D8"
+          "password": "myPassword1!"
         }
       }
     },
@@ -363,8 +375,7 @@
         "os_type": "ESXI",
         "host_credential": {
           "username": "root",
-          "password": "VMware1!",
-          "thumbprint": "61:FB:63:1A:7B:C2:9F:B2:1D:11:E4:4F:76:29:61:9B:E3:D2:DF:0D:F7:19:64:4B:39:DF:6F:A4:93:E1:BE:1B"
+          "password": "myPassword1!"
         }
       }
     }
@@ -373,7 +384,11 @@
   "edge_clusters": [
     {
       "display_name": "Edge-Cluster-01",
-      "cluster_profile_binding_id": "91bcaa06-47a1-11e4-8316-17ffc770799b",
+      "cluster_profile_bindings": [
+        {
+          "profile_name": "nsx-default-edge-high-availability-profile"
+        }
+      ],
       "members": [
         {
           "transport_node_name": "EdgeNode-01"

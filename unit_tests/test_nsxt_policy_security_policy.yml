@@ -1,0 +1,39 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test Security Policy
+#
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: create Security Policy
+      nsxt_policy_security_policy:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        id: test-sec-pol
+        display_name: test-sec-pol
+        state: "present"
+        domain_id: "default"
+        locked: True
+        rules:
+          - action: "ALLOW"
+            description: "example-rule"
+            sequence_number: 1
+            display_name: "test-example-rule"
+            id: "test-example-rule"
+            source_groups: ["/infra/domains/vmc/groups/dbgroup"]
+            destination_groups: ["/infra/domains/vmc/groups/appgroup"]
+            services: ["/infra/services/HTTP", "/infra/services/CIM-HTTP"]
+            tag: my-tag
+            tags:
+              - scope: scope-1
+                tag: tag-1
+            logged: True
+            notes: dummy-notes
+            ip_protocol: IPV4_IPV6
+            scope: my-scope
+            profiles: "encryption algorithm"

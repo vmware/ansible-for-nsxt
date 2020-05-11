@@ -1,0 +1,13 @@
+- hosts: localhost
+  tasks:
+    - name: Update BFD Config
+      nsxt_policy_bfd_config:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        display_name: test-bfd-config
+        state: present
+        interval: 200
+        multiple: 10

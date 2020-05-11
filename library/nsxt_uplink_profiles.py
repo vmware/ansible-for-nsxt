@@ -47,6 +47,10 @@ options:
         description: Display name
         required: true
         type: str
+    description:
+        description: Description of the resource
+        required: false
+        type: str
     enabled:
         description: 'The enabled property specifies the status of NIOC feature.
                       When enabled is set to true, NIOC feature is turned on and
@@ -109,21 +113,6 @@ options:
             required: true
             type: array of Uplink
         description: Default TeamingPolicy associated with this UplinkProfile
-        name:
-            description: An uplink teaming policy of a given name defined in UplinkHostSwitchProfile.
-                         The names of all NamedTeamingPolicies in an UplinkHostSwitchProfile 
-                         must be different, but a name can be shared by different
-                         UplinkHostSwitchProfiles. Different TransportNodes can use different 
-                         NamedTeamingPolicies having the same name in different 
-                         UplinkHostSwitchProfiles to realize an uplink teaming policy on a
-                         logical switch. An uplink teaming policy on a logical switch can be any
-                         policy defined by a user; it does not have to be a single type of FAILOVER
-                         or LOADBALANCE. It can be a combination of types, for instance, a user can 
-                         define a policy with name "MyHybridTeamingPolicy" as "FAILOVER on all ESX 
-                         TransportNodes and LOADBALANCE on all KVM TransportNodes". The name is the 
-                         key of the teaming policy and can not be changed once assigned.
-            required: true
-            type: str
         policy:
             description: Teaming policy
             required: true
@@ -208,6 +197,7 @@ def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
                         transport_vlan=dict(required=False, type='int'),
+                        description=dict(required=False, type='str'),
                         enabled=dict(required=False, type='boolean'),
                         host_infra_traffic_res=dict(required=False, type='list'),
                         overlay_encap=dict(required=False, type='str'),
@@ -219,7 +209,6 @@ def main():
                         teaming=dict(required=True, type='dict',
                         policy=dict(required=True, type='str'),
                         standby_list=dict(required=False, type='list'),
-                        name=dict(required=True, type='str'),
                         active_list=dict(required=True, type='list')),
                         lags=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str', choices=['UplinkHostSwitchProfile']),

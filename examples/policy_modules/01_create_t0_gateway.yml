@@ -1,0 +1,21 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - build_topology_vars.yml
+  tasks:
+    - name: Modify Tier0
+      nsxt_policy_tier0:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        state: "{{ state }}"
+        display_name: "{{ item.display_name }}"
+        ha_mode: "{{ item.ha_mode }}"
+        tags: "{{ item.tags }}"
+        locale_services: "{{ item.locale_services }}"
+      with_items:
+        - "{{ tier0_gateways }}"

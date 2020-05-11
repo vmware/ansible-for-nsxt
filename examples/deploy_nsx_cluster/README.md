@@ -16,5 +16,6 @@ to match your needs and run the playbooks in the order listed.
 
 Validated against:
 * NSX-T 2.4 GA
+* NSX-T 2.5 GA
 
 It currently does not configure a cluster Virtual IP

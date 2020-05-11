@@ -9,14 +9,14 @@
   # Common NSX Appliance variables
   #
   "nsx_username": "admin",
-  "nsx_password": "myPassword!myPassword!",
+  "nsx_password": "myPassword1!myPassword1!",
   "validate_certs": False,
 
   #
   # OVA/OVF Information. Path can be on local file system or a HTTP URL
   #
   "nsx_ova_path": "/home/vmware",
-  "nsx_ova": "nsx-unified-appliance-2.4.0.0.0.12456291.ova",
+  "nsx_ova": "nsx-unified-appliance-2.5.0.0.0.14663978.ova",
 
   #
   # Common network details. This assumes all NSX appliance nodes are on the
@@ -39,7 +39,7 @@
     "mgmt_ip": "10.114.200.11",
     "datacenter": "Datacenter",
     "cluster": "Management",
-    "datastore": "datastore1",
+    "datastore": "datastore7",
     "portgroup": "VM Network"
   },
 
@@ -54,19 +54,19 @@
       "hostname": "mynsx-02.mylab.local",
       "mgmt_ip": "10.114.200.12",
       "prefix": "27",
-      "datacenter_moid": "datacenter-2",
-      "cluster_moid": "domain-c7",
-      "datastore_moid": "datastore-15",
-      "portgroup_moid": "network-16"
+      "datacenter": "Datacenter",
+      "cluster": "Management",
+      "datastore": "datastore7",
+      "portgroup": "VM Network"
     },
     {
       "hostname": "mynsx-03.mylab.local",
       "mgmt_ip": "10.114.200.13",
       "prefix": "27",
-      "datacenter_moid": "datacenter-2",
-      "cluster_moid": "domain-c9",
-      "datastore_moid": "datastore-21",
-      "portgroup_moid": "network-16"
+      "datacenter": "Datacenter",
+      "cluster": "Management",
+      "datastore": "datastore5",
+      "portgroup": "VM Network"
     }
   ],
 
@@ -79,8 +79,8 @@
       "mgmt_ip": "10.114.200.6",
       "origin_type": "vCenter",
       "credential_type": "UsernamePasswordLoginCredential",
-      "username": "administrator@mylab.local",
-      "password": "myPassword!"
+      "username": "administrator@madhu.local",
+      "password": "myPassword1!"
     }
   ]
 }

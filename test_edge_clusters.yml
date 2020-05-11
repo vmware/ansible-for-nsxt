@@ -15,7 +15,7 @@
         validate_certs: False
         display_name: edge-cluster-1
         cluster_profile_bindings:
-        - profile_id: 91bcaa06-47a1-11e4-8316-17ffc770799b
+        - profile_name: "Profile01"
           resource_type: EdgeHighAvailabilityProfile
         members:
         - transport_node_name: "TN_1"

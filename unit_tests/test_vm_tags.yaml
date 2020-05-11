@@ -1,0 +1,18 @@
+- hosts: localhost
+  tasks:
+    - name: Update Tags on VMs
+      nsxt_vm_tags:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        virtual_machine_display_name: App-VM-1
+        remove_other_tags: False
+        add_tags:
+          - scope: "my-scope"
+            tag: "my-tag"
+          # - scope: "my-scope1"
+          #   tag: "my-tag"
+        remove_tags_with_scope:
+          - my-scope1

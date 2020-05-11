@@ -1,0 +1,22 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - build_topology_vars.yml
+  tasks:
+    - name: Modify Security Policy
+      nsxt_policy_security_policy:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        state: "{{ state }}"
+        display_name: "{{ item.display_name }}"
+        domain_id: "{{ item.domain_id }}"
+        category: "{{ item.category }}"
+        rules: "{{ item.rules }}"
+        tags: "{{ item.tags }}"
+      with_items:
+        - "{{ security_policies }}"
