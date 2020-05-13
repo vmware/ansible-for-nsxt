@@ -1,3 +1,26 @@
-/*.retry
-/.DS_Store/
-.gitignore
+# Ignore Ansible retry files
+**/*.retry
+
+# Ignore auto-generated backup files by some text editors
+**/*~
+**/.~lock*
+**/*.bak
+
+# Ignore OS generated files
+**/.DS_Store
+**/.DS_Store?
+**/._*
+**/.Spotlight-V100
+**/.Trashes
+**/ehthumbs.db
+**/Thumbs.db
+**/desktop.ini
+
+# Ignore Editor and IDE generated files
+**/*.sublime-workspace
+**/*.vscode
+*.py[cod]
+**/*.pyc
+**/*.spec
+.history
+
