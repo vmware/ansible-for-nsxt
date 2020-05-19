@@ -24,6 +24,7 @@ import hashlib
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.vmware_nsxt import get_certificate_file_path
+from ansible.module_utils.vmware_nsxt import is_json
 
 
 class PolicyCommunicator:
@@ -142,11 +143,11 @@ class PolicyCommunicator:
             try:
                 resp_data = resp_raw_data
                 # infer the response
-                if resp_raw_data:
+                if resp_raw_data and is_json(resp_raw_data):
                     resp_data = json.loads(resp_raw_data)
             except Exception as e:
                 if not ignore_errors:
-                    raise Exception(resp_raw_data)
+                    raise Exception(resp_code, resp_raw_data)
 
             # return the approprate response code and data
             if resp_code >= 400 and not ignore_errors:
