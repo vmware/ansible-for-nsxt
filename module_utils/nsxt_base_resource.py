@@ -665,7 +665,7 @@ class NSXTBaseRealizableResource(ABC):
                                                       self.id, to_native(err)),
                                   successfully_updated_resources=srel)
 
-    def _send_request_to_API(self, suffix="", ignore_error=True,
+    def _send_request_to_API(self, suffix="", ignore_error=False,
                              method='GET', data=None,
                              resource_base_url=None,
                              accepted_error_codes=set()):
@@ -683,6 +683,8 @@ class NSXTBaseRealizableResource(ABC):
                 resource_base_url + suffix,
                 ignore_errors=ignore_error, method=method, data=data)
             return (rc, resp)
+        except DuplicateRequestError:
+            self.module.fail_json(msg='Duplicate request')
         except Exception as e:
             if (e.args[0] not in accepted_error_codes and
                     self.get_resource_name() in BASE_RESOURCES):
