@@ -28,12 +28,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_policy_bfd_config
 short_description: Create or Delete a Policy BFD Config
-description:
-    Creates or deletes a Policy BFD Config.
-    Required attributes include id and display_name.
+description: "Creates or deletes a Policy BFD Config.
+    Required attributes include id and display_name."
 version_added: "2.8"
 author: Gautam Verma
-extends_documentation_fragment: vmware_nsxt
 options:
     hostname:
         description: Deployed NSX manager hostname.

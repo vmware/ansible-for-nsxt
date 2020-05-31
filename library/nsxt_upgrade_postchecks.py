@@ -48,7 +48,7 @@ options:
             - host
             - mp
             - edge
-        description: "Component type on which post upgrade is to be run.
+        description: "Component type on which post upgrade is to be run."
         required: true   
 '''
 
