@@ -33,7 +33,7 @@ description: Creates a host node (hypervisor) or edge node (router) in the trans
              host thumbprint.
 
              To get the ESXi host thumbprint, SSH to the host and run the
-             <b>openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout</b>
+             'openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout'
              command.
 
              To generate host key thumbprint using SHA-256 algorithm please follow the
@@ -96,8 +96,8 @@ options:
                 required: false
                 type: str
             audit_username:
-                description: "The default username is \"audit\". To configure username, you must 
-                              provide this property together with <b>audit_password</b>."
+                description: "The default username is 'audit'. To configure username, you must 
+                              provide this property together with 'audit_password'."
                 required: false
                 type: str
             cli_password:
@@ -112,7 +112,7 @@ options:
                 type: str
             cli_username:
                 description: "To configure username, you must provide this property together 
-                              with <b>cli_password</b>."
+                              with 'cli_password'."
                 required: false
                 type: str
             description: "Username and password settings for the node.

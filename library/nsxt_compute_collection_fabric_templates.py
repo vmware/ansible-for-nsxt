@@ -52,7 +52,7 @@ options:
         required: false
         type: str
     compute_manager_name:
-        description: 'Cluster Manager's Name'
+        description: "Cluster Manager's Name"
         required: false
         type: str
     display_name:
