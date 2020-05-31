@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_node_collections_facts
 short_description: List Transport Node collections
-description: Returns all Transport Node collections
+description: 
+  - Returns all Transport Node collections.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -39,7 +40,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

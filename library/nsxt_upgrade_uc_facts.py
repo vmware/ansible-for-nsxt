@@ -23,8 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_uc_facts
 short_description: Get upgrade-coordinator upgrade status 
-description: Get upgrade-coordinator upgrade status 
-
+description: 
+  - Get upgrade-coordinator upgrade status.
 version_added: "2.7"
 author: 'Kommireddy Akhilesh'
 options:

@@ -30,9 +30,9 @@ DOCUMENTATION = '''
 ---
 module: nsxt_ip_blocks_facts
 short_description: Returns list of configured IP address blocks.
-description: Returns information about configured IP address blocks. Information includes
-             the id, display name, description & CIDR of IP address blocks
-
+description: 
+  - Returns information about configured IP address blocks. 
+  - Information includes the id, display name, description & CIDR of IP address blocks.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -48,7 +48,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

@@ -22,8 +22,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: nsxt_manager_auto_deployment_facts
 short_description: 'Returns info for all cluster node VM auto-deployment attempts'
-description: 'Returns request information for every attempted deployment of a 
-              cluster node VM'
+description: 
+  - Returns request information for every attempted deployment of a cluster node VM.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:

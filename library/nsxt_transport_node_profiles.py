@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_node_profiles
 short_description: "Create a Transport Node Profile"
-description: "Transport node profile captures the configuration needed to create
-a transport node. A transport node profile can be attached to
-compute collections for automatic TN creation of member hosts."
+description: 
+    - Transport node profile captures the configuration needed to create a transport node. 
+    - A transport node profile can be attached to compute collections for automatic TN creation of member hosts.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -80,7 +80,6 @@ options:
         description: Transport zone endpoints.
         required: False
         type: array of TransportZoneEndPoint
-    
 '''
 
 EXAMPLES = '''

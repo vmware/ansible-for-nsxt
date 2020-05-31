@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_plan_facts
 short_description: 'Get the upgrade plan settings for the component.'
-description: "Get the upgrade plan settings for the component."
+description: 
+  - Get the upgrade plan settings for the component.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

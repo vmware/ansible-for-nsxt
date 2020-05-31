@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_group_facts
 short_description: 'Get the upgrade groups information'
-description: 'Get the upgrade groups information'
+description: 
+  - Get the upgrade groups information.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 module: nsxt_vm_tags
 short_description: Update tags on NSXT VM
 description:
-    Update tags on NSXT VM
+    - Update tags on NSXT VM.
 version_added: "2.8"
 author: Gautam Verma
 options:

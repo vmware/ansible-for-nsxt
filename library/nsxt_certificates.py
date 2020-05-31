@@ -23,11 +23,12 @@ DOCUMENTATION = '''
 ---
 module: nsxt_certificates
 short_description: 'Add a New Certificate'
-description: "Adds a new private-public certificate or a chain of certificates (CAs) and, 
-              optionally, a private key that can be applied to one of the user-facing 
-              components (appliance management or edge). The certificate and the key 
-              should be stored in PEM format. If no private key is provided, the 
-              certificate is used as a client certificate in the trust store."
+description: 
+  - "Adds a new private-public certificate or a chain of certificates (CAs) and, 
+    optionally, a private key that can be applied to one of the user-facing 
+    components (appliance management or edge)."
+  - The certificate and the key should be stored in PEM format. 
+  - If no private key is provided, the certificate is used as a client certificate in the trust store.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:
@@ -87,7 +88,6 @@ options:
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
         required: true
-
 '''
 
 EXAMPLES = '''

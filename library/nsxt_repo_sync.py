@@ -23,10 +23,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_repo_sync
 short_description: 'Synchronizes the repository data between nsx managers'
-description: "Attempts to synchronize the repository partition on nsx 
-              manager. Repository partition contains packages required for 
-              the install and upgrade of nsx components.Normally 
-              there is no need to call this API explicitely by the user."
+description: 
+  - Attempts to synchronize the repository partition on nsx manager.
+  - Repository partition contains packages required for the install and upgrade of nsx components.
+  - Normally there is no need to call this API explicitely by the user.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

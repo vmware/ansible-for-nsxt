@@ -23,12 +23,13 @@ DOCUMENTATION = '''
 ---
 module: nsxt_edge_clusters
 short_description: 'Create Edge Cluster'
-description: "Creates a new edge cluster.
-              It only supports homogeneous members.
-              The TransportNodes backed by EdgeNode are only allowed in cluster members.
-              DeploymentType (VIRTUAL_MACHINE|PHYSICAL_MACHINE) of these EdgeNodes is
-              recommended to be the same. EdgeCluster supports members of different
-              deployment types."
+description: 
+    - Creates a new edge cluster.
+    - It only supports homogeneous members.
+    - The TransportNodes backed by EdgeNode are only allowed in cluster members.
+    - DeploymentType (VIRTUAL_MACHINE|PHYSICAL_MACHINE) of these EdgeNodes is
+      recommended to be the same. 
+    - EdgeCluster supports members of different deployment types.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -101,8 +102,6 @@ options:
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
         required: true
-
-    
 '''
 
 EXAMPLES = '''

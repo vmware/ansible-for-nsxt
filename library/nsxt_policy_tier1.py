@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: nsxt_policy_tier1
 short_description: 'Create/Update/Delete a Tier-1 and associated resources'
-description: Creates/Updates/Deletes a Tier-1 resource using the Policy API.
-             Assocaited resources include 'Tier-1 Locale Service' and
-             'Tier-1 Interface'. 'Tier-1 Locale Service' and 'Tier-1 Interface'
-             attributes must be prepended with 't1ls' and 't1iface'
-             respectively.
+description: 
+    - Creates/Updates/Deletes a Tier-1 resource using the Policy API.
+    - "Assocaited resources include 'Tier-1 Locale Service' and 'Tier-1 Interface'."
+    - "'Tier-1 Locale Service' and 'Tier-1 Interface' attributes must be prepended with 't1ls' and 't1iface'
+       respectively."
 version_added: '2.8'
 author: 'Gautam Verma'
 options:

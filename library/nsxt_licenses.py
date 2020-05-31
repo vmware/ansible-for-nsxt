@@ -23,11 +23,13 @@ DOCUMENTATION = '''
 ---
 module: nsxt_licenses
 short_description: 'Add a new license key'
-description: "This will add a license key to the system.
-              The API supports adding only one license key for each license edition
-              type - Standard, Advanced or Enterprise. If a new license key is tried
-              to add for an edition for which the license key already exists,
-              then this API will return an error."
+description: 
+    - This will add a license key to the system.
+    - The API supports adding only one license key for each license edition
+      type - Standard, Advanced or Enterprise. 
+    - If a new license key is tried
+      to add for an edition for which the license key already exists,
+      then this API will return an error. 
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:

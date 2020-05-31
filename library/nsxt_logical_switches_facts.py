@@ -39,7 +39,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

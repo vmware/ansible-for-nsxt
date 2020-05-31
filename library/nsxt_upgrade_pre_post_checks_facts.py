@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_pre_post_checks_facts
 short_description: 'Get the pre and post upgrade checks'
-description: 'Get the pre and post upgrade checks'
+description:
+  - Get the pre and post upgrade checks.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

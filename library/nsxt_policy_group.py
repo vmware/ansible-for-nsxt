@@ -29,8 +29,8 @@ DOCUMENTATION = '''
 module: nsxt_policy_group
 short_description: Create or Delete a Policy Policy Group
 description:
-    Creates or deletes a Policy Policy Group.
-    Required attributes include id and display_name.
+    - Creates or deletes a Policy Policy Group.
+    - Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
 options:

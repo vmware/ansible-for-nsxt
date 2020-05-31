@@ -23,9 +23,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_fabric_nodes_facts
 short_description: Return the List of Nodes
-description: Returns information about all fabric nodes (hosts and edges).
-             This api is deprecated as part of FN+TN unification. Please use GET Transport Node
-             API to list all fabric nodes.
+description: 
+  - Returns information about all fabric nodes (hosts and edges).
+  - This api is deprecated as part of FN+TN unification. 
+  - Please use GET Transport Node API to list all fabric nodes.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -41,7 +42,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

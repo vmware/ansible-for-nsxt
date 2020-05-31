@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_run
 short_description: 'Start the upgrade'
-description: 'Upgrade will start as per the upgrade plan.'
+description: 
+  - Upgrade will start as per the upgrade plan.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

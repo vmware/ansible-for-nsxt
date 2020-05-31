@@ -23,11 +23,12 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_node_collections
 short_description: Create transport node collection by attaching Transport Node Profile to cluster.
-description: "When transport node collection is created the hosts which are part
-of compute collection will be prepared automatically i.e. NSX Manager
-attempts to install the NSX components on hosts. Transport nodes for these
-hosts are created using the configuration specified in transport node
-profile."
+description: 
+    - When transport node collection is created the hosts which are part
+      of compute collection will be prepared automatically i.e. NSX Manager
+      attempts to install the NSX components on hosts. 
+    - Transport nodes for these hosts are created using the configuration 
+      specified in transport node profile.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -83,7 +84,6 @@ options:
         description: Transport Node Profile Names
         required: true
         type: str
-    
 '''
 
 EXAMPLES = '''

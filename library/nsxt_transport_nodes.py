@@ -23,92 +23,89 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_nodes
 short_description: Create a Transport Node
-description: "Transport nodes are hypervisor hosts and NSX Edges that will participate
-              in an NSX-T overlay. For a hypervisor host, this means that it hosts
-              VMs that will communicate over NSX-T logical switches. For NSX Edges,
-              this means that it will have logical router uplinks and downlinks.
+description: 
+    - Transport nodes are hypervisor hosts and NSX Edges that will participate in an NSX-T overlay. 
+    - For a hypervisor host, this means that it hosts
+      VMs that will communicate over NSX-T logical switches. 
+    - For NSX Edges, this means that it will have logical router uplinks and downlinks.
 
-              This API creates transport node for a host node (hypervisor) or edge node
-              (router) in the transport network.
+    - This API creates transport node for a host node (hypervisor) or edge node
+      (router) in the transport network.
 
-              When you run this command for a host, NSX Manager attempts to install the
-              NSX kernel modules, which are packaged as VIB, RPM, or DEB files. For the
-              installation to succeed, you must provide the host login credentials and the
-              host thumbprint.
+    - When you run this command for a host, NSX Manager attempts to install the
+      NSX kernel modules, which are packaged as VIB, RPM, or DEB files. 
+    - For the installation to succeed, you must provide the host login credentials and the
+      host thumbprint.
 
-              To get the ESXi host thumbprint, SSH to the host and run the
-              <b>openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout</b>
-              command.
+    - "To get the ESXi host thumbprint, SSH to the host and run the
+      'openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout' command."
 
-              To generate host key thumbprint using SHA-256 algorithm please follow the
-              steps below.
+    - To generate host key thumbprint using SHA-256 algorithm please follow the
+      steps below.
 
-              Log into the host, making sure that the connection is not vulnerable to a
-              man in the middle attack. Check whether a public key already exists.
-              Host public key is generally located at '/etc/ssh/ssh_host_rsa_key.pub'.
-              If the key is not present then generate a new key by running the following
-              command and follow the instructions.
+    - "Log into the host, making sure that the connection is not vulnerable to a
+      man in the middle attack. Check whether a public key already exists.
+    - Host public key is generally located at '/etc/ssh/ssh_host_rsa_key.pub'."
+    - If the key is not present then generate a new key by running the following
+      command and follow the instructions.
+    - ssh-keygen -t rsa
 
-              <b>ssh-keygen -t rsa</b>
+    - Now generate a SHA256 hash of the key using the following command. 
+    - "Please make sure to pass the appropriate file name if the public key is stored with
+      a different file name other than the default 'id_rsa.pub'."
 
-              Now generate a SHA256 hash of the key using the following command. Please
-              make sure to pass the appropriate file name if the public key is stored with
-              a different file name other than the default 'id_rsa.pub'.
+    - "awk '{print $2}' id_rsa.pub | base64 -d | sha256sum -b | sed 's/ .*$//' | xxd -r -p | base64"
+    - This api is deprecated as part of FN+TN unification. 
+    - Please use Transport Node API to install NSX components on a node.
 
-              <b>awk '{print $2}' id_rsa.pub | base64 -d | sha256sum -b | sed 's/ .*$//' | xxd -r -p | base64</b>
-              This api is deprecated as part of FN+TN unification. Please use Transport Node API
-              to install NSX components on a node.
+    - Additional documentation on creating a transport node can be found
+      in the NSX-T Installation Guide.
 
-              Additional documentation on creating a transport node can be found
-              in the NSX-T Installation Guide.
+    - In order for the transport node to forward packets,
+      the host_switch_spec property must be specified.
 
-              In order for the transport node to forward packets,
-              the host_switch_spec property must be specified.
+    - Host switches (called bridges in OVS on KVM hypervisors) are the
+      individual switches within the host virtual switch. 
+    - Virtual machines are connected to the host switches.
 
-              Host switches (called bridges in OVS on KVM hypervisors) are the
-              individual switches within the host virtual switch. Virtual machines
-              are connected to the host switches.
+    - When creating a transport node, you need to specify if the host switches
+      are already manually preconfigured on the node, or if NSX should create
+      and manage the host switches. 
+    - You specify this choice by the type of host switches you pass in the host_switch_spec property of the
+      TransportNode request payload.
 
-              When creating a transport node, you need to specify if the host switches
-              are already manually preconfigured on the node, or if NSX should create
-              and manage the host switches. You specify this choice by the type
-              of host switches you pass in the host_switch_spec property of the
-              TransportNode request payload.
+    - For a KVM host, you can preconfigure the host switch, or you can have
+      NSX Manager perform the configuration. 
+    - For an ESXi host or NSX Edge node, NSX Manager always configures the host switch.
 
-              For a KVM host, you can preconfigure the host switch, or you can have
-              NSX Manager perform the configuration. For an ESXi host or NSX Edge
-              node, NSX Manager always configures the host switch.
+    - To preconfigure the host switches on a KVM host, pass an array
+      of PreconfiguredHostSwitchSpec objects that describes those host
+      switches. 
+    - In the current NSX-T release, only one prefonfigured host
+      switch can be specified.  
+    - See the PreconfiguredHostSwitchSpec schema definition for documentation on the properties that must be provided.
+    - Preconfigured host switches are only supported on KVM hosts, not on ESXi hosts or NSX Edge nodes.
 
-              To preconfigure the host switches on a KVM host, pass an array
-              of PreconfiguredHostSwitchSpec objects that describes those host
-              switches. In the current NSX-T release, only one prefonfigured host
-              switch can be specified.  See the PreconfiguredHostSwitchSpec schema
-              definition for documentation on the properties that must be provided.
-              Preconfigured host switches are only supported on KVM hosts, not on
-              ESXi hosts or NSX Edge nodes.
+    - To allow NSX to manage the host switch configuration on KVM hosts,
+      ESXi hosts, or NSX Edge nodes, pass an array of StandardHostSwitchSpec
+      objects in the host_switch_spec property, and NSX will automatically
+      create host switches with the properties you provide. 
+    - In the current NSX-T release, up to 5 host switches can be automatically managed.
+    - See the StandardHostSwitchSpec schema definition for documentation on
+      the properties that must be provided.
 
-              To allow NSX to manage the host switch configuration on KVM hosts,
-              ESXi hosts, or NSX Edge nodes, pass an array of StandardHostSwitchSpec
-              objects in the host_switch_spec property, and NSX will automatically
-              create host switches with the properties you provide. In the current
-              NSX-T release, up to 5 host switches can be automatically managed.
-              See the StandardHostSwitchSpec schema definition for documentation on
-              the properties that must be provided.
+    - "Note: previous versions of NSX-T used a property named host_switches
+      to specify the host switch configuration on the transport node."
+    - That property is deprecated, but still functions. 
+    - You should configure new host switches using the host_switch_spec property.
+    - The request should either provide node_deployement_info or node_id.
 
-              Note: previous versions of NSX-T used a property named host_switches
-              to specify the host switch configuration on the transport node. That
-              property is deprecated, but still functions. You should configure new
-              host switches using the host_switch_spec property.
+    - If the host node (hypervisor) or edge node (router) is already added in
+      system then it can be converted to transport node by providing node_id in
+      request.
 
-              The request should either provide node_deployement_info or node_id.
-
-              If the host node (hypervisor) or edge node (router) is already added in
-              system then it can be converted to transport node by providing node_id in
-              request.
-
-              If host node (hypervisor) or edge node (router) is not already present in
-              system then information should be provided under node_deployment_info."
-
+    - If host node (hypervisor) or edge node (router) is not already present in
+      system then information should be provided under node_deployment_info.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

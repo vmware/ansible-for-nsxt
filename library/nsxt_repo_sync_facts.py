@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_repo_sync_facts
 short_description: 'Get synchronize status of a manager node'
-description: "Returns the synchronization status for the manager represented by given ."
+description: 
+  - Returns the synchronization status for the manager represented by given.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

@@ -23,10 +23,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_logical_ports_facts
 short_description: List All Logical Ports
-description: Returns information about all configured logical switch ports. Logical
-             switch ports connect to VM virtual network interface cards (NICs). Each
-             logical port is associated with one logical switch.
-
+description: 
+  - Returns information about all configured logical switch ports. 
+  - Logical switch ports connect to VM virtual network interface cards (NICs). 
+  - Each logical port is associated with one logical switch.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -42,7 +42,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

@@ -23,13 +23,15 @@ DOCUMENTATION = '''
 ---
 module: nsxt_uplink_profiles_facts
 short_description: List Hostswitch Profiles
-description: Returns information about the configured hostswitch profiles. Hostswitch
-              profiles define networking policies for hostswitches (sometimes referred to
-              as bridges in OVS). Currently, only uplink teaming is supported. Uplink
-              teaming allows NSX to load balance traffic across different physical NICs
-              (PNICs) on the hypervisor hosts. Multiple teaming policies are supported,
-              including LACP active, LACP passive, load balancing based on source ID, and
-              failover order.
+description: 
+  - Returns information about the configured hostswitch profiles. 
+  - Hostswitch profiles define networking policies for hostswitches (sometimes referred to
+    as bridges in OVS). 
+  - Currently, only uplink teaming is supported. 
+  - Uplink teaming allows NSX to load balance traffic across different physical NICs
+    (PNICs) on the hypervisor hosts. Multiple teaming policies are supported,
+    including LACP active, LACP passive, load balancing based on source ID, and
+    failover order.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi

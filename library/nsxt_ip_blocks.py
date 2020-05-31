@@ -22,8 +22,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_ip_blocks
 short_description: 'Create a new IP address block.'
-description: "Creates a new IPv4 address block using the specified cidr. cidr is a
-              required parameter. display_name & description are optional parameters"
+description: 
+    - "Creates a new IPv4 address block using the specified cidr. 
+    - cidr is a required parameter. 
+    - display_name & description are optional parameters.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:

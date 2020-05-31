@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_uc
 short_description: 'Upgrade the upgrade coordinator'
-description: "Upgrade the upgrade coordinator"
+description: 
+  - Upgrade the upgrade coordinator.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

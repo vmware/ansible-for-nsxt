@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upload_upgrade_bundle_facts
 short_description: 'Get uploaded upgrade bundle information.'
-description: "Get uploaded upgrade bundle information."
+description: 
+  - Get uploaded upgrade bundle information.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

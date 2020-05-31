@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_eula_accept_facts
 short_description: 'Gets EULA acceptance status and contents'
-description: "Returns EULA acceptance status and the contents."
+description: 
+  - Returns EULA acceptance status and the contents.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

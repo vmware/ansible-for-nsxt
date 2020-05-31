@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_principal_identities_facts
 short_description: List all existing principal identities
-description: Returns the list of principals registered with a certificate.
+description: 
+  - Returns the list of principals registered with a certificate.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

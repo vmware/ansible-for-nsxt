@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_upload_mub
 short_description: 'Uploads upgrade mub'
-description: "Uploads upgrade mub"
+description: 
+    - Uploads upgrade mub.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

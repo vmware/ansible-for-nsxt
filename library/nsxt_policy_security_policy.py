@@ -29,8 +29,8 @@ DOCUMENTATION = '''
 module: nsxt_policy_security_policy
 short_description: Create or Delete a Policy Security Policy
 description:
-    Creates or deletes a Policy Security Policy.
-    Required attributes include id and display_name.
+    - Creates or deletes a Policy Security Policy.
+    - Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
 options:

@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_principal_identities
 short_description: 'Register a name-certificate combination.'
-description: "Associates a principal's name with a certificate that is used to authenticate. "
+description: 
+  - Associates a principal's name with a certificate that is used to authenticate.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

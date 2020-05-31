@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_deploy_ova
 short_description: Deploys NSXT Manager
-description: Deploys NSXT Manager
+description: 
+    - Deploys NSXT Manager.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

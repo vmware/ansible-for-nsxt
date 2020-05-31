@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_compute_collection_transport_templates_facts
 short_description: 'List compute collection transportnode templates'
-description: 'Returns all eligible compute collection transportnode templates'
+description: 
+  - Returns all eligible compute collection transportnode templates.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -39,7 +40,6 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

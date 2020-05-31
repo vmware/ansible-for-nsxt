@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_fabric_compute_managers_facts
 short_description: Return the List of Compute managers
-description: Returns information about all compute managers.
+description: 
+  - Returns information about all compute managers.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -39,7 +40,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

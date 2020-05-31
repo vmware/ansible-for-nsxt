@@ -23,14 +23,13 @@ DOCUMENTATION = '''
 ---
 module: nsxt_logical_router_ports_facts
 short_description: List Logical Router Ports
-description: Returns information about all logical router ports. Information includes the
-              resource_type (LogicalRouterUpLinkPort, LogicalRouterDownLinkPort,
-              LogicalRouterLinkPort, LogicalRouterLoopbackPort, 
-              LogicalRouterCentralizedServicePort);
-              logical_router_id (the router to which each logical router port is assigned);
-              and any service_bindings (such as DHCP relay service).
-              The GET request can include a query parameter (logical_router_id
-              or logical_switch_id).
+description: 
+  - Returns information about all logical router ports. 
+  - Information includes the resource_type (LogicalRouterUpLinkPort, LogicalRouterDownLinkPort,
+    LogicalRouterLinkPort, LogicalRouterLoopbackPort, LogicalRouterCentralizedServicePort);
+    logical_router_id (the router to which each logical router port is assigned);
+    and any service_bindings (such as DHCP relay service).
+  - The GET request can include a query parameter (logical_router_id or logical_switch_id).
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -47,7 +46,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

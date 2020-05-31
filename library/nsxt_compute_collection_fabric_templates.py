@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 ---
 module: nsxt_compute_collection_fabric_templates
 short_description: 'Create a compute collection fabric template'
-description: 'Fabric templates are fabric configurations applied at the compute collection 
-              level. This configurations is used to decide what automated operations should 
-              be a run when a host membership changes.'
+description: 
+    - Fabric templates are fabric configurations applied at the compute collection level.
+    - This configurations is used to decide what automated operations should be a run when a host membership changes.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -67,7 +67,6 @@ options:
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
         required: true
-
 '''
 
 EXAMPLES = '''

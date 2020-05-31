@@ -23,10 +23,11 @@ DOCUMENTATION = '''
 ---
 module: nsxt_ip_pools_facts
 short_description: List IP Pools
-description: Returns information about the configured IP address pools. Information
-             includes the display name and description of the pool and the details of
-             each of the subnets in the pool, including the DNS servers, allocation
-             ranges, gateway, and CIDR subnet address.
+description: 
+  - Returns information about the configured IP address pools. 
+  - Information includes the display name and description of the pool and the details of
+    each of the subnets in the pool, including the DNS servers, allocation
+    ranges, gateway, and CIDR subnet address.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -43,7 +44,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

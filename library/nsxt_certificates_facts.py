@@ -23,12 +23,13 @@ DOCUMENTATION = '''
 ---
 module: nsxt_certificates_facts
 short_description: List all existing certificates
-description: Returns all certificate information viewable by the user, including each
-             certificate's UUID; resource_type (for example, certificate_self_signed,
-             certificate_ca, or certificate_signed); pem_encoded data; and history of the
-             certificate (who created or modified it and when). For additional
-             information, include the ?details=true modifier at the end of the request
-             URI.
+description: 
+  - Returns all certificate information viewable by the user, including each
+    certificate's UUID; resource_type (for example, certificate_self_signed,
+    certificate_ca, or certificate_signed); pem_encoded data; and history of the
+    certificate (who created or modified it and when). For additional
+    information, include the ?details=true modifier at the end of the request
+    URI.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -44,8 +45,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
-
 '''
 
 EXAMPLES = '''

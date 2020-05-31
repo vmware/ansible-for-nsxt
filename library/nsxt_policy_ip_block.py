@@ -29,8 +29,8 @@ DOCUMENTATION = '''
 module: nsxt_policy_ip_block
 short_description: Create or Delete a Policy IP Block
 description:
-    Creates or deletes a Policy IP Block.
-    Required attributes include id and display_name.
+    - Creates or deletes a Policy IP Block.
+    - Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
 options:

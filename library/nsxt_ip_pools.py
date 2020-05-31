@@ -22,9 +22,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_ip_pools
 short_description: 'Create an IP Pool'
-description: "Creates a new IPv4 or IPv6 address pool. Required parameters are
-              allocation_ranges and cidr. Optional parameters are display_name,
-              description, dns_nameservers, dns_suffix, and gateway_ip."
+description: 
+    - Creates a new IPv4 or IPv6 address pool. 
+    - Required parameters are allocation_ranges and cidr. 
+    - Optional parameters are display_name, description, dns_nameservers, dns_suffix, and gateway_ip.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -69,8 +70,6 @@ options:
         description: 'IP address release delay'
         required: false
         type: int
-
-    
 '''
 
 EXAMPLES = '''

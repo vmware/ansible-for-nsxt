@@ -23,13 +23,12 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_nodes_facts
 short_description: List Transport Nodes
-description: Returns information about all transport nodes along with underlying host or
-              edge details. A transport node is a host or edge that contains hostswitches.
-              A hostswitch can have virtual machines connected to them.
-
-              Because each transport node has hostswitches, transport nodes can also have
-              virtual tunnel endpoints, which means that they can be part of the overlay.
-
+description: 
+  - Returns information about all transport nodes along with underlying host or edge details. 
+  - A transport node is a host or edge that contains hostswitches.
+  - A hostswitch can have virtual machines connected to them.
+  - Because each transport node has hostswitches, transport nodes can also have
+    virtual tunnel endpoints, which means that they can be part of the overlay.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

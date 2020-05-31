@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_plan
 short_description: 'Upgrade plan settings for the component'
-description: 'Upgrade plan settings for the component'
+description:
+  - Upgrade plan settings for the component.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

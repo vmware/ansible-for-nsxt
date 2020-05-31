@@ -23,10 +23,11 @@ DOCUMENTATION = '''
 ---
 module: nsxt_uplink_profiles
 short_description: Create a Hostswitch Profile
-description: Creates a hostswitch profile. The resource_type is required. For uplink
-              profiles, the teaming and policy parameters are required. By default, the
-              mtu is 1600 and the transport_vlan is 0. The supported MTU range is 1280
-              through 9000.
+description: 
+    - Creates a hostswitch profile. The resource_type is required. 
+    - For uplink profiles, the teaming and policy parameters are required. 
+    - By default, the mtu is 1600 and the transport_vlan is 0. 
+    - The supported MTU range is 1280 through 9000.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi

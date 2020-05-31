@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 module: nsxt_policy_segment
 short_description: Create or Delete a Policy Segment
 description:
-    Creates or deletes a Policy Segment.
-    Required attributes include id and display_name.
-    If the specified TransportZone is of VLAN type, a vlan_id is also required.
+    - Creates or deletes a Policy Segment.
+    - Required attributes include id and display_name.
+    - If the specified TransportZone is of VLAN type, a vlan_id is also required.
 version_added: "2.8"
 author: Gautam Verma
 options:

@@ -23,11 +23,11 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_postchecks
 short_description: 'Execute post-upgrade checks'
-description: "Run pre-defined checks to identify potential issues which can be 
-              encountered after an upgrade. The results
-              of the checks are added to the respective upgrade units aggregate-info. The 
-              progress and status of operation is part of upgrade status summary of 
-              individual components."
+description: 
+  - Run pre-defined checks to identify potential issues which can be encountered after an upgrade. 
+  - The results of the checks are added to the respective upgrade units aggregate-info. 
+  - The progress and status of operation is part of upgrade status summary of 
+    individual components.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

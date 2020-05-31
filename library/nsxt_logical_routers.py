@@ -23,10 +23,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_logical_routers
 short_description: Create a Logical Router
-description: Creates a logical router. The required parameters are router_type (TIER0 or
-             TIER1) and edge_cluster_id (TIER0 only). Optional parameters include
-             internal and external transit network addresses.
-
+description: 
+    - Creates a logical router. The required parameters are router_type (TIER0 or
+      TIER1) and edge_cluster_id (TIER0 only). 
+    - Optional parameters include internal and external transit network addresses.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -185,7 +185,6 @@ options:
                       'present' is used to create or update resource. 
                       'absent' is used to delete resource."
         required: true
-    
 '''
 
 EXAMPLES = '''

@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_compute_collection_fabric_templates_facts
 short_description: 'Get compute collection fabric templates'
-description: 'Returns compute collection fabric templates'
+description: 
+  - Returns compute collection fabric templates.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -39,7 +40,6 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

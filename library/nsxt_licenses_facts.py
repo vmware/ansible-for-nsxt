@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_licenses_facts
 short_description: Get all licenses
-description: Returns all licenses.
+description: 
+  - Returns all licenses.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -40,7 +41,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

@@ -23,10 +23,11 @@ DOCUMENTATION = '''
 ---
 module: nsxt_edge_clusters_facts
 short_description: List Edge Clusters
-description: Returns information about the configured edge clusters, which enable you to
-             group together transport nodes of the type EdgeNode and apply fabric
-             profiles to all members of the edge cluster. Each edge node can participate
-             in only one edge cluster.
+description: 
+  - Returns information about the configured edge clusters, which enable you to
+    group together transport nodes of the type EdgeNode and apply fabric
+    profiles to all members of the edge cluster. 
+  - Each edge node can participate in only one edge cluster.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi

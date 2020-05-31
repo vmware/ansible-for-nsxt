@@ -23,12 +23,12 @@ DOCUMENTATION = '''
 ---
 module: nsxt_logical_switches
 short_description: Create a Logical Switch
-description: Creates a new logical switch. The request must include the
-             transport_zone_id, display_name, and admin_state (UP or DOWN). The
-             replication_mode (MTEP or SOURCE) is required for overlay logical
-             switches, but not for VLAN-based logical switches. A vlan needs to be
-             provided for VLAN-based logical switches
-
+description: 
+    - Creates a new logical switch. 
+    - The request must include the transport_zone_id, display_name, and admin_state (UP or DOWN). 
+    - The replication_mode (MTEP or SOURCE) is required for overlay logical
+      switches, but not for VLAN-based logical switches. 
+    - A vlan needs to be provided for VLAN-based logical switches.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

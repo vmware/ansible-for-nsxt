@@ -23,9 +23,10 @@ DOCUMENTATION = '''
 ---
 module: nsxt_virtual_ip
 short_description: 'Sets and clears cluster virtual IP address'
-description: "Sets the cluster virtual IP address. Note, all nodes in the management 
-              cluster must be in the same subnet. If not, a 409 CONFLICT status is 
-              returned. "
+description: 
+  - Sets the cluster virtual IP address. 
+  - Note, all nodes in the management cluster must be in the same subnet. 
+  - If not, a 409 CONFLICT status is returned.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:

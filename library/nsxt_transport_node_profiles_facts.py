@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_node_profiles_facts
 short_description: List Transport Nodes Profiles
-description: Returns information about all transport node profiles.
+description: 
+  - Returns information about all transport node profiles.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi

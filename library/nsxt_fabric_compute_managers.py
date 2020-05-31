@@ -23,8 +23,9 @@ DOCUMENTATION = '''
 ---
 module: nsxt_fabric_compute_managers
 short_description: 'Register compute manager with NSX'
-description: "Registers compute manager with NSX. Inventory service will collect
-              data from the registered compute manager"
+description:
+    - Registers compute manager with NSX. 
+    - Inventory service will collect data from the registered compute manager.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -100,8 +101,6 @@ options:
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
         required: true
-
-    
 '''
 
 EXAMPLES = '''

@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_logical_router_static_routes
 short_description: Add Static Routes on a Logical Router
-description: Add Static Routes on a Logical Router
+description: 
+  - Add Static Routes on a Logical Router
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:
@@ -75,7 +76,6 @@ options:
                       'present' is used to create or update resource. 
                       'absent' is used to delete resource."
         required: true
-    
 '''
 
 EXAMPLES = '''

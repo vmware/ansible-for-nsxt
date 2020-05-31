@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 ---
 module: nsxt_manager_auto_deployment
 short_description: 'Deploy and register a cluster node VM'
-description: "Deploys a cluster node VM as specified by the deployment config.
-              Once the VM is deployed and powered on, it will automatically join the
-              existing cluster."
+description: 
+  - Deploys a cluster node VM as specified by the deployment config.
+  - Once the VM is deployed and powered on, it will automatically join the existing cluster.
 version_added: '2.7'
 author: 'Rahul Raghuvanshi'
 options:
@@ -61,7 +61,6 @@ options:
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
         required: true
-    
 '''
 
 EXAMPLES = '''

@@ -29,8 +29,8 @@ DOCUMENTATION = '''
 module: nsxt_policy_ip_pool
 short_description: Create or Delete a Policy IP Pool
 description:
-    Creates or deletes a Policy IP Pool.
-    Required attributes include id and display_name.
+    - Creates or deletes a Policy IP Pool.
+    - Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
 options:

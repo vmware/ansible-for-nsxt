@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_groups
 short_description: 'Create a group of upgrade units.'
-description: 'Create a group of upgrade units.'
+description: 
+  - Create a group of upgrade units.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

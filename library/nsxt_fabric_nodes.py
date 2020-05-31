@@ -24,36 +24,34 @@ DOCUMENTATION = '''
 ---
 module: nsxt_fabric_nodes
 short_description: Register and Install NSX Components on a Node
-description: Creates a host node (hypervisor) or edge node (router) in the transport
-             network.
+description: 
+    - Creates a host node (hypervisor) or edge node (router) in the transport network.
 
-             When you run this command for a host, NSX Manager attempts to install the
-             NSX kernel modules, which are packaged as VIB, RPM, or DEB files. For the
-             installation to succeed, you must provide the host login credentials and the
-             host thumbprint.
+    - When you run this command for a host, NSX Manager attempts to install the
+      NSX kernel modules, which are packaged as VIB, RPM, or DEB files.
 
-             To get the ESXi host thumbprint, SSH to the host and run the
-             'openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout'
-             command.
+    - For the installation to succeed, you must provide the host login credentials and the
+      host thumbprint.
 
-             To generate host key thumbprint using SHA-256 algorithm please follow the
-             steps below.
+    - To get the ESXi host thumbprint, SSH to the host and run the
+      'openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha256 -noout'
+      command.
+    - To generate host key thumbprint using SHA-256 algorithm please follow the steps below.
 
-             Log into the host, making sure that the connection is not vulnerable to a
-             man in the middle attack. Check whether a public key already exists.
-             Host public key is generally located at '/etc/ssh/ssh_host_rsa_key.pub'.
-             If the key is not present then generate a new key by running the following
-             command and follow the instructions.
+    - Log into the host, making sure that the connection is not vulnerable to a
+      man in the middle attack. Check whether a public key already exists.
+      Host public key is generally located at '/etc/ssh/ssh_host_rsa_key.pub'.
+      If the key is not present then generate a new key by running the following
+      command and follow the instructions.
+    - ssh-keygen -t rsa
 
-             <b>ssh-keygen -t rsa</b>
+    - Now generate a SHA256 hash of the key using the following command. Please
+      make sure to pass the appropriate file name if the public key is stored with
+      a different file name other than the default 'id_rsa.pub'.
 
-             Now generate a SHA256 hash of the key using the following command. Please
-             make sure to pass the appropriate file name if the public key is stored with
-             a different file name other than the default 'id_rsa.pub'.
-
-             <b>awk '{print $2}' id_rsa.pub | base64 -d | sha256sum -b | sed 's/ .*$//' | xxd -r -p | base64</b>
-             This api is deprecated as part of FN+TN unification. Please use Transport Node API
-             to install NSX components on a node.
+    - awk '{print $2}' id_rsa.pub | base64 -d | sha256sum -b | sed 's/ .*$//' | xxd -r -p | base64
+    - This api is deprecated as part of FN+TN unification. Please use Transport Node API
+      to install NSX components on a node.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi

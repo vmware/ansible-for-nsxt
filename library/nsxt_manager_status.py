@@ -23,8 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_manager_status
 short_description: Shows status of nsxt manager
-description: Shows status of nsxt manager
-
+description: 
+  - Shows status of nsxt manager.
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

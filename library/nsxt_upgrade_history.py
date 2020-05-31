@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_history
 short_description: 'Get upgrade history'
-description: "Get upgrade history"
+description: 
+  - Get upgrade history.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:

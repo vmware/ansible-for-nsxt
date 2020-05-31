@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_vitual_ip_facts
 short_description: Read cluster virtual IP address
-description: Returns the configured cluster virtual IP address or null if not configured.
+description: 
+  - Returns the configured cluster virtual IP address or null if not configured.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi

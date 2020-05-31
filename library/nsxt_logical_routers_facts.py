@@ -23,10 +23,12 @@ DOCUMENTATION = '''
 ---
 module: nsxt_logical_routers_facts
 short_description: List Logical Routers
-description: Returns information about all logical routers, including the UUID, internal
-              and external transit network addresses, and the router type (TIER0 or
-              TIER1). You can get information for only TIER0 routers or only the TIER1
-              routers by including the router_type query parameter.
+description: 
+  - Returns information about all logical routers, including the UUID, internal
+    and external transit network addresses, and the router type (TIER0 or
+    TIER1). 
+  - You can get information for only TIER0 routers or only the TIER1 
+    routers by including the router_type query parameter.
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -43,7 +45,6 @@ options:
         description: The password to authenticate with the NSX manager.
         required: true
         type: str
-
 '''
 
 EXAMPLES = '''

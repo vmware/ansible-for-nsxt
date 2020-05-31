@@ -23,7 +23,8 @@ DOCUMENTATION = '''
 ---
 module: nsxt_upgrade_eula_accept
 short_description: 'Accept end user license agreement'
-description: "Accept end user license agreement "
+description: 
+  - Accept end user license agreement.
 version_added: '2.7'
 author: 'Kommireddy Akhilesh'
 options:
