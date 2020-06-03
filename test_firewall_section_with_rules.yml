@@ -1,0 +1,27 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+    - answerfile_firewall.yml
+  tasks:
+    - name: Create DFW Section with Rules
+      nsxt_firewall_section_with_rules:
+        hostname: "{{ hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        applied_tos: "{{ item.applied_tos | default([]) }}"
+        display_name: "{{ item.display_name }}"
+        description: "{{ item.description | default(omit) }}"
+        modify_placement: "{{ item.modify_placement | default(omit) }}"
+        rules: "{{ item.rules | default([]) }}"
+        section_placement: "{{ item.section_placement | default(omit) }}"
+        section_type: LAYER3
+        state: "{{ item.state }}"
+        stateful: "{{ item.stateful | default(True) }}"
+        tags: "{{ item.tags | default([]) }}"
+        validate_certs: False
+      with_items:
+        - "{{ nsxt_dfw_section_with_rules }}"
+

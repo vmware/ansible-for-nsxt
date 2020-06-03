@@ -1,0 +1,124 @@
+nsxt_ip_sets:
+- display_name: 'ips_test'
+  ip_addresses:
+  - '192.168.0.0/24'
+  - '192.168.1.1'
+  state: present
+
+nsxt_ns_groups:
+- display_name: 'ns_test'
+  members:
+    - resource_type: NSGroupSimpleExpression
+      target_property: id
+      op: EQUALS
+      target_type: IPSet
+      value: 'ips_test'
+  state: present
+- display_name: 'ns_test_criteria'
+  membership_criteria:
+    - resource_type: NSGroupTagExpression
+      target_type: 'LogicalSwitch'
+      scope: 'S1'
+      tag: 'T1'
+    - resource_type: NSGroupComplexExpression
+      expressions:
+        - resource_type: NSGroupTagExpression
+          target_type: 'LogicalPort'
+          scope: 'S2'
+          tag: 'T2'
+        - resource_type: NSGroupTagExpression
+          target_type: 'LogicalPort'
+          scope: '99'
+          tag: 'T1'
+  state: present
+
+  nsxt_dfw_section_with_rules:
+- display_name: Test Section DFW
+  description: Testinging
+  modify_placement: True
+  stateful: True
+  state: present
+  applied_tos:
+  - target_display_name: 'ns_Dynamic1'
+    target_type: NSGroup
+  - target_display_name: 'test_lp'
+    target_type: LogicalPort
+  - target_display_name: 'PKS_Infra'
+    target_type: LogicalSwitch
+  section_placement:
+    operation: insert_after
+    display_name: top_section
+  rules:
+  - display_name: 'Test Rule DFW'
+    description: Testing
+    action: ALLOW
+    applied_tos:
+    - target_display_name: 'logical_switch_test'
+      target_type: LogicalSwitch
+    context_profiles:
+    - target_display_name: 'ACTIVDIR'
+      target_type: NSProfile
+    destinations:
+    - target_display_name: 'ip_set_test' # Will insert target_id a runtime
+      target_type: IPSet
+    direction: IN_OUT
+    disabled: False
+    ip_protocol: IPV4_IPV6
+    logged: True
+    notes: 'Test rule to prove FW rules'
+    resource_type: FirewallRule
+    rule_tag: Test-Log-Tag
+    services: 
+    - target_display_name: 'Active Directory Server UDP' # Will insert target_id a runtime
+      target_type: NSService
+    sources: 
+    - target_display_name: 'ns_group_test'# Will insert target_id a runtime
+      target_type: NSGroup
+
+- display_name: Test Section Edge
+  description: Testing edge1
+  modify_placement: False
+  stateful: True
+  state: present
+  tags:
+  - scope: 'test scope'
+    tag: 'test tag'
+  applied_tos:
+  - target_display_name: 'tier-0'
+    target_type: LogicalRouter
+  section_placement:
+    operation: insert_bottom
+  rules:
+  - display_name: 'Test Rule Edge'
+    description: Testing
+    action: ALLOW
+    applied_tos:
+    - target_display_name: 'Uplink'
+      target_type: LogicalRouterPort
+    destinations: 
+    - target_display_name: 'ip_set_test'
+      target_type: IPSet
+    direction: IN_OUT
+    disabled: False
+    ip_protocol: IPV4
+    logged: True
+    resource_type: FirewallRule
+    services: 
+    - target_display_name: 'SSL' # Will insert target_id a runtime
+      target_type: NSService
+    sources: 
+    - target_display_name: '10.1.1.1'
+      target_type: IPAddress
+
+
+services:
+- display_name: 'HTTPS-ALT'
+  description: random
+  nsservice_element:
+    destination_ports:
+    - '8443'
+    l4_protocol: TCP
+    resource_type: L4PortSetNSService
+  tags:
+  - scope: 'test scope'
+    tag: 'test tag'
