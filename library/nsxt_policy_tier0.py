@@ -974,7 +974,7 @@ options:
                                 required: False
                                 suboptions:
                                     address_family:
-                                        description:
+                                        description: Address Family
                                         type: str
                                         required: False
                                         choices:
