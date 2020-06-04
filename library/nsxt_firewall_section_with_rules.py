@@ -398,7 +398,7 @@ RETURN = '''# '''
 
 import json, time, copy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, request_get_all
 from ansible.module_utils._text import to_native
 from collections import Counter
 
@@ -408,24 +408,14 @@ ENDPOINT_LOOKUP = {'NSGroup': '/ns-groups', 'IPSet': '/ip-sets', 'FirewallSectio
                     'LogicalRouterPort': '/logical-router-ports', 'NSProfile': '/ns-profiles', 
                     'NSServiceGroup': '/ns-service-groups', 'NSService': '/ns-services'}
 
-
-def get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
-    '''Handle the API service respondign with a cursor and make subsequent request.'''
+def get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
     try:
-        output_list = []
-        cursor = ''
-        while True:
-            (rc, resp) = request(manager_url + endpoint + cursor, headers=dict(Accept='application/json'),
-                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-            if resp['results']:
-                output_list += resp['results']
-            if resp.__contains__('cursor'):
-                cursor = '?cursor=' + resp['cursor']
-            else:
-                break
-        return output_list
+        (rc, resp) = request_get_all(manager_url + endpoint, headers=dict(Accept='application/json'),
+                                                                      url_username=mgr_username, url_password=mgr_password, 
+                                                                      validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-        module.fail_json(msg='Error accessing endpoint %s. \nError [%s]' % (endpoint, to_native(err)))
+        module.fail_json(msg='Error accessing NS Group. Error [%s]' % (to_native(err)))
+    return resp['results']
 
 def get_dfw_section_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -438,7 +428,7 @@ def get_dfw_section_params(args=None):
 
 def get_dfw_section_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     '''Return dict of firewall section by section name, if name is unique'''
-    dfw_sections = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, '/firewall/sections')
+    dfw_sections = get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs, '/firewall/sections')
     return_section = None
     for dfw_section in dfw_sections:
         if dfw_section.__contains__('display_name') and dfw_section['display_name'] == display_name:
@@ -549,7 +539,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     # Lists must be deep copied otherwise pop removes globally.
     copy_dfw_section_params = copy.deepcopy(dfw_section_params)
     new_dfw_secton_rules = copy_dfw_section_params.pop('rules', [])
-    new_dfw_secton_applied_tos = copy_dfw_section_params.pop('applied_tos', [])
+    copy_dfw_section_params.pop('applied_tos', [])
     copy_dfw_section_params.pop('resource_type', None)
     copy_tags = copy_dfw_section_params.pop('tags', [])
     existing_tags = existing_dfw_section.pop('tags', [])
@@ -562,6 +552,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if compare_tags(module, existing_tags, copy_tags):
         return True
 
+    
     # Check that applied_tos sections match.
     insert_lists_if_missing(existing_dfw_section, ['applied_tos'])
     existing_applied_tos = [d['target_type'] + d['target_id'] for d in existing_dfw_section['applied_tos'] if 'target_id' in d]
@@ -571,7 +562,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     
     # Create lookup table of existing rules by display name. Ignore duplicate names as would trigger a change anyway.
     existing_rule_dict = {}
-    existing_dfw_section_rules = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs,
+    existing_dfw_section_rules = get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs,
                                                  '/firewall/sections/%s/rules' % existing_dfw_section['id'])
     if len(existing_dfw_section_rules) != len(new_dfw_secton_rules):
         return True
@@ -584,9 +575,9 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     # Iterate through each rule and compare each subsection list and finally the keys and values.
     for new_rule in new_dfw_secton_rules:
         try:
-            exsting_rule = existing_rule_dict[new_rule['display_name']]
+            existing_rule = existing_rule_dict[new_rule['display_name']]
         except KeyError:
-            continue
+            existing_rule = {}
         section_labels = ['applied_tos', 'context_profiles', 'destinations', 'services', 'sources']
         insert_lists_if_missing(new_rule, section_labels)
         insert_lists_if_missing(existing_rule, section_labels)
@@ -613,7 +604,7 @@ def collect_all_existing_config(module, manager_url, mgr_username, mgr_password,
     existing_config_lookup = {}
     duplicated_objects = {'IPAddress': []} # Manually isert IP Addresses as the cannot be duplicated.
     for endpoint_name, endpoint in ENDPOINT_LOOKUP.items():
-        resp = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint)
+        resp = get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint)
         if resp:
             duplicated_objects[endpoint_name] = []
             lookup_table = {}
@@ -643,7 +634,7 @@ def check_if_section_moved(module, manager_url, mgr_username, mgr_password, vali
     '''Check if FW section placement does not match definition'''
     if not modify_placement:
         return False
-    existing_section_list = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, '/firewall/sections')                                                
+    existing_section_list = get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs, '/firewall/sections')                                                
     for idx, section in enumerate(existing_section_list):
         if section['display_name'] == dfw_section_params['display_name']:
             try:

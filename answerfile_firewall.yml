@@ -1,20 +1,20 @@
 nsxt_ip_sets:
-- display_name: 'ips_test'
+- display_name: 'ips-fw-testing'
   ip_addresses:
   - '192.168.0.0/24'
   - '192.168.1.1'
   state: present
 
 nsxt_ns_groups:
-- display_name: 'ns_test'
+- display_name: 'ns-fw-testing'
   members:
     - resource_type: NSGroupSimpleExpression
       target_property: id
       op: EQUALS
       target_type: IPSet
-      value: 'ips_test'
+      value: 'ips-fw-testing'
   state: present
-- display_name: 'ns_test_criteria'
+- display_name: 'ns-fw-testing_criteria'
   membership_criteria:
     - resource_type: NSGroupTagExpression
       target_type: 'LogicalSwitch'
@@ -32,34 +32,34 @@ nsxt_ns_groups:
           tag: 'T1'
   state: present
 
-  nsxt_dfw_section_with_rules:
+nsxt_dfw_section_with_rules:
 - display_name: Test Section DFW
-  description: Testinging
+  description: Testing
   modify_placement: True
   stateful: True
   state: present
   applied_tos:
-  - target_display_name: 'ns_Dynamic1'
+  - target_display_name: 'ns-fw-testing'
     target_type: NSGroup
-  - target_display_name: 'test_lp'
+  - target_display_name: 'lp-fw-testing'
     target_type: LogicalPort
-  - target_display_name: 'PKS_Infra'
+  - target_display_name: 'ls-fw-testing'
     target_type: LogicalSwitch
   section_placement:
-    operation: insert_after
-    display_name: top_section
+    operation: insert_before
+    display_name: "Default Layer3 Section"
   rules:
   - display_name: 'Test Rule DFW'
     description: Testing
     action: ALLOW
     applied_tos:
-    - target_display_name: 'logical_switch_test'
+    - target_display_name: 'ls-fw-testing'
       target_type: LogicalSwitch
     context_profiles:
     - target_display_name: 'ACTIVDIR'
       target_type: NSProfile
     destinations:
-    - target_display_name: 'ip_set_test' # Will insert target_id a runtime
+    - target_display_name: 'ips-fw-testing' # Will insert target_id a runtime
       target_type: IPSet
     direction: IN_OUT
     disabled: False
@@ -72,7 +72,7 @@ nsxt_ns_groups:
     - target_display_name: 'Active Directory Server UDP' # Will insert target_id a runtime
       target_type: NSService
     sources: 
-    - target_display_name: 'ns_group_test'# Will insert target_id a runtime
+    - target_display_name: 'ns-fw-testing' # Will insert target_id a runtime
       target_type: NSGroup
 
 - display_name: Test Section Edge
@@ -84,7 +84,7 @@ nsxt_ns_groups:
   - scope: 'test scope'
     tag: 'test tag'
   applied_tos:
-  - target_display_name: 'tier-0'
+  - target_display_name: 't1-fw-testing'
     target_type: LogicalRouter
   section_placement:
     operation: insert_bottom
@@ -93,10 +93,10 @@ nsxt_ns_groups:
     description: Testing
     action: ALLOW
     applied_tos:
-    - target_display_name: 'Uplink'
+    - target_display_name: 'lrp-fw-testing'
       target_type: LogicalRouterPort
     destinations: 
-    - target_display_name: 'ip_set_test'
+    - target_display_name: 'ips-fw-testing'
       target_type: IPSet
     direction: IN_OUT
     disabled: False
@@ -104,7 +104,7 @@ nsxt_ns_groups:
     logged: True
     resource_type: FirewallRule
     services: 
-    - target_display_name: 'SSL' # Will insert target_id a runtime
+    - target_display_name: 'SSH' # Will insert target_id a runtime
       target_type: NSService
     sources: 
     - target_display_name: '10.1.1.1'

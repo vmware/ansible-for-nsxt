@@ -1,11 +1,93 @@
 ---
 - hosts: 127.0.0.1
   connection: local
-  become: yes
   vars_files:
     - answerfile.yml
     - answerfile_firewall.yml
   tasks:
+    - name: Create a new IP Set
+      nsxt_ip_sets:
+        hostname: "{{ hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        display_name: "{{ item.display_name }}"
+        ip_addresses: "{{ item.ip_addresses }}"
+        state: "{{ item.state }}"
+        validate_certs: False
+      with_items:
+        - "{{ nsxt_ip_sets }}"
+
+    - name: Create a new NS Group
+      nsxt_ns_groups:
+        hostname: "{{ hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        display_name: "{{ item.display_name }}"
+        members: "{{ item.members | default([]) }}"
+        membership_criteria: "{{ item.membership_criteria | default([]) }}"
+        resource_type: "NSGroup"
+        state: "{{ item.state }}"
+        validate_certs: False
+      with_items:
+        - "{{ nsxt_ns_groups }}"
+
+    - name: Create transport zone
+      nsxt_transport_zones:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: "TransportZone"
+        display_name: "tz-fw-testing"
+        description: "NSX configured Test Transport Zone"
+        transport_type: "OVERLAY"
+        host_switch_name: "sw-fw-testing"
+        state: "present"
+
+    - name: Create logical switch
+      nsxt_logical_switches:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "ls-fw-testing"
+        replication_mode: SOURCE
+        transport_zone_name: "tz-fw-testing"
+        admin_state: "UP"
+        state: "present"
+
+    - name: Create a Logical Port
+      nsxt_logical_ports:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "lp-fw-testing"
+        logical_switch_name: "ls-fw-testing"
+        admin_state: "UP"
+        state: "present"
+
+    - name: Create logical router
+      nsxt_logical_routers:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "t1-fw-testing"
+        router_type: "TIER1"
+        state: "present"
+
+    - name: Create logical router port
+      nsxt_logical_router_ports:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "lrp-fw-testing"
+        resource_type: "LogicalRouterLinkPortOnTIER1"
+        logical_router_name: "t1-fw-testing"
+        state: "present"
+
     - name: Create DFW Section with Rules
       nsxt_firewall_section_with_rules:
         hostname: "{{ hostname }}"

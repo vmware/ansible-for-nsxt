@@ -138,7 +138,7 @@ RETURN = '''# '''
 
 import json, time, copy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, request_get_all
 from ansible.module_utils._text import to_native
 
 
@@ -152,28 +152,18 @@ def get_service_params(args=None):
             args.pop(key, None)
     return args
 
-def get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
-    '''Handle the API service respondign with a cursor and make subsequent request.'''
+def get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
     try:
-        output_list = []
-        cursor = ''
-        while True:
-            (rc, resp) = request(manager_url + endpoint + cursor, headers=dict(Accept='application/json'),
-                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, 
-                                 ignore_errors=True)
-            if resp['results']:
-                output_list += resp['results']
-            if resp.__contains__('cursor'):
-                cursor = '?cursor=' + resp['cursor']
-            else:
-                break
-        return output_list
+        (rc, resp) = request_get_all(manager_url + endpoint, headers=dict(Accept='application/json'),
+                                                                      url_username=mgr_username, url_password=mgr_password, 
+                                                                      validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
-        module.fail_json(msg='Error accessing endpoint %s. \nError [%s]' % (endpoint, to_native(err)))
+        module.fail_json(msg='Error accessing NS Group. Error [%s]' % (to_native(err)))
+    return resp['results']
 
 def get_service_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     '''Retrn service dict from display name if display name is unique'''
-    services = get_all_request(module, manager_url, mgr_username, mgr_password, validate_certs, '/ns-services')
+    services = get_all_objects(module, manager_url, mgr_username, mgr_password, validate_certs, '/ns-services')
     return_service = None
     for service in services:
         if service.__contains__('display_name') and service['display_name'] == display_name:

@@ -25,6 +25,24 @@ def vmware_argument_spec():
         validate_certs=dict(type='bool', required=False, default=True),
     )
 
+def request_get_all(url, data=None, headers=None, method='GET', use_proxy=True,
+            force=False, last_mod_time=None, timeout=300, validate_certs=True,
+            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
+    output_list = []
+    cursor = ''
+    while True:
+        (rc, resp) = request(url=url + cursor, headers=headers, method='GET', use_proxy=use_proxy,
+                                                    force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
+                                                    url_username=url_username, url_password=url_password, http_agent=http_agent, 
+                                                    force_basic_auth=True, ignore_errors=ignore_errors)
+        if resp['results']:
+            output_list += resp['results']
+        if resp.__contains__('cursor'):
+            cursor = '?cursor=' + resp['cursor']
+        else:
+            break
+    return rc, {'results': output_list}
+
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
             force=False, last_mod_time=None, timeout=300, validate_certs=True,
             url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):

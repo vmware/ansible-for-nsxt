@@ -82,7 +82,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, request_get_all
 from ansible.module_utils._text import to_native
 
 def get_ip_set_params(args=None):
@@ -96,16 +96,16 @@ def get_ip_set_params(args=None):
 
 def get_ip_sets(module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
-      (rc, resp) = request(manager_url+ '/ip-sets', headers=dict(Accept='application/json'),
+      (rc, resp) = request_get_all(manager_url+ '/ip-sets', headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
       module.fail_json(msg='Error accessing ip sets. Error [%s]' % (to_native(err)))
-    return resp
+    return resp['results']
 
 def get_ip_set_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
     ip_sets = get_ip_sets(module, manager_url, mgr_username, mgr_password, validate_certs)
     return_ip_set = None
-    for ip_set in ip_sets['results']:
+    for ip_set in ip_sets:
         if ip_set.__contains__('display_name') and ip_set['display_name'] == display_name:
             if not return_ip_set: # Handle there being 2 sections created with the same display name
                 return_ip_set = ip_set

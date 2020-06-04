@@ -204,7 +204,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request, request_get_all
 from ansible.module_utils._text import to_native
 from collections import Counter
 
@@ -218,18 +218,18 @@ def get_ns_group_params(args=None):
             args.pop(key, None)
     return args
 
-def get_ns_groups(module, manager_url, mgr_username, mgr_password, validate_certs):
+def get_objects(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint):
     try:
-      (rc, resp) = request(manager_url+ '/ns-groups', headers=dict(Accept='application/json'),
+      (rc, resp) = request_get_all(manager_url+ endpoint, headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
       module.fail_json(msg='Error accessing NS Group. Error [%s]' % (to_native(err)))
-    return resp
+    return resp['results']
 
 def get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
-    ns_groups = get_ns_groups(module, manager_url, mgr_username, mgr_password, validate_certs)
+    ns_groups = get_objects(module, manager_url, mgr_username, mgr_password, validate_certs, '/ns-groups')
     return_ns_group = None
-    for ns_group in ns_groups['results']:
+    for ns_group in ns_groups:
         if ns_group.__contains__('display_name') and ns_group['display_name'] == display_name:
             if not return_ns_group: # Handle there being 2 sections created with the same display name
                 return_ns_group = ns_group
@@ -238,13 +238,8 @@ def get_ns_group_from_display_name(module, manager_url, mgr_username, mgr_passwo
     return return_ns_group
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True, id_notation='id'):
-    try:
-      (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
-                      url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-    except Exception as err:
-      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
-
-    for result in resp['results']:
+    objects = get_objects(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint)
+    for result in objects:
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result[id_notation]
     if exit_if_not_found:
@@ -271,7 +266,7 @@ def add_equals_operator_if_missing(dict_to_check):
         addition_string += 'EQUALS'
     if not dict_to_check.__contains__('scope_op'):
         addition_string += 'EQUALS'
-    return addition_string if addition_string <> '' else ''
+    return addition_string if addition_string != '' else ''
 
 # All values are extracted for each membership_criteria and a sorted string is built. 
 def extract_membership_criteria_list(membership_criteria_list):
@@ -297,7 +292,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return False
     # Compares the uniqie value for all static members, which is the object ID.
     if ns_group_params['members']:
-        if len(ns_group_params['members']) <> len(existing_ns_group['members']):
+        if len(ns_group_params['members']) != len(existing_ns_group['members']):
             return True
         existing_members = [d['value'] for d in existing_ns_group['members'] if 'value' in d]
         new_members = [d['value'] for d in ns_group_params['members'] if 'value' in d]
@@ -305,7 +300,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
             return True
     # Membership criterial has no unique keys, so all values need to be compared. Lists are generated with sorted strings.
     if ns_group_params['membership_criteria']:
-        if len(ns_group_params['membership_criteria']) <> len(existing_ns_group['membership_criteria']):
+        if len(ns_group_params['membership_criteria']) != len(existing_ns_group['membership_criteria']):
             return True
         existings_membership_criteria_list = extract_membership_criteria_list(existing_ns_group['membership_criteria'])
         new_membership_criteria_list = extract_membership_criteria_list(ns_group_params['membership_criteria'])
