@@ -24,6 +24,7 @@ import hashlib
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.vmware_nsxt import get_certificate_file_path
+from ansible.module_utils.vmware_nsxt import is_json
 
 
 class PolicyCommunicator:
@@ -131,33 +132,26 @@ class PolicyCommunicator:
                                     client_cert=self.nsx_cert_path,
                                     client_key=self.nsx_key_path,
                                     ca_path=self.ca_path)
-                resp_code = response.getcode()
-                resp_raw_data = response.read().decode('utf-8') or None
             except HTTPError as err:
-                response = err.fp
-                resp_code = response.getcode()
-                resp_raw_data = err.fp.read().decode('utf-8')
+                response = err
+            resp_code = response.getcode()
+            resp_raw_data = response.read().decode('utf-8')
 
             # request completed by the server
             self.active_requests.remove(request_id)
 
             try:
+                resp_data = resp_raw_data
                 # infer the response
-                if resp_raw_data:
+                if resp_raw_data and is_json(resp_raw_data):
                     resp_data = json.loads(resp_raw_data)
-                elif data is not None:
-                    resp_data = json.loads(data)
-                else:
-                    resp_data = None
             except Exception as e:
-                if ignore_errors:
-                    pass
-                else:
-                    raise Exception(resp_raw_data)
+                if not ignore_errors:
+                    raise Exception(resp_code, resp_raw_data)
 
             # return the approprate response code and data
             if resp_code >= 400 and not ignore_errors:
-                raise Exception(resp_code, None)
+                raise Exception(resp_code, resp_data)
             if resp_data is not None and 'error_code' in resp_data:
                 raise Exception(resp_data['error_code'], resp_data)
             else:
