@@ -532,6 +532,64 @@ options:
                             - either this or edge_node_id must be specified. If
                               both are specified, edge_node_id takes precedence
                         type: str
+            route_redistribution_types:
+                description:
+                    - Enable redistribution of different types of routes on
+                      Tier-0.
+                    - This property is only valid for locale-service under
+                      Tier-0.
+                    - This property is deprecated, please use
+                      "route_redistribution_config" property to configure
+                      redistribution rules.
+                choices:
+                    - TIER0_STATIC - Redistribute user added
+                        static routes.
+                    - TIER0_CONNECTED - Redistribute all
+                        subnets configured on Interfaces and
+                        routes related to TIER0_ROUTER_LINK,
+                        TIER0_SEGMENT, TIER0_DNS_FORWARDER_IP,
+                        TIER0_IPSEC_LOCAL_IP, TIER0_NAT types.
+                    - TIER1_STATIC - Redistribute all subnets
+                        and static routes advertised by Tier-1s.
+                    - TIER0_EXTERNAL_INTERFACE - Redistribute
+                        external interface subnets on Tier-0.
+                    - TIER0_LOOPBACK_INTERFACE - Redistribute
+                        loopback interface subnets on Tier-0.
+                    - TIER0_SEGMENT - Redistribute subnets
+                        configured on Segments connected to
+                        Tier-0.
+                    - TIER0_ROUTER_LINK - Redistribute router
+                        link port subnets on Tier-0.
+                    - TIER0_SERVICE_INTERFACE - Redistribute
+                        Tier0 service interface subnets.
+                    - TIER0_DNS_FORWARDER_IP - Redistribute DNS
+                        forwarder subnets.
+                    - TIER0_IPSEC_LOCAL_IP - Redistribute IPSec
+                        subnets.
+                    - TIER0_NAT - Redistribute NAT IPs owned by
+                        Tier-0.
+                    - TIER0_EVPN_TEP_IP - Redistribute EVPN
+                        local endpoint subnets on Tier-0.
+                    - TIER1_NAT - Redistribute NAT IPs
+                        advertised by Tier-1 instances.
+                    - TIER1_LB_VIP - Redistribute LB VIP IPs
+                        advertised by Tier-1 instances.
+                    - TIER1_LB_SNAT - Redistribute LB SNAT IPs
+                        advertised by Tier-1 instances.
+                    - TIER1_DNS_FORWARDER_IP - Redistribute DNS
+                        forwarder subnets on Tier-1 instances.
+                    - TIER1_CONNECTED - Redistribute all
+                        subnets configured on Segments and
+                        Service Interfaces.
+                    - TIER1_SERVICE_INTERFACE - Redistribute
+                        Tier1 service interface subnets.
+                    - TIER1_SEGMENT - Redistribute subnets
+                        configured on Segments connected to
+                        Tier1.
+                    - TIER1_IPSEC_LOCAL_ENDPOINT - Redistribute
+                        IPSec VPN local-endpoint subnets
+                        advertised by TIER1.
+                type: list
             route_redistribution_config:
                 description: Configure all route redistribution properties like
                              enable/disable redistributon, redistribution rule
@@ -1105,6 +1163,11 @@ class NSXTTier1(NSXTBaseRealizableResource):
                             type='str'
                         )
                     )
+                ),
+                route_redistribution_types=dict(
+                    required=False,
+                    type='list',
+                    elements='str',
                 ),
                 route_redistribution_config=dict(
                     type='dict',
