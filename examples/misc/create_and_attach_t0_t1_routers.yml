@@ -1,0 +1,77 @@
+# Copyright 2020 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+
+#
+# This example shows how to create T0 and T1 Router and connect them
+#
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars:
+    nsx: "192.168.200.11"
+    user: "admin"
+    password: "myPassword1!myPassword1!"
+    state: "present"
+  
+  tasks:
+    - name: Create T0
+      nsxt_logical_routers:
+        hostname: "{{ nsx }}"
+        username: "{{ user }}"
+        password: "{{ password }}"
+        validate_certs: False
+        state: "{{ state }}"
+        display_name: "myTier-0"
+        edge_cluster_name: "Edge-Cluster-01"
+        router_type: "TIER0"
+        high_availability_mode: "ACTIVE_ACTIVE"
+
+    - name: Create T1
+      nsxt_logical_routers:
+        hostname: "{{ nsx }}"
+        username: "{{ user }}"
+        password: "{{ password }}"
+        validate_certs: False
+        state: "{{ state }}"
+        display_name: "myTier-1"
+        edge_cluster_name: "Edge-Cluster-01"
+        router_type: "TIER1"
+
+    - name: Create Tier0 router port to Tier1
+      nsxt_logical_router_ports:
+        hostname: "{{ nsx }}"
+        username: "{{ user }}"
+        password: "{{ password }}"
+        validate_certs: False
+        state: "{{ state }}"
+        display_name: "RouterPortOnTier0toT1"
+        resource_type: "LogicalRouterLinkPortOnTIER0"
+        logical_router_name: "myTier-0"
+
+    - name: Get Router ID
+      uri:
+        url: "https://192.168.200.11/api/v1/logical-router-ports?resource_type=LogicalRouterLinkPortOnTIER0"
+        user: "{{ user }}"
+        password: "{{ password }}"
+        validate_certs: False
+        return_content: yes
+        use_proxy: false
+        force_basic_auth: true
+      register: ports
+
+    - name: Create Tier1 router port to Tier0
+      nsxt_logical_router_ports:
+        hostname: "{{ nsx }}"
+        username: "{{ user }}"
+        password: "{{ password }}"
+        validate_certs: False
+        state: "{{ state }}"
+        display_name: "RouterPortOnTier1toT0"
+        resource_type: "LogicalRouterLinkPortOnTIER1"
+        logical_router_name: "myTier-1"
+        linked_logical_router_port_id:
+          target_id: "{{ ports.json['results'][0].id }}"
+          target_type: LogicalPort
+
+
