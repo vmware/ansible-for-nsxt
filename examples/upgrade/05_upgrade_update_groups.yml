@@ -16,3 +16,16 @@
         enabled: "true"
         upgrade_units: "{{ hosts }}"
         state: "present"
+#        extended_configuration:
+#          - key: "upgrade_mode"
+#            value: "in_place"
+#          - key: "rebootless_upgrade"
+#            value: "true"
+        extended_configuration:
+          - key: "upgrade_mode"
+            value: "maintenance_mode"
+          - key: "rebootless_upgrade"
+            value: "true"
+          - key: "maintenance_mode_config_evacuate_powerd_off_vms"
+            value: "false"
+        state: "present"
