@@ -39,6 +39,8 @@ MP API modules can be used to configure an NSX resource with one-to-one mapping.
 
 ### Branch Information
 This repository has different branches with each branch providing support for upto a specific NSX-T release. Below is the list:
+* Master: Latest code, under development
+* v3.0.0: NSX-T 3.0 and below
 * v1.1.0: NSX-T 2.4, NSX-T 2.5
 * v1.0.0: NSX-T 2.3
 
@@ -263,12 +265,14 @@ Please note that you must specify the correct vmware args in order to successful
 
 The ansible-for-nsxt project team welcomes contributions from the community. Before you start working with ansible-for-nsxt, please read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on as an open-source patch. For more detailed information, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
 
+Please open a Pull-Request against the Master branch.
+
 # Support
 
 The NSX-T Ansible modules in this repository are community supported. For bugs and feature requests please open a Github Issue and label it appropriately. As this is a community supported solution there is no SLA for resolutions.
 
 # License
-Copyright (c) 2018 VMware, Inc.  All rights reserved
+Copyright (c) 2020 VMware, Inc.  All rights reserved
 
 The NSX-T Ansible modules in this repository are available under [BSD-2 license or GPLv3](LICENSE.txt) applies to all parts of the ansible-for-nsxt.
 You may not use them except in compliance with the License.
