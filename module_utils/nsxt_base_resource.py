@@ -763,7 +763,7 @@ class NSXTBaseRealizableResource(ABC):
         while True:
             try:
                 self._send_request_to_API(
-                    "/" + self.id, accepted_error_codes=set([600]))
+                    "/" + self.id, accepted_error_codes=set([404]))
                 time.sleep(10)
             except DuplicateRequestError:
                 self.module.fail_json(msg='Duplicate request')
