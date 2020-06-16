@@ -735,7 +735,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
             enforcementpoint_id=dict(
                 required=False,
                 type='str',
-                default="default"
             ),
             extra_configs=dict(
                 type='list',
@@ -801,7 +800,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
             site_id=dict(
                 required=False,
                 type='str',
-                default="default"
             ),
             subnets=dict(
                 required=False,
@@ -871,9 +869,9 @@ class NSXTSegment(NSXTBaseRealizableResource):
 
         if self.do_resource_params_have_attr_with_id_or_display_name(
                 "transport_zone"):
-            site_id = nsx_resource_params.pop("site_id")
+            site_id = nsx_resource_params.pop("site_id", 'default')
             enforcementpoint_id = nsx_resource_params.pop(
-                "enforcementpoint_id")
+                "enforcementpoint_id", 'default')
             transport_zone_base_url = (
                 TRANSPORT_ZONE_URL.format(site_id, enforcementpoint_id))
             transport_zone_id = self.get_id_using_attr_name_else_fail(
