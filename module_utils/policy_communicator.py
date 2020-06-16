@@ -32,6 +32,12 @@ class PolicyCommunicator:
     __instances = dict()
 
     @staticmethod
+    def check_for_authorization_header(request_headers):
+        if 'Authorization' in request_headers:
+            return True
+        return False
+
+    @staticmethod
     def get_instance(mgr_hostname, mgr_username=None, mgr_password=None,
                      nsx_cert_path=None, nsx_key_path=None, request_headers={},
                      ca_path=None, validate_certs=True):
@@ -51,6 +57,9 @@ class PolicyCommunicator:
         elif get_certificate_file_path('NSX_MANAGER_CERT_PATH') is not None:
             nsx_cert_path = get_certificate_file_path('NSX_MANAGER_CERT_PATH')
             key = tuple([mgr_hostname, nsx_cert_path])
+        elif PolicyCommunicator.check_for_authorization_header(
+                request_headers):
+            key = tuple([request_headers['Authorization']])
         else:
             raise InvalidInstanceRequest("(mgr_username, mgr_password) or"
                                          "(nsx_cert_path, nsx_key_path), or "
