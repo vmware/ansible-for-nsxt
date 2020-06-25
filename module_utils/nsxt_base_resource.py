@@ -38,7 +38,8 @@ import inspect
 # Policy API here. Required to infer base resource params.
 BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
                   "NSXTSecurityPolicy", "NSXTPolicyGroup",
-                  "NSXTIpBlock", "NSXTIpPool", "NSXTBFDConfig"}
+                  "NSXTIpBlock", "NSXTIpPool", "NSXTBFDConfig",
+                  "NSXTGatewayPolicy"}
 
 
 class NSXTBaseRealizableResource(ABC):
@@ -688,8 +689,8 @@ class NSXTBaseRealizableResource(ABC):
         except Exception as e:
             if (e.args[0] not in accepted_error_codes and
                     self.get_resource_name() in BASE_RESOURCES):
-                msg='Received {} from NSX Manager. Please try again. '.format(
-                    e.args[0])
+                msg = ('Received {} from NSX Manager. Please try '
+                       'again. '.format(e.args[0]))
                 if e.args[1] and 'error_message' in e.args[1]:
                     msg += e.args[1]['error_message']
                 self.module.fail_json(msg=msg)

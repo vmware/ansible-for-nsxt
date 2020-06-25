@@ -60,3 +60,5 @@ EDGE_NODE_URL = EDGE_CLUSTER_URL + '/{}/edge-nodes'
 VM_URL = '/infra/realized-state/enforcement-points/default/virtual-machines'
 
 BFD_CONFIG_URL = '/infra/bfd-configs'
+
+GATEWAY_POLICY_URL = _DOMAIN_URL + '/{}/gateway-policies'

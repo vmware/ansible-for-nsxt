@@ -1,21 +1,21 @@
-# Copyright 2018 VMware, Inc.
+# Copyright 2020 VMware, Inc.
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 ---
 #
-# Playbook to test Security Policy
+# Playbook to test Gateway Policy
 #
 - hosts: localhost
   become: yes
   tasks:
-    - name: create Security Policy
-      nsxt_policy_security_policy:
+    - name: create Gateway Policy
+      nsxt_policy_gateway_policy:
         hostname: "default"
         nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
         nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
         validate_certs: True
         ca_path: /path/to/my/ca-bundle
-        id: test-sec-pol
-        display_name: test-sec-pol
+        id: test-gateway-policy
+        display_name: test-gateway-policy
         state: "present"
         domain_id: "default"
         locked: True
