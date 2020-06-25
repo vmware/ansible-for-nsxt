@@ -83,6 +83,8 @@ MP API modules can be used to configure an NSX resource with one-to-one mapping.
 #### Policy API
 Policy API modules are aggregated such that logical constructs related to an NSX resource can be configured using a single playbook. They can be identified with prefix *nsxt_policy_*. The below list outlines the supported modules and the resources that can be configured through a module.
 
+Note that the Policy modules are supported only for NSX-T 3.0 and above.
+
 1. Tier-0 Gateway (nsxt_policy_tier0)
    1. Tier-0 Locale Services
    2. Tier-0 Static Routes
