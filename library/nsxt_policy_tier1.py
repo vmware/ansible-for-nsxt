@@ -726,12 +726,13 @@ options:
                                 description: Subnet prefix length
                                 type: str
                     urpf_mode:
-                        description: Unicast Reverse Path Forwarding mode
+                        description:
+                            - Unicast Reverse Path Forwarding mode
+                            - Required if NSXT API >= 3.0.0. Defaults to STRICT
                         type: str
                         choices:
                             - NONE
                             - STRICT
-                        default: STRICT
 '''
 
 EXAMPLES = '''
@@ -1295,7 +1296,6 @@ class NSXTTier1(NSXTBaseRealizableResource):
                     ),
                     urpf_mode=dict(
                         type='str',
-                        default='STRICT',
                         choices=['NONE', 'STRICT']
                     )
                 )
