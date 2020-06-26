@@ -99,6 +99,10 @@ options:
         description: Enabled or disabled sending LLDP packets
         required: false
         type: boolean
+    tags:
+        description: Opaque identifier meaninful to API user
+        required: false
+        type: Array of Tag
     state:
         choices:
         - present
@@ -211,6 +215,7 @@ def main():
                         standby_list=dict(required=False, type='list'),
                         active_list=dict(required=True, type='list')),
                         lags=dict(required=False, type='list'),
+                        tags=dict(required=False, type='list'),
                         resource_type=dict(required=True, type='str', choices=['UplinkHostSwitchProfile']),
                         state=dict(required=True, choices=['present', 'absent']))
 
