@@ -85,7 +85,7 @@ options:
 
 EXAMPLES = '''
 - name: Create transport node profile
-  nsxt_transport_node_profile:
+  nsxt_transport_node_profiles:
     hostname: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
