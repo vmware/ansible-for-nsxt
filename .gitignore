@@ -1,3 +1,6 @@
-/*.retry
-/.DS_Store/
-.gitignore
+# build products...
+*.py[co]
+# Mac OS X stuff...
+.DS_Store
+# test output
+*.retry
