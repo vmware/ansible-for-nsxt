@@ -213,10 +213,11 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
                                                                                     "/transport-zones", transport_zone_name)
         if host_switch.__contains__('vmk_install_migration'):
             for vmk_install_migration in host_switch['vmk_install_migration']:
-                destination_network_name = vmk_install_migration.pop('destination_network_name', None)
-                vmk_install_migration['destination_network'] = get_id_from_display_name (module, manager_url,
-                                                                                    mgr_username, mgr_password, validate_certs,
-                                                                                    "/logical-switches", destination_network_name)
+                if vmk_install_migration.__contains__('destination_network_name'):
+                    destination_network_name = vmk_install_migration.pop('destination_network_name', None)
+                    vmk_install_migration['destination_network'] = get_id_from_display_name (module, manager_url,
+                                                                                        mgr_username, mgr_password, validate_certs,
+                                                                                        "/logical-switches", destination_network_name)
     if transport_node_profile_params.__contains__('transport_zone_endpoints'):
         for transport_zone_endpoint in transport_node_profile_params['transport_zone_endpoints']:
             transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
