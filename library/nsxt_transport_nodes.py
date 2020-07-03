@@ -720,7 +720,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         sorted_existing_host_switches = sorted(existing_host_switches, key = lambda i: i['host_switch_name'])
         sorted_new_host_switches = sorted(transport_node_with_ids['host_switch_spec']['host_switches'], key = lambda i: i['host_switch_name'])
         if len(sorted_existing_host_switches) != len(sorted_new_host_switches):
-           return False
+           return True
         for i in range(len(sorted_existing_host_switches)):
            diff_obj = {k: sorted_existing_host_switches[i][k] for k in sorted_existing_host_switches[i] if k in sorted_new_host_switches[i] and sorted_existing_host_switches[i][k] != sorted_new_host_switches[i][k]}
            if not cmp_dict(diff_obj, sorted_new_host_switches[i]):
