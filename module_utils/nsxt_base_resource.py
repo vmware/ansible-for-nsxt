@@ -691,7 +691,8 @@ class NSXTBaseRealizableResource(ABC):
                     self.get_resource_name() in BASE_RESOURCES):
                 msg = ('Received {} from NSX Manager. Please try '
                        'again. '.format(e.args[0]))
-                if e.args[1] and 'error_message' in e.args[1]:
+                if len(e.args) == 2 and e.args[1] and (
+                        'error_message' in e.args[1]):
                     msg += e.args[1]['error_message']
                 self.module.fail_json(msg=msg)
             raise e
