@@ -63,14 +63,14 @@ options:
     src:
         description:
             - "The absolute path to the file containing the request body(payload) to be sent to the NSX REST API."
-            - "If this option doesn't use, use the C(content) option instead."
+            - "If this option isn't used, use the C(content) option instead."
             - "If this option is used, the C(content) option is ignored."
         required: false
         type: str
     content:
         description:
             - "The request body(payload) to be sent to the NSX REST API."
-            - "If this option doesn't use, use the C(src) option instead."
+            - "If this option isn't used, use the C(src) option instead."
         required: false
         type: raw
 '''
@@ -111,7 +111,7 @@ EXAMPLES = '''
     password: "{{ nsxt_password }}"
     validate_certs: false
     method: delete
-   path: /policy/api/v1/infra/segments/segment
+    path: /policy/api/v1/infra/segments/segment
 '''
 
 RETURN = '''
@@ -156,6 +156,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_nsxt import vmware_argument_spec
 from ansible.module_utils.urls import basic_auth_header, fetch_url
 
+
 class VMwareNSXTRest():
     def __init__(self, module):
         self.module = module
@@ -168,7 +169,11 @@ class VMwareNSXTRest():
         self.content = module.params["content"]
 
         self.manager_url = "https://{}".format(self.mgr_hostname)
-        self.headers = { "authorization": basic_auth_header(self.mgr_username, self.mgr_password) }
+        self.headers = {
+            "authorization": basic_auth_header(self.mgr_username, self.mgr_password),
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
 
         if self.src:
             if os.path.isfile(self.src):
@@ -189,74 +194,49 @@ class VMwareNSXTRest():
         if status == -1:
             self.module.fail_json(msg="error_code: %s, error_message: %s" % (status, info.get('msg')))
 
-    def get_method(self, ignore_errors=False):
+    def operate_nsxt(self, method, ignore_errors=False):
         try:
-            (resp, info) = fetch_url(self.module, self.manager_url + self.path, method="GET", headers=self.headers)
+            (resp, info) = fetch_url(self.module, self.manager_url + self.path, method=method.upper(), headers=self.headers,
+                                     data=json.dumps(self.content))
         except Exception as err:
             self.module.fail_json(msg="nsxt rest api request error: %s, error url: %s"
                                       % (err, self.manager_url + self.path))
 
-        if not ignore_errors:
+        if ignore_errors is False:
             self.error_code_check(info)
 
-        if resp:
-            return json.loads(resp.read())
-        else:
-            return ""
-
-    def update_method(self, method, ignore_errors=False):
-        self.headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        try:
-            (resp, info) = fetch_url(self.module, self.manager_url + self.path, method=method.upper(),
-                                     headers=self.headers, data=json.dumps(self.content))
-        except Exception as err:
-            self.module.fail_json(msg="nsxt rest api request error: %s, error url: %s"
-                                      % (err, self.manager_url + self.path))
-
-        if not ignore_errors:
-            self.error_code_check(info)
-
-    def delete_method(self, ignore_errors=False):
-        try:
-            (resp, info) = fetch_url(self.module, self.manager_url + self.path, method="DELETE", headers=self.headers)
-        except Exception as err:
-            self.module.fail_json(msg="nsxt rest api request error: %s, error url: %s"
-                                      % (err, self.manager_url + self.path))
-
-        if not ignore_errors:
-            self.error_code_check(info)
-
-        if resp and len(resp.read()):
-            return json.loads(resp.read())
+        resp_body = resp.read() if 'read' in dir(resp) else False
+        if resp_body:
+            return json.loads(resp_body)
         else:
             return ""
 
     def execute(self):
         if self.method == "get":
-            resp = self.get_method()
+            resp = self.operate_nsxt(method=self.method)
             self.module.exit_json(changed=False, body=resp)
 
         if self.method == "post" or self.method == "put" or self.method == "patch":
-            before_resp = self.get_method(ignore_errors=True)
+            before_resp = self.operate_nsxt(method="get", ignore_errors=True)
             if before_resp:
                 before_revision = before_resp["_revision"]
             else:
                 before_revision = ""
 
-            self.update_method(self.method)
+            _ = self.operate_nsxt(method=self.method)
 
-            after_resp = self.get_method()
+            after_resp = self.operate_nsxt(method="get")
             after_revision = after_resp["_revision"]
-            
+
             if before_revision == after_revision:
                 self.module.exit_json(changed=False, body=after_resp)
             else:
                 self.module.exit_json(changed=True, body=after_resp)
 
         if self.method == "delete":
-            resp = self.get_method(ignore_errors=True)
+            resp = self.operate_nsxt(method="get", ignore_errors=True)
             if resp:
-                resp = self.delete_method()
+                resp = self.operate_nsxt(method=self.method)
                 self.module.exit_json(changed=True, body=resp)
             else:
                 self.module.exit_json(changed=False, body=resp)
