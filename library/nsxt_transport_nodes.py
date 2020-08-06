@@ -676,13 +676,6 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
                     transport_zone_endpoint['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                                              mgr_username, mgr_password, validate_certs,
                                                                                              "/transport-zones", transport_zone_name)
-            if host_switch.__contains__('vmk_install_migration'):
-                for network in host_switch['vmk_install_migration']:
-                    if network.__contains__('destination_network'):
-                        network['destination_network'] = get_id_from_display_name (module, manager_url, mgr_username,
-                                                                                   mgr_password, validate_certs,
-                                                                                   "/logical-switches", network['destination_network'])
-
     if transport_node_params.__contains__('transport_zone_endpoints'):
         for transport_zone_endpoint in transport_node_params['transport_zone_endpoints']:
             transport_zone_name = transport_zone_endpoint.pop('transport_zone_name', None)
@@ -722,7 +715,7 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     if existing_transport_node.__contains__('description') and not transport_node_with_ids.__contains__('description'):
         return True
-    if transport_node_with_ids.__contains__('host_switch_spec') and transport_node_with_ids['host_switch_spec'].__contains__('host_switches'):
+    if  transport_node_with_ids.__contains__('host_switch_spec') and transport_node_with_ids['host_switch_spec'].__contains__('host_switches'):
         existing_host_switches = existing_transport_node['host_switch_spec']['host_switches']
         sorted_existing_host_switches = sorted(existing_host_switches, key = lambda i: i['host_switch_name'])
         sorted_new_host_switches = sorted(transport_node_with_ids['host_switch_spec']['host_switches'], key = lambda i: i['host_switch_name'])
@@ -806,16 +799,6 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
     if vm_deployment_config.__contains__('host'):
       host_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('host', None)
       transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['host_id'] = host_id
-        
-    cluster_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('compute', None)
-    storage_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('storage', None)
-    management_network_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('management_network', None)
-    data_network_ids = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks', None)
-        
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = cluster_id
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = storage_id
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = management_network_id
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
 
 
 def main():
