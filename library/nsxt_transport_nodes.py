@@ -806,16 +806,6 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
     if vm_deployment_config.__contains__('host'):
       host_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('host', None)
       transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['host_id'] = host_id
-        
-    cluster_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('compute', None)
-    storage_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('storage', None)
-    management_network_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('management_network', None)
-    data_network_ids = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks', None)
-        
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = cluster_id
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = storage_id
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = management_network_id
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
 
 
 def main():
