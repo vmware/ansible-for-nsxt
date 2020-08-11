@@ -1,0 +1,21 @@
+# Copyright 2020 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test L2 Bridge Endpoint Profile
+#
+- hosts: localhost
+  tasks:
+    - name: update L2 Bridge Endpoint Profile
+      nsxt_policy_l2_bridge_ep_profile:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        display_name: test-br-profile
+        state: present
+        edge_nodes_info:
+          - edge_cluster_display_name: edge-cluster
+            edge_node_id: 60f7dc14-d11c-11ea-8fb5-000c29e1fb0e
+        failover_mode: NON_PREEMPTIVE
