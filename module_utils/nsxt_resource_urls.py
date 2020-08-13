@@ -36,6 +36,8 @@ SEGMENT_PORT_URL = SEGMENT_URL + '/{}/ports'
 
 TRANSPORT_ZONE_URL = _ENFORCEMENT_POINT_URL + '/{}/transport-zones'
 
+L2_BRIDGE_EP_PROFILE_URL = _ENFORCEMENT_POINT_URL + '/{}/edge-bridge-profiles'
+
 TIER_0_URL = '/infra/tier-0s'
 TIER_0_STATIC_ROUTE_URL = TIER_0_URL + '/{}/static-routes'
 TIER_0_LOCALE_SERVICE_URL = TIER_0_URL + '/{}/locale-services'

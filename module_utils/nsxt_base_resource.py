@@ -39,7 +39,7 @@ import inspect
 BASE_RESOURCES = {"NSXTSegment", "NSXTTier0", "NSXTTier1",
                   "NSXTSecurityPolicy", "NSXTPolicyGroup",
                   "NSXTIpBlock", "NSXTIpPool", "NSXTBFDConfig",
-                  "NSXTGatewayPolicy"}
+                  "NSXTGatewayPolicy", "NSXTL2BridgeEpProfile"}
 
 
 class NSXTBaseRealizableResource(ABC):
