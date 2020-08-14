@@ -8,13 +8,13 @@
     - setup_infra_vars.yml
   tasks:
     - name: Create IP Pools
-      nsxt_ip_pools:
+      nsxt_policy_ip_pool:
         hostname: "{{ nsx_node1.mgmt_ip }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"
         validate_certs: "{{ validate_certs }}"
         display_name: "{{ item.display_name }}"
-        subnets: "{{ item.subnets }}"
+        pool_static_subnets: "{{ item.pool_static_subnets }}"
         state: "{{ state }}"
       with_items:
         - "{{ ip_pools  }}"

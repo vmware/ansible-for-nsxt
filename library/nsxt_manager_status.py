@@ -79,7 +79,7 @@ def main():
         current_time = datetime.now()
         (rc, resp) = request(manager_url+ '/cluster-manager/status', headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-        module.exit_json(changed=changed, msg= " NSX manager is UP")
+        module.exit_json(changed=changed, msg= " \"overall_status\": \"STABLE\"")
       except Exception as err:
         time_diff = datetime.now() - current_time
         time.sleep(10)
