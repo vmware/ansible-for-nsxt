@@ -1,4 +1,4 @@
-# Copyright 2018 VMware, Inc.
+# Copyright 2020 VMware, Inc.
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 ---
 - hosts: 127.0.0.1
@@ -7,17 +7,18 @@
   vars_files:
     - setup_infra_vars.yml
   tasks:
-    - name: Create transport zone
-      nsxt_transport_zones:
+    - name: Create Transport Node Collections
+      nsxt_transport_node_collections:
         hostname: "{{ nsx_node1.mgmt_ip }}"
         username: "{{ nsx_username }}"
         password: "{{ nsx_password }}"
         validate_certs: "{{ validate_certs }}"
-        resource_type: "TransportZone"
         display_name: "{{ item.display_name }}"
         description: "{{ item.description }}"
-        transport_type: "{{ item.transport_type }}"
-        host_switch_name: "{{ item.host_switch_name }}"
+        resource_type: "TransportNodeCollection"
+        compute_manager_name: "{{ item.compute_manager_name }}"
+        cluster_name: "{{ item.cluster_name }}"
+        transport_node_profile_name: "{{ item.transport_node_profile_name }}"
         state: "{{ state }}"
       with_items:
-        - "{{ transport_zones }}"
+        - "{{ transport_node_collections }}"

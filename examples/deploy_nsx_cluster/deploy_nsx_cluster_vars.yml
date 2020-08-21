@@ -16,8 +16,9 @@
   #
   # OVA/OVF Information. Path can be on local file system or a HTTP URL
   #
-  "nsx_ova_path": "/home/vmware",
-  "nsx_ova": "nsx-unified-appliance-3.0.0.0.0.15946739.ova",
+  "nsx_ova_path": "/media/disk2",
+#  "nsx_ova": "nsx-unified-appliance-3.0.0.0.0.15946739.ova",
+  "nsx_ova": "nsx-unified-appliance-3.0.1.0.0.16404476.ova",
 
   #
   # Common network details. This assumes all NSX appliance nodes are on the
@@ -26,9 +27,9 @@
   # use them in the playbooks instead.
   #
   "domain": "mylab.local",
-  "netmask": "255.255.224.0",
-  "gateway": "10.114.200.1",
-  "dns_server": "10.114.200.8",
+  "netmask": "255.255.255.224",
+  "gateway": "10.114.200.33",
+  "dns_server": "10.116.1.201",
   "ntp_server": "10.114.200.8",
 
   #
@@ -37,36 +38,34 @@
   #
   "nsx_node1": {
     "hostname": "mynsx-01.mylab.local",
-    "mgmt_ip": "10.114.200.11",
+    "mgmt_ip": "10.114.200.41",
     "datacenter": "Datacenter",
     "cluster": "Management",
-    "datastore": "datastore7",
+    "datastore": "datastore36",
     "portgroup": "VM Network"
   },
 
   #
   # Additional nodes defined as an array so that its easier to iterate
   # through them in the playbook.
-  # NOTE: The Datacenter/Cluster/Datastore/Network requires the vCenter MOID
-  # (Module Object ID) and not the name
   #
   "additional_nodes": [
     {
       "hostname": "mynsx-02.mylab.local",
-      "mgmt_ip": "10.114.200.12",
+      "mgmt_ip": "10.114.200.42",
       "prefix": "27",
       "datacenter": "Datacenter",
       "cluster": "Management",
-      "datastore": "datastore7",
+      "datastore": "datastore36",
       "portgroup": "VM Network"
     },
     {
       "hostname": "mynsx-03.mylab.local",
-      "mgmt_ip": "10.114.200.13",
+      "mgmt_ip": "10.114.200.43",
       "prefix": "27",
       "datacenter": "Datacenter",
       "cluster": "Management",
-      "datastore": "datastore5",
+      "datastore": "datastore36",
       "portgroup": "VM Network"
     }
   ],
@@ -81,7 +80,7 @@
       "origin_type": "vCenter",
       "credential_type": "UsernamePasswordLoginCredential",
       "username": "administrator@madhu.local",
-      "password": "myPassword1!"
+      "password": "VMware1!"
     }
   ],
 
