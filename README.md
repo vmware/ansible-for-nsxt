@@ -271,7 +271,17 @@ Please open a Pull-Request against the Master branch.
 
 # Support
 
-The NSX-T Ansible modules in this repository are community supported. For bugs and feature requests please open a Github Issue and label it appropriately. As this is a community supported solution there is no SLA for resolutions.
+Released NSX-T Ansible modules are fully supported by VMware. The released modules are available in the specific numbered release branches:
+* v3.0.0
+* v1.1.0
+* v1.0.0
+
+They are also available for download from VMware's download page.
+
+The *master* branch contains the latest development code which is community supported.
+
+For bugs and feature requests, please open a Github Issue and label it appropriately.
+
 
 # License
 Copyright (c) 2020 VMware, Inc.  All rights reserved
