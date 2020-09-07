@@ -54,10 +54,6 @@ This repository has different branches with each branch providing support for up
 * nsxt_edge_clusters_facts
 * nsxt_fabric_compute_managers
 * nsxt_fabric_compute_managers_facts
-* nsxt_fabric_nodes
-* nsxt_fabric_nodes_facts
-* nsxt_compute_collection_fabric_templates
-* nsxt_compute_collection_fabric_templates_facts
 * nsxt_ip_pools
 * nsxt_ip_pools_facts
 * nsxt_uplink_profiles
@@ -70,8 +66,6 @@ This repository has different branches with each branch providing support for up
 * nsxt_transport_node_collections_facts
 * nsxt_transport_node_profiles
 * nsxt_transport_node_profiles_facts
-* nsxt_compute_collection_transport_templates
-* nsxt_compute_collection_transport_templates_facts
 * nsxt_controller_manager_auto_deployment
 
 ###### Logical networking modules
