@@ -125,6 +125,9 @@ class NSXTBaseRealizableResource(ABC):
         except Exception as err:
             # the resource does not exist currently on the manager
             self.existing_resource = None
+        finally:
+            self._clean_none_resource_params(
+                self.existing_resource, self.nsx_resource_params)
         self._achieve_state(resource_params, successful_resource_exec_logs)
 
     @classmethod
@@ -822,3 +825,15 @@ class NSXTBaseRealizableResource(ABC):
                 resource_params[k] = v
             elif type(v).__name__ == 'dict':
                 self._fill_missing_resource_params(v, resource_params[k])
+
+    def _clean_none_resource_params(self, existing_params, resource_params):
+        keys_to_remove = []
+        for k, v in resource_params.items():
+            if v is None and (
+                    existing_params is None or k not in existing_params):
+                keys_to_remove.append(k)
+        for key in keys_to_remove:
+            resource_params.pop(key)
+        for k, v in resource_params.items():
+            if type(v).__name__ == 'dict':
+                self._clean_none_resource_params(existing_params, v)
