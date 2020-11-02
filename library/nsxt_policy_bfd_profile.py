@@ -26,10 +26,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_policy_bfd_config
-short_description: Create or Delete a Policy BFD Config
+module: nsxt_policy_bfd_profile
+short_description: Create or Delete a Policy BFD Profile
 description:
-    Creates or deletes a Policy BFD Config.
+    Creates or deletes a Policy BFD Profile.
     Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
@@ -104,11 +104,11 @@ options:
               request to create the next resource is sent to the Manager.
             - Can be specified for each subresource.
     id:
-        description: The id of the BFD Config.
+        description: The id of the BFD Profile.
         required: true
         type: str
     description:
-        description: BFD Config description.
+        description: BFD Profile description.
         type: str
     interval:
         description:
@@ -127,13 +127,13 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Update BFD Config
-  nsxt_policy_bfd_config:
+- name: Update BFD Profile
+  nsxt_policy_bfd_profile:
     hostname: "10.10.10.10"
     nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
     nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
     validate_certs: False
-    display_name: test-bfd-config
+    display_name: test-bfd-profile
     state: present
     interval: 200
     multiple: 10
@@ -145,15 +145,15 @@ import json
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils.nsxt_resource_urls import BFD_CONFIG_URL
+from ansible.module_utils.nsxt_resource_urls import BFD_PROFILE_URL
 from ansible.module_utils._text import to_native
 
 
-class NSXTBFDConfig(NSXTBaseRealizableResource):
+class NSXTBFDProfile(NSXTBaseRealizableResource):
     @staticmethod
     def get_resource_spec():
-        bfd_config_arg_spec = {}
-        bfd_config_arg_spec.update(
+        bfd_profile_arg_spec = {}
+        bfd_profile_arg_spec.update(
             interval=dict(
                 default=500,
                 type='int'
@@ -163,13 +163,13 @@ class NSXTBFDConfig(NSXTBaseRealizableResource):
                 type='int'
             )
         )
-        return bfd_config_arg_spec
+        return bfd_profile_arg_spec
 
     @staticmethod
     def get_resource_base_url(baseline_args=None):
-        return BFD_CONFIG_URL
+        return BFD_PROFILE_URL
 
 
 if __name__ == '__main__':
-    bfd_config = NSXTBFDConfig()
-    bfd_config.realize()
+    bfd_profile = NSXTBFDProfile()
+    bfd_profile.realize()
