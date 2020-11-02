@@ -1028,7 +1028,8 @@ options:
                             route_filtering:
                                 description: Enable address families and route
                                              filtering in each direction
-                                type: dict
+                                type: list
+                                elements: dict
                                 required: False
                                 suboptions:
                                     address_family:
@@ -2184,7 +2185,8 @@ class NSXTTier0(NSXTBaseRealizableResource):
                         ),
                         route_filtering=dict(
                             required=False,
-                            type='dict',
+                            type='list',
+                            elements='dict',
                             options=dict(
                                 address_family=dict(
                                     required=False,
