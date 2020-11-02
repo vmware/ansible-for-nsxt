@@ -72,7 +72,7 @@ class PolicyCommunicatorTestCase(unittest.TestCase):
         mock_fp.getcode.return_value = 200
         mock_fp.read.return_value.decode.return_value = expected_response
         mock_open_url.side_effect = HTTPError(
-            url="dummy", code="dummy", msg=None, fp=mock_fp, hdrs=None)
+            url="dummy", code=200, msg=None, fp=mock_fp, hdrs=None)
 
         rc, response = pc.request("dummy")
 

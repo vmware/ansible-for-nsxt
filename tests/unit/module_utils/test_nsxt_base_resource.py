@@ -49,6 +49,7 @@ os.remove(path_ansible_lib + "policy_communicator.py")
 
 class SimpleDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     def __init__(self):
+        self.existing_resource_revision = 0
         self.resource_class = self.__class__
         self.validate_certs = False
         self.baseline_args = {}
@@ -68,6 +69,7 @@ class SimpleDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
 
 class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     def __init__(self):
+        self.existing_resource_revision = 0
         self.resource_class = self.__class__
         self.validate_certs = False
         self.baseline_args = {}
@@ -87,6 +89,7 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     class SubDummyResource1(nsxt_base_resource.NSXTBaseRealizableResource):
         # This one does not override get_spec_identifier
         def __init__(self):
+            self.existing_resource_revision = 0
             NestedDummyNSXTResource.__init__(self)
 
         @staticmethod
@@ -120,6 +123,7 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
     class SubDummyResource2(nsxt_base_resource.NSXTBaseRealizableResource):
         # This one overrides get_spec_identifier
         def __init__(self):
+            self.existing_resource_revision = 0
             NestedDummyNSXTResource.__init__(self)
 
         @staticmethod
@@ -154,6 +158,7 @@ class NestedDummyNSXTResource(nsxt_base_resource.NSXTBaseRealizableResource):
         # This one overrides get_spec_identifier
         # and supports creation of only 1 instance per parent resource
         def __init__(self):
+            self.existing_resource_revision = 0
             NestedDummyNSXTResource.__init__(self)
 
         @staticmethod
@@ -854,7 +859,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             ]
             self.assertEqual(exec_logs, expected_exec_logs)
 
-        policy_communicator_request_call_num = 1
+        policy_communicator_request_call_num = 2
 
         def test_when_resource_updated(is_created=False):
             def test_when_policy_request_succeeds():
@@ -864,7 +869,12 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 }
                 simple_dummy_resource.resource_params = {}
                 exec_logs = []
-                mock_policy_communicator.request.return_value = (200, "OK")
+                mock_policy_communicator.request.side_effect = [
+                    (200, "OK"),
+                    (200, {
+                        "_revision": 1
+                    })
+                ]
                 simple_dummy_resource._achieve_present_state(exec_logs)
 
                 self.assertEqual(mock_policy_communicator.request.call_count,

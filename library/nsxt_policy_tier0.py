@@ -1871,8 +1871,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                                 None, external_interface,
                                 interface_base_url,
                                 NSXTTier0.NSXTTier0LocaleService.
-                                NSXTTier0Interface.__name__,
-                                ignore_not_found_error=False))
+                                NSXTTier0Interface.__name__))
                     ha_vip_config[
                         'external_interface_paths'] = external_interface_paths
 
