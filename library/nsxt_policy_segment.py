@@ -412,7 +412,8 @@ options:
         suboptions:
             address_bindings:
                 description: Static address binding used for the port.
-                type: dict
+                type: list
+                elements: dict
                 suboptions:
                 ip_address:
                     description: IP Address for port binding.
@@ -916,7 +917,8 @@ class NSXTSegment(NSXTBaseRealizableResource):
             segment_port_arg_spec.update(
                 address_bindings=dict(
                     required=False,
-                    type='dict',
+                    type='list',
+                    elements='dict',
                     options=dict(
                         ip_address=dict(
                             required=False,
