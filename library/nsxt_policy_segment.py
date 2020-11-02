@@ -886,8 +886,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
             if nsx_resource_params['advanced_config'].get('address_pool_id'):
                 address_pool_id = nsx_resource_params['advanced_config'].pop(
                     'address_pool_id')
-                nsx_resource_params['advanced_config'].pop(
-                    'address_pool_display_name')
             elif nsx_resource_params['advanced_config'].get(
                     'address_pool_display_name'):
                 address_pool_id = self.get_id_from_display_name(
@@ -896,8 +894,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
                     ignore_not_found_error=False)
                 nsx_resource_params['advanced_config'].pop(
                     'address_pool_display_name')
-                nsx_resource_params['advanced_config'].pop(
-                    'address_pool_id')
             if address_pool_id:
                 address_pool_paths = [IP_POOL_URL + "/" + address_pool_id]
                 nsx_resource_params['advanced_config'][
