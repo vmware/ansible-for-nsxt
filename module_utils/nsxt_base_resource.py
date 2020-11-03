@@ -100,9 +100,6 @@ class NSXTBaseRealizableResource(ABC):
                     self.get_resource_base_url(self._parent_info),
                     self.get_spec_identifier())
 
-        if self.id is None:
-            return
-
         # Extract the resource params from module
         self.nsx_resource_params = self._extract_nsx_resource_params(
             resource_params)
@@ -323,11 +320,9 @@ class NSXTBaseRealizableResource(ABC):
         return False
 
     def get_id_using_attr_name_else_fail(self, attr_name, params,
-                                         resource_base_url, resource_type,
-                                         ignore_not_found_error=True):
+                                         resource_base_url, resource_type):
         resource_id = self._get_id_using_attr_name(
-            attr_name, params, resource_base_url, resource_type,
-            ignore_not_found_error)
+            attr_name, params, resource_base_url, resource_type)
         if resource_id is not None:
             return resource_id
         # Incorrect usage of Ansible Module
@@ -364,8 +359,7 @@ class NSXTBaseRealizableResource(ABC):
         return True
 
     def _get_id_using_attr_name(self, attr_name, params,
-                                resource_base_url, resource_type,
-                                ignore_not_found_error=True):
+                                resource_base_url, resource_type):
         # Pass attr_name '' or None to infer base resource's ID
         id_identifier = 'id'
         display_name_identifier = 'display_name'
@@ -380,7 +374,11 @@ class NSXTBaseRealizableResource(ABC):
             # Use display_name as ID if ID is not specified.
             return (self.get_id_from_display_name(
                 resource_base_url, resource_display_name, resource_type,
-                ignore_not_found_error) or resource_display_name)
+                False) or resource_display_name)
+        # Incorrect usage of Ansible Module
+        self.module.fail_json(
+            msg="Please specify either {} id or display_name for the "
+                "resource {}".format(attr_name, str(resource_type)))
 
     def get_id_from_display_name(self, resource_base_url,
                                  resource_display_name,
