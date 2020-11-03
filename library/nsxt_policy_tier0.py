@@ -1683,6 +1683,25 @@ class NSXTTier0(NSXTBaseRealizableResource):
         def get_spec_identifier(cls):
             return "locale_services"
 
+        def infer_resource_id(self, parent_info):
+            all_locale_services = self.get_all_resources_from_nsx()
+            if len(all_locale_services) == 0:
+                self.module.fail_json(
+                    msg="No {} found under Tier0 gateway {}. Please specify "
+                        "the id or display_name of the LocaleService to be "
+                        "created".format(
+                            self.get_spec_identifier(),
+                            parent_info.get("tier0_id", 'default')))
+            if len(all_locale_services) > 1:
+                ls_ids = [ls['id'] for ls in all_locale_services]
+                self.module.fail_json(
+                    msg="Multiple {} found under Tier0 gateway {} with IDs "
+                        "{}. Please specify the id of the LocaleService "
+                        "to be updated".format(
+                            self.get_spec_identifier(),
+                            parent_info.get("tier0_id", 'default'), ls_ids))
+            return all_locale_services[0]['id']
+
         @staticmethod
         def get_resource_spec():
             tier0_ls_arg_spec = {}
