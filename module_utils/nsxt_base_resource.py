@@ -93,12 +93,21 @@ class NSXTBaseRealizableResource(ABC):
                 self.id = self._get_id_using_attr_name(
                     None, resource_params,
                     self.get_resource_base_url(self.baseline_args),
-                    self.get_spec_identifier())
+                    self.get_spec_identifier(),
+                    fail_if_not_found=True)
             else:
                 self.id = self._get_id_using_attr_name(
                     None, resource_params,
                     self.get_resource_base_url(self._parent_info),
-                    self.get_spec_identifier())
+                    self.get_spec_identifier(),
+                    fail_if_not_found=False)
+                if self.id is None:
+                    self.id = self.infer_resource_id(self._parent_info)
+                if self.id is None:
+                    self.module.fail_json(
+                        msg="Please specify either id or display_name for "
+                            "resource {}".format(str(
+                                self.get_spec_identifier())))
 
         # Extract the resource params from module
         self.nsx_resource_params = self._extract_nsx_resource_params(
@@ -143,6 +152,11 @@ class NSXTBaseRealizableResource(ABC):
 
     def get_parent_info(self):
         return self._parent_info
+
+    def infer_resource_id(self, parent_info):
+        # This is called when the user has not specified the ID or
+        # display_name of any child resource or its sub-resources
+        pass
 
     @staticmethod
     @abstractmethod
@@ -321,14 +335,9 @@ class NSXTBaseRealizableResource(ABC):
 
     def get_id_using_attr_name_else_fail(self, attr_name, params,
                                          resource_base_url, resource_type):
-        resource_id = self._get_id_using_attr_name(
-            attr_name, params, resource_base_url, resource_type)
-        if resource_id is not None:
-            return resource_id
-        # Incorrect usage of Ansible Module
-        self.module.fail_json(msg="Please specify either {} id or display_name"
-                              " for the resource {}".format(
-                                  attr_name, str(resource_type)))
+        return self._get_id_using_attr_name(
+            attr_name, params, resource_base_url, resource_type,
+            fail_if_not_found=True)
 
     def exit_with_failure(self, msg, **kwargs):
         self.module.fail_json(msg=msg, **kwargs)
@@ -359,7 +368,8 @@ class NSXTBaseRealizableResource(ABC):
         return True
 
     def _get_id_using_attr_name(self, attr_name, params,
-                                resource_base_url, resource_type):
+                                resource_base_url, resource_type,
+                                fail_if_not_found=True):
         # Pass attr_name '' or None to infer base resource's ID
         id_identifier = 'id'
         display_name_identifier = 'display_name'
@@ -374,11 +384,12 @@ class NSXTBaseRealizableResource(ABC):
             # Use display_name as ID if ID is not specified.
             return (self.get_id_from_display_name(
                 resource_base_url, resource_display_name, resource_type,
-                False) or resource_display_name)
-        # Incorrect usage of Ansible Module
-        self.module.fail_json(
-            msg="Please specify either {} id or display_name for the "
-                "resource {}".format(attr_name, str(resource_type)))
+                fail_if_not_found) or resource_display_name)
+        if fail_if_not_found:
+            # Incorrect usage of Ansible Module
+            self.module.fail_json(
+                msg="Please specify either {} id or display_name for the "
+                    "resource {}".format(attr_name, str(resource_type)))
 
     def get_id_from_display_name(self, resource_base_url,
                                  resource_display_name,
@@ -713,6 +724,14 @@ class NSXTBaseRealizableResource(ABC):
                     msg += e.args[1]['error_message']
                 self.module.fail_json(msg=msg)
             raise e
+
+    def get_all_resources_from_nsx(self):
+        rc, resp = self._send_request_to_API()
+        if rc != 200:
+            self.module.fail_json(
+                "Invalid URL to retrieve all configured {} NSX "
+                "resources".format(self.get_spec_identifier()))
+        return resp['results']
 
     def _achieve_state(self, resource_params,
                        successful_resource_exec_logs=[]):
