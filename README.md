@@ -106,7 +106,7 @@ Note that the Policy modules are supported only for NSX-T 3.0 and above.
    1. IP Address Pool Block Subnet
    2. IP Address Pool Static Subnet
 7. IP Blocks (nsxt_policy_ip_block)
-8. BFD Config (nsxt_policy_bfd_config)
+8. BFD Profile (nsxt_policy_bfd_profile)
 9. VM Tags (nsxt_vm_tags)
 
 Note that to add a new modules in Policy API, it's base class name should be added in the BASE_RESOURCES in module_utils/nsxt_base_resource.py
