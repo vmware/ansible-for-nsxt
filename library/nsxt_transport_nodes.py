@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_nodes
 short_description: Create a Transport Node
-description: Transport nodes are hypervisor hosts and NSX Edges that will participate
+description: "Transport nodes are hypervisor hosts and NSX Edges that will participate
               in an NSX-T overlay. For a hypervisor host, this means that it hosts
               VMs that will communicate over NSX-T logical switches. For NSX Edges,
               this means that it will have logical router uplinks and downlinks.
@@ -107,7 +107,7 @@ description: Transport nodes are hypervisor hosts and NSX Edges that will partic
               request.
 
               If host node (hypervisor) or edge node (router) is not already present in
-              system then information should be provided under node_deployment_info.
+              system then information should be provided under node_deployment_info."
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
@@ -184,8 +184,8 @@ options:
                     required: false
                     type: str
                 audit_username:
-                    description: "The default username is \"audit\". To configure username, you
-                                  must provide this property together with <b>audit_password</b>."
+                    description: 'The default username is "audit". To configure username, you
+                                  must provide this property together with <b>audit_password</b>.'
                     required: false
                     type: str
                 cli_password:
@@ -441,51 +441,51 @@ options:
         named_teaming_policy:
             description: The named teaming policy to be used by the remote tunnel endpoint
             required: False
-            type:'str'
+            type: 'str'
         rtep_vlan:
             description: VLAN id for remote tunnel endpoint
-            required:True
-            type:'dict'
+            required: True
+            type: 'dict'
             VlanID:
                 description: Virtual Local Area Network Identifier
-                required:False
-                type:'int'
+                required: False
+                type: 'int'
         ip_assignment_spec:
             description: Specification for IPs to be used with host switch remote tunnel endpoints
-            required:True
-            type:'dict'
+            required: True
+            type: 'dict'
             resource_type:
                 description: Resource type
-                required:True
-                type:'str'
+                required: True
+                type: 'str'
             ip_pool_id:
                 description: IP pool id
                 required:False
-                type:'str'
+                type: 'str'
             ip_list:
                 description: List of IPs for transport node host switch virtual tunnel endpoints
-                required:False
-                type:'list'
+                required: False
+                type: 'list'
             ip_mac_list:
                 description: List of IPs and MACs for transport node host switch virtual tunnel endpoints 
-                required:False
-                type:'list'
+                required: False
+                type: 'list'
             default_gateway:
                 description: Default gateway
-                required:False
-                type:'dict'
+                required: False
+                type: 'dict'
                 IPAddress:
                     description: IPv4 or IPv6 address
-                    required:False
-                    type:'str'
+                    required: False
+                    type: 'str'
             subnet_mask:
                 description: Subnet mask
                 required:False
-                type:'dict'
+                type: 'dict'
                 IPAddress:
                     description: IPv4 IPv6 address
-                    required:False
-                    type:'str'
+                    required: False
+                    type: 'str'
     tags: 
         description: Opaque identifiers meaningful to the API user
         required: False

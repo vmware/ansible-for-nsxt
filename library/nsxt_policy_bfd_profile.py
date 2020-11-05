@@ -33,7 +33,6 @@ description:
     Required attributes include id and display_name.
 version_added: "2.8"
 author: Gautam Verma
-extends_documentation_fragment: vmware_nsxt
 options:
     hostname:
         description: Deployed NSX manager hostname.

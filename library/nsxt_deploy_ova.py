@@ -41,7 +41,7 @@ options:
         type: str
     ovftool_path:
         description: Path of ovf tool
-        type: 'str',
+        type: 'str'
     folder:
         description:  vCenter folder
         required: false
