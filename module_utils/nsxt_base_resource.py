@@ -384,7 +384,7 @@ class NSXTBaseRealizableResource(ABC):
             # Use display_name as ID if ID is not specified.
             return (self.get_id_from_display_name(
                 resource_base_url, resource_display_name, resource_type,
-                fail_if_not_found) or resource_display_name)
+                not fail_if_not_found) or resource_display_name)
         if fail_if_not_found:
             # Incorrect usage of Ansible Module
             self.module.fail_json(
