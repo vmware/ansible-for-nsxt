@@ -94,7 +94,7 @@ class NSXTBaseRealizableResource(ABC):
                     None, resource_params,
                     self.get_resource_base_url(self.baseline_args),
                     self.get_spec_identifier(),
-                    fail_if_not_found=True)
+                    fail_if_not_found=False)
             else:
                 self.id = self._get_id_using_attr_name(
                     None, resource_params,
