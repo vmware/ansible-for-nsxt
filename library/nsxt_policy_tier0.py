@@ -467,22 +467,13 @@ options:
             bfd_profile_id:
                 description:
                     - The associated BFD Profile ID
-                    - Either this, bfd_profile_display_name, or
-                      bfd_profile_path must be specified
+                    - Either this or bfd_profile_display_name must be specified
                     - BFD Profile is not supported for IPv6 networks.
                 type: str
             bfd_profile_display_name:
                 description:
                     - The associated BFD Profile display name
-                    - Either this, bfd_profile_id, or bfd_profile_path
-                      must be specified
-                    - BFD Profile is not supported for IPv6 networks.
-                type: str
-            bfd_profile_path:
-                description:
-                    - The associated BFD Profile policy path
-                    - Either this, bfd_profile_display_name, or bfd_profile_id
-                      must be specified
+                    - Either this or bfd_profile_id must be specified
                     - BFD Profile is not supported for IPv6 networks.
                 type: str
             enabled:
@@ -1642,9 +1633,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 bfd_profile_display_name=dict(
                     type='str'
                 ),
-                bfd_profile_path=dict(
-                    type='str'
-                ),
                 enabled=dict(
                     type='bool',
                     default=True
@@ -1665,16 +1653,11 @@ class NSXTTier0(NSXTBaseRealizableResource):
             return TIER_0_BFD_PEERS.format(tier0_id)
 
         def update_resource_params(self, nsx_resource_params):
-            if 'bfd_profile_path' in nsx_resource_params:
-                nsx_resource_params.pop('bfd_profile_id', None)
-                nsx_resource_params.pop('bfd_profile_display_name', None)
-                return
             bfd_profile_id = self.get_id_using_attr_name_else_fail(
                 "bfd_profile", nsx_resource_params, '/infra/bfd-profiles',
                 'BFD Profile')
             nsx_resource_params.pop('bfd_profile_id', None)
             nsx_resource_params.pop('bfd_profile_display_name', None)
-
             nsx_resource_params['bfd_profile_path'] = (
                 '/infra/bfd-profiles/{}'.format(bfd_profile_id))
 
