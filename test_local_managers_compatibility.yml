@@ -8,7 +8,7 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Register local manager
+    - name: Checks the compatibility of a local manager for registration with a global manager
       nsxt_local_managers_compatibility:
           hostname: "{{ hostname }}"
           username: "{{ username }}"

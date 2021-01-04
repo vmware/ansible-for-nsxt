@@ -8,18 +8,19 @@
   vars_files:
     - answerfile.yml
   tasks:
-    - name: Register local manager
-      nsxt_local_managers:
-          hostname: "{{hostname}}"
-          username: "{{username}}"
-          password: "{{password}}"
+    - name: Register global manager
+      nsxt_global_manager_registration:
+          hostname: "{{ hostname }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: "{{ validate_certs }}"
           display_name: "{{ item.display_name }}"
-          site_connection_info:
+          mode: "{{ item.mode }}"
+          connection_info:
             fqdn: "{{ item.fqdn }}"
             username: "{{ item.username }}"
             password: "{{ item.password }}"
             thumbprint: "{{ item.thumbprint }}"
-          state: present
+          state: absent
       with_items:
-        - "{{local_managers}}"
+        - "{{global_managers}}"

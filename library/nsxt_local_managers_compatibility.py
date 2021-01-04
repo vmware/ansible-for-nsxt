@@ -45,21 +45,20 @@ options:
             required: true
             type: str
         password:
-            description: "Password for the user (optionally specified on PUT, unspecified on
-                          GET)"
+            description: "Password for the user"
             no_log: 'True'
             required: false
             type: str
         required: false
         thumbprint:
-            description: 'Hexadecimal SHA256 hash of the vIDM server''s X.509 certificate'
+            description: 'Thumbprint of local manager in the form of a SHA-256 hash represented in lower case HEX'
             no_log: 'True'
             required: false
             type: str
         username:
-            description: 'Username value of the log'
+            description: 'Username value of the local manager'
             required: false
-            type: str    
+            type: str   
 '''
 
 EXAMPLES = '''
@@ -73,7 +72,7 @@ EXAMPLES = '''
       fqdn: "10.161.244.213"
       username: "administrator@vsphere.local"
       password: "Admin!23"
-      thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
+      thumbprint: "1a4eeaef05ad711c84d688cfb72001d17a4965a963611d9af63fb86ff55276cf"
 '''
 
 RETURN = '''# '''
@@ -121,9 +120,9 @@ def main():
     (rc, resp) = request(check_copmatibility_api_url, data=request_data, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
   except Exception as err:
-    module.fail_json(msg='Error accessing fabric compute manager. Error [%s]' % (to_native(err)))
+    module.fail_json(msg='Error accessing local manager. Error [%s]' % (to_native(err)))
 
-  module.exit_json(changed=False, **resp)
+  module.exit_json(changed=False, **resp, compatibility_status=resp["version_compatible"])
 
 if __name__ == '__main__':
     main()

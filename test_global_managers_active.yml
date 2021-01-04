@@ -10,8 +10,8 @@
   tasks:
     - name: Make the global manager as Active
       nsxt_global_manager_active:
-          hostname: "{{ hostname }}"
-          username: "{{ username }}"
-          password: "{{ password }}"
+          hostname: "{{ global_managers[0].fqdn }}"
+          username: "{{ global_managers[0].username }}"
+          password: "{{ global_managers[0].password }}"
           validate_certs: "{{ validate_certs }}"
-          display_name: "{{ hostname }}"
+          id: "{{ global_managers[0].id }}"

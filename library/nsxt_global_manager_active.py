@@ -23,12 +23,13 @@ DOCUMENTATION = '''
 ---
 module: nsxt_global_manager_active
 short_description: 'Make the global manager as Active'
-description: "Make the global manager as Active"
+description: "Make the global manager as Active. This module has to be called using the details of global manager 
+              which is to be made active"
 version_added: '3.2'
 author: 'Kaushik Lele'
 options:
     hostname:
-        description: 'Deployed NSX Global manager hostname.'
+        description: 'Fully Qualified Domain Name of the Management Node which is to be made active'
         required: true
         type: str
     username:
@@ -39,8 +40,8 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
-    display_name:
-        description: 'Display name'
+    id:
+        description: 'Unique identifier of this global manager'
         required: true
         type: str
 
@@ -49,10 +50,10 @@ options:
 EXAMPLES = '''
 - name: Make the global manager as Active
   nsxt_global_manager_active:
-    hostname: "10.192.167.137"
+    fqdn: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
-    display_name: "GM-1"
+    id: "GM-1"
 '''
 
 RETURN = '''# '''
@@ -76,10 +77,10 @@ def get_global_managers(module, url, mgr_username, mgr_password, validate_certs)
     return resp
 
 
-def get_global_manager_from_display_name(module, url, mgr_username, mgr_password, validate_certs, display_name):
+def get_global_manager_from_id(module, url, mgr_username, mgr_password, validate_certs, id):
     global_managers = get_global_managers(module, url, mgr_username, mgr_password, validate_certs)
     for global_manager in global_managers['results']:
-        if global_manager.__contains__('display_name') and global_manager['display_name'] == display_name:
+        if global_manager.__contains__('id') and global_manager['id'] == id:
             return global_manager
     return None
 
@@ -91,69 +92,64 @@ def wait_till_switchover_complete(module, url, mgr_username, mgr_password, valid
             (rc, resp) = request(url, headers=dict(Accept='application/json'),
                                  url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
                                  ignore_errors=True)
-            if resp['overall_status'] == "ONGOING" and retry_count < 100:
+            if (resp['overall_status'] == "ONGOING" or resp['overall_status'] == "NOT_STARTED") and retry_count < 100:
                 time.sleep(10)
             elif resp['overall_status'] == "COMPLETE":
                 return
             else:
-                all_erroes = ''
+                all_errors = ''
                 if resp['errors'] is not None:
                     for e in resp['errors']:
-                        all_erroes = all_erroes + e
-                module.fail_json(msg='Switchover was not completed due to errors : %s' % all_erroes)
+                        all_errors = all_errors + e
+                module.fail_json(msg='Switchover was not completed due to errors : %s' % all_errors)
     except Exception as err:
         module.fail_json(msg='Error checking switchover status. Error [%s]' % (to_native(err)))
 
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(display_name=dict(required=True, type='str'))
+    argument_spec.update(id=dict(required=True, type='str'))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
     mgr_hostname = module.params['hostname']
     mgr_username = module.params['username']
     mgr_password = module.params['password']
     validate_certs = module.params['validate_certs']
-    display_name = module.params['display_name']
+    id = module.params['id']
 
     manager_url = 'https://{}/global-manager/api/v1'.format(mgr_hostname)
     global_manager_url = manager_url + '/global-infra/global-managers'
     switchover_api_url = 'https://{}/api/v1/sites/switchover-status'.format(mgr_hostname)
 
-    existing_global_manager = get_global_manager_from_display_name(module, global_manager_url,
-                                                                   mgr_username, mgr_password, validate_certs,
-                                                                   display_name)
+    existing_global_manager = get_global_manager_from_id(module, global_manager_url,
+                                                         mgr_username, mgr_password, validate_certs,
+                                                         id)
     global_manager_id, revision = None, None
 
     if existing_global_manager is None:
-        module.fail_json(msg="Global_manager with disaplya name [%s] not found." % display_name)
+        module.fail_json(msg="Global_manager with id [%s] not found." % id)
 
     global_manager_id = existing_global_manager['id']
     revision = existing_global_manager['_revision']
+    existing_global_manager["display_name"]
 
     if existing_global_manager["mode"] == "ACTIVE":
         module.exit_json(changed=False, id=global_manager_id,
-                         message="Global manager with display name %s is already in ACTIVE mode." %
-                                 existing_global_manager["display_name"])
+                         message="Global manager with id %s is already in ACTIVE mode." %
+                                 existing_global_manager["id"])
     else:
         headers = dict(Accept="application/json")
         headers['Content-Type'] = 'application/json'
-        request_data_dict = {
-            "id": global_manager_id,
-            "resource_type": "GlobalManager",
-            "display_name": existing_global_manager["display_name"],
-            "mode": "ACTIVE",
-            "_revision": revision
 
-        }
-
+        request_data_dict = existing_global_manager
+        request_data_dict["mode"] = "ACTIVE"
         request_data = json.dumps(request_data_dict)
 
         if module.check_mode:
             module.exit_json(changed=True, debug_out=str(request_data), id=global_manager_id)
 
         try:
-            (rc, resp) = request(global_manager_url + '%s' % global_manager_id, data=request_data,
+            (rc, resp) = request(global_manager_url + '/%s' % global_manager_id, data=request_data,
                                  headers=headers, method='PUT',
                                  url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
                                  ignore_errors=True)
@@ -164,8 +160,8 @@ def main():
         wait_till_switchover_complete(module, switchover_api_url, mgr_username, mgr_password, validate_certs)
 
         module.exit_json(changed=True, id=resp["id"], body=str(resp),
-                         message="Global manager with display name %s was requested to be made active." % module.params[
-                             'display_name'])
+                         message="Global manager with id %s was made active." % module.params[
+                             'id'])
 
 
 if __name__ == '__main__':

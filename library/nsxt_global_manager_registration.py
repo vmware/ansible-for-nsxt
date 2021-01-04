@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_global_manager
+module: nsxt_global_manager_registration
 short_description: 'Register a standby global manager cluster'
 description: "Register a standby global manager cluster"
 version_added: '3.2'
@@ -39,31 +39,51 @@ options:
         description: 'The password to authenticate with the NSX manager.'
         required: true
         type: str
-    display_name:
-        description: 'Display name'
-        required: true
-        type: str
     connection_info:
         fqdn:
             description: 'IP address or hostname of global manager(cluster)'
             required: true
             type: str
         password:
-            description: "Password for the user (optionally specified on PUT, unspecified on
-                          GET)"
+            description: "Password for the user"
             no_log: 'True'
             required: false
             type: str
         required: false
         thumbprint:
-            description: 'Hexadecimal SHA256 hash of the vIDM server''s X.509 certificate'
+            description: 'Thumbprint of global manager in the form of a SHA-256 hash represented in lower case HEX'
             no_log: 'True'
             required: false
             type: str
         username:
-            description: 'Username value of the log'
+            description: 'Username to connect to global manager'
             required: false
             type: str
+    display_name:
+        description: "Identifier to use when displaying entity in logs or GUI. Defaults to ID if not set'
+        required: false
+        type: str
+    description:
+        description: 'Description of this resource'
+        required: false
+        type: str
+    fail_if_rtt_exceeded:
+        description: 'Fail onboarding if maximum RTT exceeded.'
+        required: false
+        type: bool
+    id:
+        description: 'Unique identifier of this resource'
+        required: true
+        type: str
+    maximum_rtt:
+        description: "Maximum acceptable packet round trip time (RTT). 
+                If provided and fail_if_rtt_exceeded is true, onboarding of the site will
+                fail if measured RTT is greater than this value.
+                Minimum: 0
+                Maximum: 1000
+                Default: 250"
+        required: false
+        type: int                           
     mode:
         choices:
             - ACTIVE
@@ -85,18 +105,19 @@ options:
 
 EXAMPLES = '''
 - name: Register a standby global manager cluster with exisitng global manager
-  nsxt_global_managers:
+  nsxt_global_manager_registration:
     hostname: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    display_name: "GM-1"
+    display_name: "GM Second"
+    id: "GM-1"
     mode: "STANDBY"
     connection_info:
       fqdn: "10.10.10.20"
       username: "admin"
       password: "Admin!23"
-      thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
+      thumbprint: "1a4eeaef05ad711c84d688cfb72001d17a4965a963611d9af63fb86ff55276cf"
     state: present
 '''
 
@@ -134,18 +155,18 @@ def get_global_managers(module, url, mgr_username, mgr_password, validate_certs)
     return resp
 
 
-def get_global_manager_from_display_name(module, url, mgr_username, mgr_password, validate_certs, display_name):
+def get_global_manager_from_id(module, url, mgr_username, mgr_password, validate_certs, id):
     global_managers = get_global_managers(module, url, mgr_username, mgr_password, validate_certs)
     for global_manager in global_managers['results']:
-        if global_manager.__contains__('display_name') and global_manager['display_name'] == display_name:
+        if global_manager.__contains__('id') and global_manager['id'] == id:
             return global_manager
     return None
 
 
 def check_for_update(module, url, mgr_username, mgr_password, validate_certs, global_manager_with_ids):
-    existing_global_manager = get_global_manager_from_display_name(module, url, mgr_username, mgr_password,
-                                                                   validate_certs,
-                                                                   global_manager_with_ids['display_name'])
+    existing_global_manager = get_global_manager_from_id(module, url, mgr_username, mgr_password,
+                                                         validate_certs,
+                                                         global_manager_with_ids['id'])
     if existing_global_manager is None:
         return False
 
@@ -154,12 +175,15 @@ def check_for_update(module, url, mgr_username, mgr_password, validate_certs, gl
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(display_name=dict(required=True, type='str'),
-                         connection_info=dict(required=False, type='dict', no_log=True,
+    argument_spec.update(connection_info=dict(required=True, type='dict', no_log=True,
                                               username=dict(required=False, type='str'),
                                               password=dict(required=False, type='str'),
                                               thumbprint=dict(required=False, type='str'),
                                               fqdn=dict(required=True, type='str')),
+                         display_name=dict(required=False, type='str'),
+                         fail_if_rtt_exceeded=dict(required=False, type='str'),
+                         id=dict(required=True, type='str'),
+                         maximum_rtt=dict(required=False, type='int'),
                          mode=dict(required=False, choices=['ACTIVE', 'STANDBY']),
                          state=dict(required=True, choices=['present', 'absent']))
 
@@ -170,12 +194,12 @@ def main():
     mgr_username = module.params['username']
     mgr_password = module.params['password']
     validate_certs = module.params['validate_certs']
-    display_name = module.params['display_name']
+    id = module.params['id']
     manager_url = 'https://{}/global-manager/api/v1'.format(mgr_hostname)
     global_manager_api_url = manager_url + '/global-infra/global-managers'
 
-    global_manager_dict = get_global_manager_from_display_name(module, global_manager_api_url, mgr_username, mgr_password,
-                                                               validate_certs, display_name)
+    global_manager_dict = get_global_manager_from_id(module, global_manager_api_url, mgr_username, mgr_password,
+                                                     validate_certs, id)
     global_manager_id, revision = None, None
     if global_manager_dict:
         global_manager_id = global_manager_dict['id']
@@ -194,10 +218,9 @@ def main():
             try:
                 if global_manager_id:
                     module.exit_json(changed=False, id=global_manager_id,
-                                     message="Global manager with display_name %s already exist." % module.params[
-                                         'display_name'])
+                                     message="Global manager with id %s already exist." % module.params['id'] )
 
-                (rc, resp) = request(global_manager_api_url + '/%s' % module.params['display_name'], data=request_data,
+                (rc, resp) = request(global_manager_api_url + '/%s' % module.params['id'], data=request_data,
                                      headers=headers, method='PUT',
                                      url_username=mgr_username, url_password=mgr_password,
                                      validate_certs=validate_certs, ignore_errors=True)
@@ -206,7 +229,7 @@ def main():
                     msg="Failed to add global_manager. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
             module.exit_json(changed=True, id=resp["id"], body=str(resp),
-                             message="Global manager with display name %s is added." % module.params['display_name'])
+                             message="Global manager with id %s is added." % module.params['id'])
         else:
             if module.check_mode:
                 module.exit_json(changed=True, debug_out=str(json.dumps(global_manager_params)), id=global_manager_id)
@@ -225,9 +248,8 @@ def main():
 
     elif state == 'absent':
         # delete the array
-        id = global_manager_id
-        if id is None:
-            module.exit_json(changed=False, msg='No global manager exists with display_name %s' % display_name)
+        if global_manager_id is None:
+            module.exit_json(changed=False, msg='No global manager exists with id %s' % id)
         if module.check_mode:
             module.exit_json(changed=True, debug_out=str(json.dumps(global_manager_params)), id=id)
         try:

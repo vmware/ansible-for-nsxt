@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_local_managers
+module: nsxt_local_manager_registration
 short_description: 'Register a local manager with the global manager'
 description: "Registers a local manager with the global manager"
 version_added: '3.2'
@@ -40,28 +40,48 @@ options:
         required: true
         type: str
     display_name:
-        description: 'Display name'
+        description: "Identifier to use when displaying entity in logs or GUI. Defaults to ID if not set'
+        required: false
+        type: str
+    description:
+        description: 'Description of this resource'
+        required: false
+        type: str
+    fail_if_rtt_exceeded:
+        description: 'Fail onboarding if maximum RTT exceeded.'
+        required: false
+        type: bool
+    id:
+        description: 'Unique identifier of this resource'
         required: true
         type: str
+    maximum_rtt:
+        description: "Maximum acceptable packet round trip time (RTT). 
+                If provided and fail_if_rtt_exceeded is true, onboarding of the site will
+                fail if measured RTT is greater than this value.
+                Minimum: 0
+                Maximum: 1000
+                Default: 250"
+        required: false
+        type: int                  
     site_connection_info:
         fqdn:
             description: 'IP address or hostname of local manager'
             required: true
             type: str
         password:
-            description: "Password for the user (optionally specified on PUT, unspecified on
-                          GET)"
+            description: "Password for the user"
             no_log: 'True'
             required: false
             type: str
         required: false
         thumbprint:
-            description: 'Hexadecimal SHA256 hash of the vIDM server''s X.509 certificate'
+            description: 'Thumbprint of local manager in the form of a SHA-256 hash represented in lower case HEX'
             no_log: 'True'
             required: false
             type: str
         username:
-            description: 'Username value of the log'
+            description: 'Username value of the local manager'
             required: false
             type: str
     state:
@@ -78,17 +98,18 @@ options:
 
 EXAMPLES = '''
 - name: Register local manager with NSX
-  nsxt_local_managers:
+  nsxt_local_manager_registration:
     hostname: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    display_name: "LM-1"
+    id: "LM-Mumbai"
+    display_name: "Mumbai LM"
     site_connection_info:
       fqdn: "10.161.244.213"
-      username: "administrator@vsphere.local"
+      username: "admin"
       password: "Admin!23"
-      thumbprint: "36:43:34:D9:C2:06:27:4B:EE:C3:4A:AE:23:BF:76:A0:0C:4D:D6:8A:D3:16:55:97:62:07:C2:84:0C:D8:BA:66"
+      thumbprint: "31a4eeaef05ad711c84d688cfb72001d17a4965a963611d9af63fb86ff55276cf"
     state: present
 '''
 
@@ -122,31 +143,32 @@ def get_local_managers(module, url, mgr_username, mgr_password, validate_certs):
       module.fail_json(msg='Error accessing local manager. Error [%s]' % (to_native(err)))
     return resp
 
-def get_local_manager_from_display_name(module, url, mgr_username, mgr_password, validate_certs, display_name):
+def get_local_manager_by_id(module, url, mgr_username, mgr_password, validate_certs, id):
     local_managers = get_local_managers(module, url, mgr_username, mgr_password, validate_certs)
     for local_manager in local_managers['results']:
-        if local_manager.__contains__('display_name') and local_manager['display_name'] == display_name:
+        if local_manager.__contains__('id') and local_manager['id'] == id:
             return local_manager
     return None
 
-def check_for_update(module, url, mgr_username, mgr_password, validate_certs, local_manager_with_ids):
-    existing_local_manager = get_local_manager_from_display_name(module, url, mgr_username, mgr_password, validate_certs, local_manager_with_ids['display_name'])
+def check_for_update(module, url, mgr_username, mgr_password, validate_certs, local_manager_params):
+    existing_local_manager = get_local_manager_by_id(module, url, mgr_username, mgr_password, validate_certs, local_manager_params['id'])
     if existing_local_manager is None:
         return False
-    if existing_local_manager['site_connection_info'][0]['fqdn'] != local_manager_with_ids['site_connection_info'][0]['fqdn'] or \
-        existing_local_manager['site_connection_info'][0]['thumbprint'] != local_manager_with_ids['site_connection_info'][0]['thumbprint'] :
+    if existing_local_manager['site_connection_info'][0]['fqdn'] != local_manager_params['site_connection_info'][0]['fqdn'] or \
+        existing_local_manager['site_connection_info'][0]['thumbprint'] != local_manager_params['site_connection_info'][0]['thumbprint'] :
         return True
     return False
 
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
-                    site_connection_info=dict(required=False, type='dict', no_log=True,
-                    username=dict(required=False, type='str'),
-                    password=dict(required=False, type='str'),
-                    thumbprint=dict(required=False, type='str'),
-                    fqdn=dict(required=True, type='str')),
-                    state=dict(required=True, choices=['present', 'absent']))
+                        id=dict(required=True, type='str'),
+                        site_connection_info=dict(required=False, type='dict', no_log=True,
+                        username=dict(required=False, type='str'),
+                        password=dict(required=False, type='str'),
+                        thumbprint=dict(required=False, type='str'),
+                        fqdn=dict(required=True, type='str')),
+                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   local_manager_params = get_local_manager_params(module.params.copy())
@@ -155,10 +177,10 @@ def main():
   mgr_username = module.params['username']
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
-  display_name = module.params['display_name']
+  id = module.params['id']
   manager_url = 'https://{}/global-manager/api/v1'.format(mgr_hostname)
   sites_api_url = manager_url + '/global-infra/sites/'
-  local_manager_dict = get_local_manager_from_display_name (module, sites_api_url, mgr_username, mgr_password, validate_certs, display_name)
+  local_manager_dict = get_local_manager_by_id (module, sites_api_url, mgr_username, mgr_password, validate_certs, id)
   local_manager_id, revision = None, None
   if local_manager_dict:
     local_manager_id = local_manager_dict['id']
@@ -175,14 +197,14 @@ def main():
           module.exit_json(changed=True, debug_out=str(request_data), id='12345')
       try:
           if local_manager_id:
-              module.exit_json(changed=False, id=local_manager_id, message="Local manager with display_name %s already exist."% module.params['display_name'])
+              module.exit_json(changed=False, id=local_manager_id, message="Local manager with id %s already exist."% module.params['id'])
 
-          (rc, resp) = request(sites_api_url + '%s' % module.params['display_name'], data=request_data, headers=headers, method='PUT',
+          (rc, resp) = request(sites_api_url + '%s' % module.params['id'], data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
                 module.fail_json(msg="Failed to add local_manager. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
-      module.exit_json(changed=True, id=None, body= str(resp), message="Local manager with ip %s created." % module.params['display_name'])
+      module.exit_json(changed=True, id=None, body= str(resp), message="Local manager with id %s created." % module.params['id'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(local_manager_params)), id=local_manager_id)
@@ -200,7 +222,7 @@ def main():
     # delete the array
     id = local_manager_id
     if id is None:
-        module.exit_json(changed=False, msg='No local manager exist with display_name %s' % display_name)
+        module.exit_json(changed=False, msg='No local manager exist with id %s' % id)
     if module.check_mode:
         module.exit_json(changed=True, debug_out=str(json.dumps(local_manager_params)), id=id)
     try:
