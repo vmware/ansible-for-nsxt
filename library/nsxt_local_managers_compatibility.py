@@ -70,7 +70,7 @@ EXAMPLES = '''
     validate_certs: False
     site_connection_info:
       fqdn: "10.161.244.213"
-      username: "administrator@vsphere.local"
+      username: "admin"
       password: "Admin!23"
       thumbprint: "1a4eeaef05ad711c84d688cfb72001d17a4965a963611d9af63fb86ff55276cf"
 '''
