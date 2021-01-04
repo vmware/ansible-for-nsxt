@@ -75,7 +75,12 @@ EXAMPLES = '''
       thumbprint: "1a4eeaef05ad711c84d688cfb72001d17a4965a963611d9af63fb86ff55276cf"
 '''
 
-RETURN = '''# '''
+RETURN = '''
+version_compatible:
+    description: Specifies whether local manager version is compatible with global manager.
+    type: bool
+    returned: when API invocation is successful
+'''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
@@ -122,7 +127,7 @@ def main():
   except Exception as err:
     module.fail_json(msg='Error accessing local manager. Error [%s]' % (to_native(err)))
 
-  module.exit_json(changed=False, **resp, compatibility_status=resp["version_compatible"])
+  module.exit_json(changed=False, **resp)
 
 if __name__ == '__main__':
     main()

@@ -15,9 +15,10 @@
           password: "{{ password }}"
           validate_certs: "{{ validate_certs }}"
           site_connection_info:
-            fqdn: "{{ item.fqdn }}"
-            username: "{{ item.username }}"
-            password: "{{ item.password }}"
-            thumbprint: "{{ item.thumbprint }}"
-      with_items:
-        - "{{local_managers}}"
+            fqdn: "{{ local_managers[0].fqdn }}"
+            username: "{{ local_managers[0].username }}"
+            password: "{{ local_managers[0].password }}"
+            thumbprint: "{{ local_managers[0].thumbprint }}"
+      register: task_output
+    - debug:
+        var: task_output.version_compatible
