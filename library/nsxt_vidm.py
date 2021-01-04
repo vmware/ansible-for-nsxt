@@ -147,6 +147,8 @@ def wait_till_create(module, url, mgr_username, mgr_password, validate_certs):
                     else:
                         module.fail_json(
                             msg='Failed to register vIDM. runtime state is : %s' % (str(resp["runtime_state"])))
+                else:
+                    break;
             except Exception as err:
                 # When registration is in progress and status is not yet accessible then it can throw error.
                 #  {'error_code': 36514, 'error_message': 'Error when requesting to verify VMware Identity Manager user access client',
@@ -188,7 +190,8 @@ def check_for_update(existing_vidm, vidm_params):
             existing_vidm['client_id'] != vidm_params['client_id'] or \
             existing_vidm['lb_enable'] != vidm_params['lb_enable'] or \
             existing_vidm['node_host_name'] != vidm_params['node_host_name'] or \
-            existing_vidm['thumbprint'] != vidm_params['thumbprint']:
+            existing_vidm['thumbprint'] != vidm_params['thumbprint'] or \
+            existing_vidm['vidm_enable'] != vidm_params['vidm_enable']:
         return True
 
     return False
@@ -226,7 +229,7 @@ def main():
             updated = check_for_update(existing_vidm, vidm_params)
             if not updated:
                 module.exit_json(changed=False, id=vidm_params['client_id'],
-                                 message="vIDM with id %s is already present." % vidm_params['client_id'])
+                                 message="vIDM with id %s is already enabled." % vidm_params['client_id'])
 
         # vIDM not present or update. So call PUT API which is same for add and update vIDM
         request_data = json.dumps(vidm_params)
