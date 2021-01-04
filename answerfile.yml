@@ -148,3 +148,38 @@ route_advertise:
   advertise_nat_routes: True
   advertise_nsx_connected_routes: True
   advertise_static_routes: True
+
+
+#
+# vIDM properties
+#
+vidm:
+  client_id: "NSX_client_credentials_client_ID",
+  client_secret: "NSX_client_credentials_client_SECRET",
+  host_name: "colo-vshield3-dhcp168.eng.vmware.com",
+  lb_enable: False,
+  node_host_name: "10.186.17.88",
+  thumbprint": "BF838E7A1CF7B84F7B556F35E0D9A0A365F6AE021885809A2D42AAF78A06B0A4"
+
+
+#
+# One or more local managers that have to be registered with NSX
+#
+local_managers:
+- display_name: "LM2",
+  fqdn: "10.92.38.167",
+  username: "admin",
+  password: "Admin!23Admin",
+  thumbprint: "ce31e5bd27cc6b5d709c54a64e67067da4d2e76b3833b0e508a959bf39a361ba"
+
+
+#
+# One or more global managers that have to be registered with current global manager
+#
+global_managers:
+- display_name": "10.92.78.184",
+  fqdn": "10.92.78.184",
+  username": "admin",
+  password": "Admin!23Admin",
+  thumbprint": "703e69dce489beaa1a683d12a16efbf9c81630d23c5f32fc25becc5340169f1e",
+  mode": "STANDBY"
