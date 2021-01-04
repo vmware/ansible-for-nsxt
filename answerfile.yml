@@ -159,7 +159,7 @@ vidm:
   host_name: "vshield3.vmware.com"
   lb_enable: False
   node_host_name: "10.186.17.88"
-  thumbprint": "BF838E7A1CF7B84F7B556F35E0D9A0A365F6AE021885809A2D42AAF78A06B0A4"
+  thumbprint: "BF838E7A1CF7B84F7B556F35E0D9A0A365F6AE021885809A2D42AAF78A06B0A4"
 
 
 #
@@ -177,9 +177,9 @@ local_managers:
 # One or more global managers that have to be registered with current global manager
 #
 global_managers:
-- display_name": "10.92.78.184"
-  fqdn": "10.92.78.184"
-  username": "admin"
-  password": "Admin!23Admin"
-  thumbprint": "703e69dce489beaa1a683d12a16efbf9c81630d23c5f32fc25becc5340169f1e"
-  mode": "STANDBY"
+- display_name: "10.92.78.184"
+  fqdn: "10.92.78.184"
+  username: "admin"
+  password: "Admin!23Admin"
+  thumbprint: "703e69dce489beaa1a683d12a16efbf9c81630d23c5f32fc25becc5340169f1e"
+  mode: "STANDBY"
