@@ -18,18 +18,48 @@ Documentation on the NSX platform can be found at the [NSX-T Documentation page]
 
 The following versions of NSX are supported:
 
+ * NSX-T 3.1
  * NSX-T 3.0
  * NSX-T 2.5.1
  * NSX-T 2.5
  * NSX-T 2.4
 
 ## Prerequisites
-We assume that ansible is already installed.
-These modules support ansible version 2.9.0 and onwards.
 
-* Python3 >= 3.6.8
-* PyVmOmi - Python library for vCenter api.
-* OVF Tools - Ovftool is used for ovf deployment.
+Using Ansible-for-nsxt requires the following packages to be installated. Installation steps differ based on the platform (Mac/iOS, Ubuntu, Debian, CentOS, RHEL etc). Please follow the links below to pick the right platform.
+
+* Ansible >= 2.9.x [Ansible Installation Documentation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+* Python3 >= 3.6.x [Python Documentation](https://www.python.org/downloads/)
+* pip >= 9.x Python Installation [PIP installation](https://pip.pypa.io/en/stable/installing/)
+* PyVmOmi - Python library for vCenter api. Installation via pip: [pyVmomi installation](https://pypi.org/project/pyvmomi/)
+* OVF Tools >= 4.4.x - Ovftool is used for ovf deployment [OVFTool Download and Installation](https://code.vmware.com/web/tool/4.4.0/ovf)
+* Git (Optional)
+
+## Installation
+
+Installation of ansible-for-nsxt modules is straightforward. Just download or clone this repository to get all the required files.
+
+```git clone https://github.com/vmware/ansible-for-nsxt.git```
+
+This creates a clone of the repository on your system. You can also downlod the source by downloading the ZIP of the sources. Once downloaded, just extract to your desired folder.
+
+
+## Usage
+
+Once installed, the modules can be directly run with ansible-playbook:
+
+```ansible-playbook  test_logical_switches.yml```
+
+The modules require you to provide details about how to authenticate with NSX-T.
+
+
+### Using modules in the Example folder
+
+There are complete workflow example modules in the Example folder. To use them, edit the corresponding vars file. Then copy them to the main folder (folder where this Readme is present). Then run using ansible-playbook
+
+```cp examples/policy_modules/01_create_t0_gateway.yml .```
+```ansible-playbook 01_create_t0_gateway.yml```
+
 
 ### Supported NSX Objects/Workflows
 The modules in this repository are focused on enabling automation of installation workflows of NSX-T. We have modules that support the legacy MP and new Policy API.
