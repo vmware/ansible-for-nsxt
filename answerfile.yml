@@ -1,7 +1,7 @@
 # Copyright 2018 VMware, Inc.
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 ---
-hostname: "10.161.157.200"
+hostname: "10.182.190.45"
 username: "admin"
 password: "Admin!23Admin"
 validate_certs: False
@@ -148,3 +148,46 @@ route_advertise:
   advertise_nat_routes: True
   advertise_nsx_connected_routes: True
   advertise_static_routes: True
+
+
+#
+# vIDM properties
+#
+vidm:
+  client_id: "NSX_client_credentials_client_ID"
+  client_secret: "NSX_client_credentials_client_SECRET"
+  host_name: "colo-vshield3-dhcp168.eng.vmware.com"
+  lb_enable: False
+  node_host_name: "10.186.17.88"
+  thumbprint: "BF838E7A1CF7B84F7B556F35E0D9A0A365F6AE021885809A2D42AAF78A06B0A4"
+
+
+#
+# One or more local managers that have to be registered with NSX
+#
+local_managers:
+- display_name: "My LM1"
+  id: "LM1"
+  fqdn: "10.186.3.163"
+  username: "admin"
+  password: "Admin!23Admin"
+  thumbprint: "ec8ba0322b987bc7bce14097667104f43340befce84d75e0820b02a2f3839441"
+- id: "LM2"
+  display_name: ""
+  fqdn: "10.182.6.97"
+  username: "admin"
+  password: "Admin!23Admin"
+  thumbprint: "d2ec50124fcd487c37d46f85d8f6f80b24441f4e5ed9cac5c8c47d2649043078"
+
+
+
+#
+# One or more global managers that have to be registered with current global manager
+#
+global_managers:
+- display_name: "10.92.78.184"
+  fqdn: "10.92.78.184"
+  username: "admin"
+  password: "Admin!23Admin"
+  thumbprint: "703e69dce489beaa1a683d12a16efbf9c81630d23c5f32fc25becc5340169f1e"
+  mode: "STANDBY"
