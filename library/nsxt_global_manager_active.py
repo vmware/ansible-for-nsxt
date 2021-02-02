@@ -143,6 +143,7 @@ def main():
 
         request_data_dict = existing_global_manager
         request_data_dict["mode"] = "ACTIVE"
+        request_data_dict.pop("connection_info", None) 
         request_data = json.dumps(request_data_dict)
 
         if module.check_mode:
