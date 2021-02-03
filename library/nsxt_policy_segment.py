@@ -387,6 +387,151 @@ options:
         description: Subnets that belong to this Policy Segment.
         type: dict
         suboptions:
+            dhcp_config:
+                description: Additional DHCP configuration for current subnet
+                type: dict
+                suboptions:
+                    dns_servers:
+                        description: IP address of DNS servers for subnet. DNS
+                                     server IP address must belong to the same
+                                     address family as segment gateway_address
+                                     property
+                        type: list
+                    lease_time:
+                        description:
+                            - DHCP lease time in seconds. When specified, this
+                              property overwrites lease time configured DHCP
+                              server config
+                            - Minimum: 60
+                            - Maximum: 4294967295
+                            - Default: "86400"
+                        type: int
+                    resource_type:
+                        description: Resource type
+                        choices:
+                            - SegmentDhcpV4Config
+                            - SegmentDhcpV6Config
+                        type: str
+                    server_address:
+                        description: IP address of the DHCP server in CIDR
+                                     format. The server_address is mandatory in
+                                     case this segment has provided a
+                                     dhcp_config_path and it represents a DHCP
+                                     server config. If this SegmentDhcpConfig
+                                     is a SegmentDhcpV4Config, the address must
+                                     be an IPv4 address. If this is a
+                                     SegmentDhcpV6Config, the address must
+                                     be an IPv6 address. This address must not
+                                     overlap the ip-ranges of the subnet, or
+                                     the gateway address of the subnet, or the
+                                     DHCP static-binding addresses of this
+                                     segment
+                        type: str
+                    options:
+                        description:
+                            - Property of SegmentDhcpV4Config
+                            - IPv4 DHCP options for segment subnet
+                        type: dict
+                        suboptions:
+                            option121:
+                                description: DHCP option 121 to define
+                                             classless static routes
+                                type: dict
+                                suboptions:
+                                    static_routes:
+                                        description: Classless static route of
+                                                     DHCP option 121
+                                        type: list
+                                        elements: dict
+                                        suboptions:
+                                            network:
+                                                description: Destination
+                                                             network in CIDR
+                                                             format
+                                                type: str
+                                                required: true
+                                            next_hop:
+                                                description: IP address of next
+                                                             hop of the route
+                                                type: str
+                                                required: true
+                            others:
+                                description:
+                                    Other DHCP options
+                                    To define DHCP options other than option
+                                    121 in generic format. Please note, only
+                                    the following options can be defined in
+                                    generic format. Those other options will be
+                                    accepted without validation but will not
+                                    take effect
+                                    --------------------------
+                                    Code Name
+                                    --------------------------
+                                    2 Time Offset
+                                    6 Domain Name Server
+                                    13 Boot File Size
+                                    19 Forward On/Off
+                                    26 MTU Interface
+                                    28 Broadcast Address
+                                    35 ARP Timeout
+                                    40 NIS Domain
+                                    41 NIS Servers
+                                    42 NTP Servers
+                                    44 NETBIOS Name Srv
+                                    45 NETBIOS Dist Srv
+                                    46 NETBIOS Node Type
+                                    47 NETBIOS Scope
+                                    58 Renewal Time
+                                    59 Rebinding Time
+                                    64 NIS+-Domain-Name
+                                    65 NIS+-Server-Addr
+                                    66 TFTP Server-Name (used by PXE)
+                                    67 Bootfile-Name (used by PXE)
+                                    93 PXE: Client system architecture
+                                    94 PXE: Client NDI
+                                    97 PXE: UUID/UNDI
+                                    117 Name Service Search
+                                    119 Domain Search
+                                    150 TFTP server address (used by PXE)
+                                    175 Etherboot
+                                    209 PXE Configuration File
+                                    210 PXE Path Prefix
+                                    211 PXE Reboot Time
+                                type: list
+                                elements: dict
+                                suboptions:
+                                    code:
+                                        description: DHCP option code, [0-255]
+                                        type: int
+                                        required: true
+                                    values:
+                                        description: DHCP option value
+                                        type: list
+                                        required: true
+                    domain_names:
+                        description:
+                            - Property of SegmentDhcpV6Config
+                            - Domain names for subnet
+                        type: list
+                    excluded_ranges:
+                        description:
+                            - Property of SegmentDhcpV6Config
+                            - Excluded IPv6 addresses to define dynamic ip
+                              allocation ranges
+                        type: list
+                    preferred_time:
+                            - Property of SegmentDhcpV6Config
+                            - The length of time that a valid address is
+                              preferred. When the preferred lifetime expires,
+                              the address becomes deprecated
+                            - Minimum: 60
+                            - Maximum: 4294967295
+                        type: int
+                    sntp_servers:
+                        description:
+                            - Property of SegmentDhcpV6Config
+                            - IPv6 address of SNTP servers for subnet
+                        type: list
             dhcp_ranges:
                 description: DHCP address ranges for dynamic IP allocation.
                              DHCP address ranges are used for dynamic IP
@@ -807,6 +952,87 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 type='list',
                 elements='dict',
                 options=dict(
+                    dhcp_config=dict(
+                        required=False,
+                        type='dict',
+                        options=dict(
+                            dns_servers=dict(
+                                required=False,
+                                type='list',
+                            ),
+                            lease_time=dict(
+                                required=False,
+                                type='int',
+                            ),
+                            resource_type=dict(
+                                required=True,
+                                type='str',
+                                choices=[
+                                    'SegmentDhcpV4Config',
+                                    'SegmentDhcpV6Config']
+                            ),
+                            server_address=dict(
+                                required=False,
+                                type='str',
+                            ),
+                            options=dict(
+                                required=False,
+                                type='dict',
+                                suboptions=dict(
+                                    option121=dict(
+                                        required=False,
+                                        type='dict',
+                                        suboptions=dict(
+                                            static_routes=dict(
+                                                required=False,
+                                                type='list',
+                                                elements='dict',
+                                                suboptions=dict(
+                                                    network=dict(
+                                                        required=True,
+                                                    ),
+                                                    next_hop=dict(
+                                                        required=True,
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                    others=dict(
+                                        required=False,
+                                        type='list',
+                                        elements='dict',
+                                        suboptions=dict(
+                                            code=dict(
+                                                required=True,
+                                                type='int',
+                                            ),
+                                            values=dict(
+                                                required=True,
+                                                type='list',
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                            domain_names=dict(
+                                required=False,
+                                type='list',
+                            ),
+                            excluded_ranges=dict(
+                                required=False,
+                                type='list',
+                            ),
+                            preferred_time=dict(
+                                required=False,
+                                type='int',
+                            ),
+                            sntp_servers=dict(
+                                required=False,
+                                type='list',
+                            ),
+                        ),
+                    ),
                     dhcp_ranges=dict(
                         required=False,
                         type='list'
@@ -899,6 +1125,27 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 address_pool_paths = [IP_POOL_URL + "/" + address_pool_id]
                 nsx_resource_params['advanced_config'][
                     'address_pool_paths'] = address_pool_paths
+
+        self._updateSubnetsAsPerIpvType(nsx_resource_params)
+
+    def _updateSubnetsAsPerIpvType(self, nsx_resource_params):
+        subnets = nsx_resource_params['subnets']
+        for subnet in subnets:
+            dhcp_config = subnet.get('dhcp_config')
+            if dhcp_config:
+                if dhcp_config['resource_type'] == "SegmentDhcpV4Config":
+                    self._remove_ipv6_subnet_attrs(dhcp_config)
+                else:
+                    self._remove_ipv4_subnet_attrs(dhcp_config)
+
+    def _remove_ipv6_subnet_attrs(self, dhcp_config):
+        dhcp_config.pop('domain_names', None)
+        dhcp_config.pop('excluded_ranges', None)
+        dhcp_config.pop('preferred_time', None)
+        dhcp_config.pop('sntp_servers', None)
+
+    def _remove_ipv4_subnet_attrs(self, dhcp_config):
+        dhcp_config.pop('options', None)
 
     def update_parent_info(self, parent_info):
         parent_info["segment_id"] = self.id
