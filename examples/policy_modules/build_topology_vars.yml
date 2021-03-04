@@ -52,6 +52,7 @@
       {
         "display_name": "Tier-1",
         "tier0_display_name": "Tier-0",
+        "route_advertisement_types": [ "TIER1_CONNECTED", "TIER1_NAT" ],
         "tags": [
           {
             "tag": "ansible",
