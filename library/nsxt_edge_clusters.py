@@ -188,9 +188,13 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     if not existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members'):
         return True
-    if existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members') and \
-        existing_edge_cluster['members'] != edge_cluster_with_id['members']:
-        return True
+    if existing_edge_cluster.__contains__('members') and edge_cluster_with_id.__contains__('members'):
+        if len(existing_edge_cluster['members']) != len(edge_cluster_with_id['members']):
+            return True
+        for count, member in enumerate(existing_edge_cluster['members']):
+            if member['transport_node_id'] != edge_cluster_with_id['members'][count]['transport_node_id']:
+                module.fail_json(msg='Existing [%s] new [%s]' % (member['transport_node_id'], edge_cluster_with_id['members'][count]['transport_node_id']))
+                return True
     return False
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, edge_cluster_params):
