@@ -1,0 +1,55 @@
+# Copyright 2021 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to join the 2nd and 3rd Manager nodes to the cluster using ansible.builtin.uri module. This is useful if unable to deploy using automated method.
+#
+- hosts: 127.0.0.1
+  connection: local
+  vars_files:
+    - deploy_nsx_cluster_manually_vars.yml
+  tasks:
+  - name: get cluster id
+    ansible.builtin.uri:
+      method: GET
+      url: https://{{ nodes[0]['hostname'] }}/api/v1/cluster
+      force_basic_auth: yes
+      user: "{{ nsx_username }}"
+      password: "{{ nsx_password }}"
+      validate_certs: false
+    register: cluster_id
+  - name: get thumbprint
+    ansible.builtin.uri:
+      method: GET
+      url: https://{{ nodes[0]['hostname'] }}/api/v1/search/query?query=resource_type:ClusterNodeConfig%20%26%26%20appliance_mgmt_listen_addr:{{ nodes[0]['mgmt_ip'] }}
+      force_basic_auth: yes
+      user: "{{ nsx_username }}"
+      password: "{{ nsx_password }}"
+      validate_certs: false
+    register: thumbprint
+  - name: Set the Facts
+    set_fact:
+      id: "{{ cluster_id['json']['cluster_id'] }}"
+      thumb: "{{ thumbprint['json']['results'][0]['manager_role']['api_listen_addr']['certificate_sha256_thumbprint'] }}"
+  - name: Join to cluster
+    ansible.builtin.uri:
+      method: POST
+      url: https://{{ nodes[1]['hostname'] }}/api/v1/cluster?action=join_cluster
+      force_basic_auth: yes
+      user: "{{ nsx_username }}"
+      password: "{{ nsx_password }}"
+      validate_certs: false
+      timeout: 180
+      body_format: json
+      body:
+        {
+          "cluster_id": "{{ id }}",
+          "ip_address": "{{ nodes[0]['mgmt_ip'] }}",
+          "username": "{{ nsx_username }}",
+          "password": "{{ nsx_password }}",
+          "certficate_sha256_thumbprint": "{{ thumb }}"
+        }
+    register: cluster_id
+    with_items:
+        - nodes[1]
+        - nodes[2]

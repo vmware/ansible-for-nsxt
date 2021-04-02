@@ -1,0 +1,43 @@
+  ovftool_path: "/Applications/VMware OVF Tool"
+  nsx_ova_path: ./software
+  nsx_ova: nsx-unified-appliance-3.1.1.0.0.17483186.ova
+  
+  mgmt_vcenter:
+  - display_name: vcenter
+    mgmt_ip: vc.mylab.local
+    origin_type: vCenter
+    credential_type: UsernamePasswordLoginCredential
+    username: administrator@vsphere.local
+    password: VMware1!
+    state: present
+  
+  nsx_username: admin
+  nsx_password: VMware1!VMware1!
+  validate_certs: 'false'
+  allow_ssh_root_login: 'False'
+  ssh_enabled: 'True'
+  domain: mylab.local
+  netmask: 255.255.255.0
+  gateway: 192.168.10.1
+  dns_server: 10.116.1.201
+  ntp_server: time.mylab.local
+
+  nodes:
+    - hostname: nsxt1.mylab.local
+      mgmt_ip: 192.168.10.31
+      datacenter: Datacenter
+      cluster: Cluster
+      datastore: NFS
+      portgroup: Lab
+    - hostname: nsxt2.mylab.local
+      mgmt_ip: 192.168.10.32
+      datacenter: Datacenter
+      cluster: Cluster
+      datastore: NFS
+      portgroup: Lab
+    - hostname: nsxt3.mylab.local
+      mgmt_ip: 192.168.10.33
+      datacenter: Datacenter
+      cluster: Cluster
+      datastore: NFS
+      portgroup: Lab

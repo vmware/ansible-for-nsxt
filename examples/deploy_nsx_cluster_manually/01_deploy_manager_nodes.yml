@@ -1,0 +1,48 @@
+# Copyright 2021 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to deploy the all three NSX Appliance nodes via ovftool. This is useful if unable to deploy using automated method.
+#
+- hosts: 127.0.0.1
+  connection: local
+  vars_files:
+    - deploy_nsx_cluster_manually_vars.yml
+  tasks:
+  - name: deploy NSX Manager OVA
+    nsxt_deploy_ova:
+      datacenter: "{{ item.datacenter }}"
+      datastore: "{{ item.datastore }}"
+      portgroup: "{{ item.portgroup }}"
+      cluster: "{{ item.cluster }}"
+      vmname: "{{ item.hostname }}"
+      hostname: "{{ item.hostname }}"
+      dns_server: "{{ dns_server }}"
+      dns_domain: "{{ domain }}"
+      ntp_server: "{{ ntp_server }}"
+      gateway: "{{ gateway }}"
+      ip_address: "{{ item.mgmt_ip }}"
+      netmask: "{{ netmask }}"
+      admin_password: "{{ nsx_password }}"
+      cli_password: "{{ nsx_password }}"
+      ovftool_path: "{{ ovftool_path }}"
+      path_to_ova: "{{ nsx_ova_path }}"
+      ova_file: "{{ nsx_ova }}"
+      vcenter: "{{ mgmt_vcenter[0]['mgmt_ip'] }}"
+      vcenter_user: "{{ mgmt_vcenter[0]['username'] }}"
+      vcenter_passwd: "{{ mgmt_vcenter[0]['password'] }}"
+      deployment_size: "small"
+      role: "NSX Manager"
+      allow_ssh_root_login: "{{ allow_ssh_root_login }}"
+      ssh_enabled: "{{ ssh_enabled }}"
+    with_items:
+        - "{{ nodes }}"
+  - name: Check manager status
+    nsxt_manager_status:
+      hostname: "{{ item.hostname }}"
+      username: "{{ nsx_username }}"
+      password: "{{ nsx_password }}"
+      validate_certs: 'false'
+      wait_time: 50
+    with_items:
+        - "{{ nodes }}"
