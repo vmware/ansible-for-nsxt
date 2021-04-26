@@ -60,14 +60,7 @@ options:
         required: true
         type: str
     resource_type:
-        description: "A Policy Based VPN requires to define protect rules that match
-                      local and peer subnets. IPSec security associations is
-                      negotiated for each pair of local and peer subnet.
-                      A Route Based VPN is more flexible, more powerful and recommended over
-                      policy based VPN. IP Tunnel port is created and all traffic routed via
-                      tunnel port is protected. Routes can be configured statically
-                      or can be learned through BGP. A route based VPN is must for establishing
-                      redundant VPN session to remote sites"
+        description: "Must be set to the value TransportNodeCollection"
         required: true
         type: str
     state:
