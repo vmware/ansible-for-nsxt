@@ -29,6 +29,23 @@
         connectivity_path: "/infra/tier-1s/d082bc25-a9b2-4d13-afe5-d3cecad4b854"
         subnets:
           - gateway_address: "40.1.1.1/16"
+          # - dhcp_config:
+          #     # IPv4 example
+          #     options:
+          #       option121:
+          #         static_routes:
+          #           - network: "10.22.12.2/23"
+          #             next_hop: "10.10.10.10"
+          #     resource_type: SegmentDhcpV4Config
+          #     lease_time: 16400
+          #   gateway_address: "192.40.10.1/24"
+          #     # IPv6 Example
+          #     resource_type: SegmentDhcpV6Config
+          #     preferred_time: 2048
+          #     excluded_ranges:
+          #       - fc7e::1-fc7e::32
+          #     server_address: "fc7e:f206:db42::2/48"
+          #   gateway_address: "fc7e:f206:db42::1/48"
         segment_ports:
           - display_name: test-sp-1
             state: present
