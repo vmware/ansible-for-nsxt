@@ -1,0 +1,18 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+#
+# Playbook to test IP Block
+#
+- hosts: localhost
+  tasks:
+    - name: create IP Block
+      vmware.ansible_for_nsxt.nsxt_policy_ip_block:
+        hostname: "default"
+        nsx_cert_path: /root/com.vmware.nsx.ncp/nsx.crt
+        nsx_key_path: /root/com.vmware.nsx.ncp/nsx.key
+        validate_certs: True
+        ca_path: /path/to/my/ca-bundle
+        display_name: test-ip-blk
+        state: "absent"
+        cidr: "192.168.0.0/16"
