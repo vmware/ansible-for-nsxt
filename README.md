@@ -162,6 +162,10 @@ the file nsx_certificate.p12 file contains the public and private key generated.
 
 Note: usr_cert tells OpenSSL to generate a client certificate. This must be defined in openssl.cnf.
 
+#### Validate CA in MP API
+
+To validate ceritificate authority (CA), set NSX_MANAGER_CA_PATH environment variable on Ansible control node pointing to CA certificate of NSX manager and pass validate_certs as ``True`` in ansible playbook.
+
 #### Using Policy API
 All the Policy API based Ansible Modules provide the following authentication mechanisms:
 
