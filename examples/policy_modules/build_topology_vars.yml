@@ -52,6 +52,7 @@
       {
         "display_name": "Tier-1",
         "tier0_display_name": "Tier-0",
+        "route_advertisement_types": [ "TIER1_CONNECTED", "TIER1_NAT" ],
         "tags": [
           {
             "tag": "ansible",
@@ -65,7 +66,7 @@
         {
             "display_name": "Web-Segment",
             "tier1_display_name": "Tier-1",
-            "tz": "Overlay-TZ",
+            "tz": "nsx-overlay-transportzone",
             "domain_name": "mylab.net",
             "subnets": [
                 {
@@ -86,7 +87,7 @@
         {
             "display_name": "App-Segment",
             "tier1_display_name": "Tier-1",
-            "tz": "Overlay-TZ",
+            "tz": "nsx-overlay-transportzone",
             "domain_name": "mylab.net",
             "subnets": [
                 {
@@ -107,7 +108,7 @@
         {
             "display_name": "DB-Segment",
             "tier1_display_name": "Tier-1",
-            "tz": "Overlay-TZ",
+            "tz": "nsx-overlay-transportzone",
             "domain_name": "mylab.net",
             "subnets": [
                 {
