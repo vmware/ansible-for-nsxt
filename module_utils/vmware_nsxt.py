@@ -42,11 +42,13 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     else:
         client_cert = None
 
+    ca_path = get_certificate_file_path('NSX_MANAGER_CA_PATH')
+
     try:
         r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     client_cert=client_cert, force_basic_auth=force_basic_auth)
+                     client_cert=client_cert, force_basic_auth=force_basic_auth, ca_path=ca_path)
     except HTTPError as err:
         r = err
 
