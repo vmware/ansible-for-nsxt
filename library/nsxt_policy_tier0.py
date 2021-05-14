@@ -269,26 +269,11 @@ options:
         type: dict
         description: VRF config, required for VRF Tier0
         suboptions:
-            description:
-                description: Description of this resource
-                type: str
-            display_name:
-                description:
-                    - Identifier to use when displaying entity in logs or GUI
-                    - Defaults to id if not set
-                    - Error if both not specified
-                type: str
             evpn_transit_vni:
                 description:
                     - L3 VNI associated with the VRF for overlay traffic.
                     - VNI must be unique and belong to configured VNI pool.
                 type: int
-            id:
-                description:
-                    - Unique identifier of this resource
-                    - Defaults to display_name if not set
-                    - Error if both not specified
-                type: str
             route_distinguisher:
                 description: Route distinguisher. 'ASN:<>' or 'IPAddress:<>'.
                 type: str
@@ -1311,8 +1296,6 @@ EXAMPLES = '''
               enabled: True
             ipv6_ndra_profile_display_name: test
     vrf_config:
-      display_name: my-vrf
-      id: my-vrf2
       tier0_display_name: node-t0
       tags:
         - scope: scope-tag-1
@@ -1431,18 +1414,8 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 options=dict(
                     # Note that only default site_id and
                     # enforcementpoint_id are used
-                    description=dict(
-                        type='str',
-                        default=""
-                    ),
-                    display_name=dict(
-                        type='str',
-                    ),
                     evpn_transit_vni=dict(
                         type='int'
-                    ),
-                    id=dict(
-                        type='str'
                     ),
                     route_distinguisher=dict(
                         type='str'
@@ -1539,13 +1512,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
             # vrf config is attached
             vrf_config = nsx_resource_params['vrf_config']
 
-            vrf_id = vrf_config.get('id')
-            vrf_display_name = vrf_config.get('display_name')
-            if not (vrf_display_name or vrf_id):
-                self.exit_with_failure(msg="Please specify either the ID or "
-                                       "display_name of the VRF in the "
-                                       "vrf_config using id or display_name")
-
             tier0_id = vrf_config.pop('tier0_id', None)
             if not tier0_id:
                 tier0_id = self.get_id_using_attr_name_else_fail(
@@ -1553,8 +1519,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     'Tier0')
             vrf_config['tier0_path'] = (
                 NSXTTier0.get_resource_base_url() + "/" + tier0_id)
-
-            vrf_config['resource_type'] = 'Tier0VrfConfig'
 
             if 'route_targets' in vrf_config:
                 route_targets = vrf_config['route_targets'] or []
@@ -2089,8 +2053,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                         type='str'
                     ),
                     multipath_relax=dict(
-                        type='bool',
-                        default=True
+                        type='bool'
                     ),
                     route_aggregations=dict(
                         required=False,
