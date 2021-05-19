@@ -1,0 +1,24 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Add edge cluster
+      vmware.ansible_for_nsxt.nsxt_cluster_profiles:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: EdgeHighAvailabilityProfile
+        display_name: edge-cluster-profile-East
+        description: "Edge cluster profile description"
+        bfd_probe_interval: 1000
+        bfd_declare_dead_multiple: 3
+        bfd_allowed_hops: 1
+        standby_relocation_config:
+          standby_relocation_threshold: 600
+        state: present

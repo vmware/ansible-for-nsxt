@@ -1,0 +1,290 @@
+# Test code for the nsxt_rest module.
+# Copyright: (c) 2020, sky-joker <sky.jokerxx@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- hosts: 127.0.0.1
+  gather_facts: no
+  vars:
+    nsxt_hostname: nsxt-manager-01
+    nsxt_username: admin
+    nsxt_password: password
+  tasks:
+    - name: create a new segment
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        content:
+          {
+            "display_name": "segment",
+            "subnets": [
+              {
+                "gateway_address": "192.168.0.1/24"
+              }
+            ],
+          }
+      register: create_new_segment_result
+
+    - assert:
+        that:
+          - create_new_segment_result.changed is sameas true
+          - create_new_segment_result.body is defined
+          - create_new_segment_result.body | length >= 1
+          - create_new_segment_result.body.id == "segment"
+          - create_new_segment_result.body.subnets.0.gateway_address == "192.168.0.1/24"
+
+    - name: create a new segment(again - expectation no change will occur)
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        content:
+          {
+            "display_name": "segment",
+            "subnets": [
+              {
+                "gateway_address": "192.168.0.1/24"
+              }
+            ],
+          }
+      register: create_new_segment_again_result
+
+    - assert:
+        that:
+          - create_new_segment_again_result.changed is sameas false
+          - create_new_segment_again_result.body is defined
+          - create_new_segment_again_result.body | length >= 1
+          - create_new_segment_again_result.body.id == "segment"
+          - create_new_segment_again_result.body.subnets.0.gateway_address == "192.168.0.1/24"
+
+    - name: update segment parameter
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        content:
+          {
+            "display_name": "segment",
+            "subnets": [
+              {
+                "gateway_address": "192.168.0.2/24"
+              }
+            ],
+          }
+      register: update_segment_parameter_result
+
+    - assert:
+        that:
+          - update_segment_parameter_result.changed is sameas true
+          - update_segment_parameter_result.body is defined
+          - update_segment_parameter_result.body | length >= 1
+          - update_segment_parameter_result.body.id == "segment"
+          - update_segment_parameter_result.body.subnets.0.gateway_address == "192.168.0.2/24"
+
+    - name: update segment parameter(again - expectation no change will occur)
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        content:
+          {
+            "display_name": "segment",
+            "subnets": [
+              {
+                "gateway_address": "192.168.0.2/24"
+              }
+            ],
+          }
+      register: update_segment_parameter_again_result
+
+    - assert:
+        that:
+          - update_segment_parameter_again_result.changed is sameas false
+          - update_segment_parameter_again_result.body is defined
+          - update_segment_parameter_again_result.body | length >= 1
+          - update_segment_parameter_again_result.body.id == "segment"
+          - update_segment_parameter_again_result.body.subnets.0.gateway_address == "192.168.0.2/24"
+
+    - name: get segment information
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: get
+        path: /policy/api/v1/infra/segments/segment
+      register: get_segment_information_result
+
+    - assert:
+        that:
+          - get_segment_information_result.changed is sameas false
+          - get_segment_information_result.body is defined
+          - get_segment_information_result.body | length >= 1
+          - get_segment_information_result.body.id == "segment"
+          - get_segment_information_result.body.subnets.0.gateway_address == "192.168.0.2/24"
+
+    - name: delete a segment
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: delete
+        path: /policy/api/v1/infra/segments/segment
+      register: delete_segment_result
+
+    - assert:
+        that:
+          - delete_segment_result.changed is sameas true
+
+    - name: delete a segment(again - expectation no change will occur)
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: delete
+        path: /policy/api/v1/infra/segments/segment
+      register: delete_segment_again_result
+
+    - assert:
+        that:
+          - delete_segment_again_result.changed is sameas false
+
+    - name: create json file for segment parameter
+      copy:
+        content:
+          {
+            "display_name": "segment",
+            "subnets": [
+              {
+                "gateway_address": "192.168.0.1/24"
+              }
+            ],
+          }
+        dest: segment_parametr.json
+      register: create_json_file_result
+
+    - assert:
+        that:
+          - create_json_file_result.changed is sameas true
+
+    - name: create a new segment with json file
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        src: segment_parametr.json
+      register: create_new_segment_result
+
+    - assert:
+        that:
+          - create_new_segment_result.changed is sameas true
+          - create_new_segment_result.body is defined
+          - create_new_segment_result.body | length >= 1
+          - create_new_segment_result.body.id == "segment"
+          - create_new_segment_result.body.subnets.0.gateway_address == "192.168.0.1/24"
+
+    - name: create a new segment with json file(again - expectation no change will occur)
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        src: segment_parametr.json
+      register: create_new_segment_again_result
+
+    - assert:
+        that:
+          - create_new_segment_again_result.changed is sameas false
+          - create_new_segment_again_result.body is defined
+          - create_new_segment_again_result.body | length >= 1
+          - create_new_segment_again_result.body.id == "segment"
+          - create_new_segment_again_result.body.subnets.0.gateway_address == "192.168.0.1/24"
+
+    - name: update json file for segment parameter
+      copy:
+        content:
+          {
+            "display_name": "segment",
+            "subnets": [
+              {
+                "gateway_address": "192.168.0.2/24"
+              }
+            ],
+          }
+        dest: segment_parametr.json
+      register: update_json_file_result
+
+    - assert:
+        that:
+          - update_json_file_result.changed is sameas true
+
+    - name: update segment parameter
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        src: segment_parametr.json
+      register: update_segment_parameter_result
+
+    - assert:
+        that:
+          - update_segment_parameter_result.changed is sameas true
+          - update_segment_parameter_result.body is defined
+          - update_segment_parameter_result.body | length >= 1
+          - update_segment_parameter_result.body.id == "segment"
+          - update_segment_parameter_result.body.subnets.0.gateway_address == "192.168.0.2/24"
+
+    - name: update segment parameter(again - expectation no change will occur)
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: patch
+        path: /policy/api/v1/infra/segments/segment
+        src: segment_parametr.json
+      register: update_segment_parameter_again_result
+
+    - assert:
+        that:
+          - update_segment_parameter_again_result.changed is sameas false
+          - update_segment_parameter_again_result.body is defined
+          - update_segment_parameter_again_result.body | length >= 1
+          - update_segment_parameter_again_result.body.id == "segment"
+          - update_segment_parameter_again_result.body.subnets.0.gateway_address == "192.168.0.2/24"
+
+    - name: delete a segment
+      vmware.ansible_for_nsxt.nsxt_rest:
+        hostname: "{{ nsxt_hostname }}"
+        username: "{{ nsxt_username }}"
+        password: "{{ nsxt_password }}"
+        validate_certs: false
+        method: delete
+        path: /policy/api/v1/infra/segments/segment
+      register: delete_segment_result
+
+    - assert:
+        that:
+          - delete_segment_result.changed is sameas true

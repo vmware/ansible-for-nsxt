@@ -1,0 +1,20 @@
+# Copyright 2019 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Update upgrade plan
+      vmware.ansible_for_nsxt.nsxt_upgrade_plan:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        component_type: 'host'
+        parallel: True
+        pause_after_each_group: True
+        pause_on_error: True
+        state: 'present'

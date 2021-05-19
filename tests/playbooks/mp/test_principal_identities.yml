@@ -1,0 +1,25 @@
+# Copyright 2019 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Register a name-certificate combination
+      vmware.ansible_for_nsxt.nsxt_principal_identities:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "Principal_display_name"
+        description: 'Foo bar'
+        certificate_name: 'Certificate_file'
+        name: "Principal_name"
+        certificate_pem_file: "/Path/to/cert/file"
+        is_protected: True
+        node_id: "node-1"
+        role: "enterprise_admin"
+        #certificate_name: "Certificate_file"
+        state: "absent"

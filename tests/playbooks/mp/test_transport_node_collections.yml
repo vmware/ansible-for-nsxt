@@ -1,0 +1,22 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Attach Transport node profile to cluster
+      vmware.ansible_for_nsxt.nsxt_transport_node_collections:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "TNC1"
+        resource_type: "TransportNodeCollection"
+        description: "Transport Node Collections 1"
+        compute_manager_name: "VC1"
+        cluster_name: "os-compute-cluster-1"
+        transport_node_profile_name: "TNP1"
+        state: present

@@ -1,0 +1,23 @@
+---
+#
+# Playbook to register Compute Managers with NSX Appliance
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Register vidm to NSX
+      vmware.ansible_for_nsxt.nsxt_vidm:
+        hostname: "{{ hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        validate_certs: "{{ validate_certs }}"
+        client_id: "{{ vidm.client_id }}"
+        client_secret: "{{ vidm.client_secret }}"
+        host_name: "{{ vidm.host_name }}"
+        lb_enable: "{{ vidm.lb_enable }}"
+        node_host_name: "{{ vidm.node_host_name }}"
+        thumbprint: "{{ vidm.thumbprint }}"
+        state: absent
