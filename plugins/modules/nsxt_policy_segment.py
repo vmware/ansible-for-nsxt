@@ -19,18 +19,6 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import (absolute_import, division, print_function)
-from ansible.module_utils.nsxt_resource_urls import (
-    SEGMENT_PORT_URL, SEGMENT_URL, TIER_0_URL, TIER_1_URL, TRANSPORT_ZONE_URL,
-    IP_POOL_URL)
-from ansible.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils._text import to_native
-from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import (
-    SEGMENT_PORT_URL, SEGMENT_URL, TIER_0_URL, TIER_1_URL, TRANSPORT_ZONE_URL,
-    IP_POOL_URL)
-from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_base_resource import NSXTBaseRealizableResource
-from ansible.module_utils.basic import AnsibleModule
-import time
-import json
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
