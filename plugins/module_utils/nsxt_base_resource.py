@@ -122,7 +122,7 @@ class NSXTBaseRealizableResource(ABC):
         try:
             # get existing resource schema
             _, self.existing_resource = self._send_request_to_API(
-                "/" + self.id, ignore_error=False,
+                suffix="/" + self.id, ignore_error=False,
                 accepted_error_codes=set([404]))
             self.existing_resource_revision = self.existing_resource[
                 '_revision']
@@ -678,7 +678,7 @@ class NSXTBaseRealizableResource(ABC):
             })
             return
         try:
-            self._send_request_to_API("/" + self.id, method='DELETE')
+            self._send_request_to_API(suffix="/" + self.id, method='DELETE')
             self._wait_till_delete()
             successful_resource_exec_logs.append({
                 "changed": True,
@@ -707,10 +707,15 @@ class NSXTBaseRealizableResource(ABC):
                     resource_base_url = (self.resource_class.
                                          get_resource_base_url(
                                              baseline_args=self.baseline_args))
-            (rc, resp) = self.policy_communicator.request(
-                resource_base_url + suffix,
-                ignore_errors=ignore_error, method=method, data=data)
-            return (rc, resp)
+            if not suffix:
+                rc, resp = self.policy_communicator.get_all_results(
+                    resource_base_url, ignore_errors=ignore_error)
+            else:
+                rc, resp = self.policy_communicator.request(
+                    resource_base_url + suffix,
+                    ignore_errors=ignore_error, method=method, data=data)
+            return rc, resp
+
         except DuplicateRequestError:
             self.module.fail_json(msg='Duplicate request')
         except Exception as e:
@@ -800,7 +805,7 @@ class NSXTBaseRealizableResource(ABC):
         while True:
             try:
                 self._send_request_to_API(
-                    "/" + self.id, accepted_error_codes=set([404]))
+                    suffix="/" + self.id, accepted_error_codes=set([404]))
                 time.sleep(10)
             except DuplicateRequestError:
                 self.module.fail_json(msg='Duplicate request')
@@ -815,7 +820,7 @@ class NSXTBaseRealizableResource(ABC):
             count = 0
             while True:
                 rc, resp = self._send_request_to_API(
-                    "/" + self.id, accepted_error_codes=set([404]))
+                    suffix="/" + self.id, accepted_error_codes=set([404]))
                 if 'state' in resp:
                     if any(resp['state'] in progress_status for progress_status
                             in IN_PROGRESS_STATES):

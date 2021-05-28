@@ -772,18 +772,32 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
            'module_utils.nsxt_base_resource.PolicyCommunicator')
     def test_send_request_to_API(self, mock_policy_communicator):
         mock_policy_communicator.request.return_value = (200, "OK")
+        mock_policy_communicator.get_all_results.return_value = (200, "OK")
 
         init_base_resources = nsxt_base_resource.BASE_RESOURCES
         nsxt_base_resource.BASE_RESOURCES = {"NestedDummyNSXTResource"}
 
-        # Test Base Resource
+        # Test get all resources
         nested_dummy_resource = NestedDummyNSXTResource()
         nested_dummy_resource.policy_communicator = mock_policy_communicator
         nested_dummy_resource.validate_certs = False
         nested_dummy_resource.resource_class = nested_dummy_resource.__class__
         nested_dummy_resource._send_request_to_API()
+        self.assertEqual(
+            mock_policy_communicator.get_all_results.call_count, 1)
+        self.assertEqual(mock_policy_communicator.request.call_count, 0)
+
+        # Test Base Resource
+        mock_policy_communicator.reset_mock()
+        nested_dummy_resource = NestedDummyNSXTResource()
+        nested_dummy_resource.policy_communicator = mock_policy_communicator
+        nested_dummy_resource.validate_certs = False
+        nested_dummy_resource.resource_class = nested_dummy_resource.__class__
+        nested_dummy_resource._send_request_to_API(suffix="dummy")
+        self.assertEqual(mock_policy_communicator.request.call_count, 1)
 
         # Test Sub-Resource
+        mock_policy_communicator.reset_mock()
         nested_subdummy_resource1 = (
             NestedDummyNSXTResource.SubDummyResource1())
         nested_subdummy_resource1.policy_communicator = (
@@ -794,9 +808,9 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         nested_subdummy_resource1._parent_info = {
             "NestedDummyNSXTResource_id": "dummy"
         }
-        nested_subdummy_resource1._send_request_to_API()
+        nested_subdummy_resource1._send_request_to_API(suffix="dummy")
 
-        self.assertEqual(mock_policy_communicator.request.call_count, 2)
+        self.assertEqual(mock_policy_communicator.request.call_count, 1)
 
         # Test when request throws exception
         with self.assertRaises(Exception):
@@ -810,9 +824,11 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             nested_dummy_resource.validate_certs = False
             nested_dummy_resource.resource_class = (
                 nested_dummy_resource.__class__)
-            nested_dummy_resource._send_request_to_API()
+            nested_dummy_resource._send_request_to_API(suffix="dummy")
 
         self.assertEqual(mock_policy_communicator.request.call_count, 1)
+        self.assertEqual(
+            mock_policy_communicator.get_all_results.call_count, 0)
 
         nsxt_base_resource.BASE_RESOURCES = init_base_resources
 
