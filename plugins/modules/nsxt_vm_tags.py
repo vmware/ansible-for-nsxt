@@ -128,7 +128,7 @@ RETURN = '''# '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import PolicyCommunicator
-from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import VM_URL
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import VM_LIST_URL, VM_UPDATE_URL
 from ansible.module_utils._text import to_native
 
 
@@ -166,9 +166,7 @@ class TagElement(object):
 
 def _fetch_all_tags_on_vm_and_infer_id(
         vm_id, policy_communicator, vm_display_name, module):
-    _, resp = policy_communicator.request(
-            VM_URL)
-    vms = resp['results']
+    _, vms = policy_communicator.get_all_results(VM_LIST_URL)
     target_vm = None
     if vm_id:
         for vm in vms:
@@ -284,7 +282,7 @@ def realize():
             "tags": final_tags
         }
         _, resp = policy_communicator.request(
-            VM_URL + '?action=update_tags', data=post_body,
+            VM_UPDATE_URL + '?action=update_tags', data=post_body,
             method="POST")
         module.exit_json(msg="Successfully updated tags on VM {}".format(
             virtual_machine_id), changed=True)

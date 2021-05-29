@@ -27,6 +27,8 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import get_certificate_file_path
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import is_json
 
+import six.moves.urllib.parse as urlparse
+
 
 class PolicyCommunicator:
 
@@ -114,6 +116,23 @@ class PolicyCommunicator:
             request_headers=dict(type='dict'),
             ca_path=dict(type='str')
         )
+
+    def get_all_results(self, url, ignore_errors=False):
+        NULL_CURSOR_PREFIX = '0000'
+        rc, concatenate_response = self.request(
+            url, ignore_errors=ignore_errors)
+        if rc != 200:
+            return rc, None
+        cursor = concatenate_response.get('cursor', NULL_CURSOR_PREFIX)
+        op = '&' if urlparse.urlparse(url).query else '?'
+        url += op + 'cursor='
+        while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
+            rc, page = self.request(url + cursor, ignore_errors)
+            if rc != 200:
+                return rc, None
+            concatenate_response['results'].extend(page.get('results', []))
+            cursor = page.get('cursor', NULL_CURSOR_PREFIX)
+        return rc, concatenate_response['results']
 
     def request(self, url, data=None, method='GET',
                 use_proxy=True, force=False, last_mod_time=None,
