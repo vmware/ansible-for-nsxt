@@ -164,10 +164,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_transport_zone = get_tz_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, transport_zone_params['display_name'])
     if existing_transport_zone is None:
         return False
-    if not existing_transport_zone.__contains__('is_default') and transport_zone_params.__contains__('is_default'):
-        return True
-    if existing_transport_zone.__contains__('is_default') and not transport_zone_params.__contains__('is_default'):
-        return True
     if existing_transport_zone.__contains__('is_default') and transport_zone_params.__contains__('is_default') and \
         existing_transport_zone['is_default'] != transport_zone_params['is_default']:
         return True

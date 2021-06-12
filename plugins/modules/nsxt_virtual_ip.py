@@ -84,6 +84,12 @@ def get_virtual_ip_params(args=None):
             args.pop(key, None)
     return args
 
+def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, vip_params):
+    existing_vip = get_attribute_from_endpoint(module, manager_url, '/cluster/api-virtual-ip', mgr_username, mgr_password, validate_certs, 'ip_address')
+    if existing_vip != vip_params['virtual_ip_address']:
+        return True
+    return False
+
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(virtual_ip_address=dict(required=True, type='str'),
@@ -104,48 +110,46 @@ def main():
 
   if state == 'present':
     # add virtual IP address
-    if not virtual_ip_params.__contains__('virtual_ip_address'):
-      module.fail_json(msg="Field virtual_ip_address is not provided")
-    else:
-      virtual_ip_address = virtual_ip_params['virtual_ip_address']
-      if not check_if_valid_ip(virtual_ip_address):
+    virtual_ip_address = virtual_ip_params['virtual_ip_address']
+    if not check_if_valid_ip(virtual_ip_address):
         module.fail_json(msg="Virtual IP provided is invalid.")
 
     if module.check_mode:
-      module.exit_json(changed=False, debug_out="Cluster virtual IP would have been updated to %s" % module.params['virtual_ip_address'], id=module.params['virtual_ip_address'])
-    try:
-      (rc, resp) = request(manager_url+ '/cluster/api-virtual-ip?action=set_virtual_ip&ip_address=%s' % virtual_ip_address, data='', headers=headers, method='POST',
-                           url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-    except Exception as err:
-      module.fail_json(msg="Failed to add virtual IP address. Error[%s]." % to_native(err))
+        module.exit_json(changed=False, debug_out="Cluster virtual IP would have been updated to %s" % virtual_ip_params, id='12345')   
+    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, virtual_ip_params)
+    if not updated:
+        module.exit_json(changed=False, message="Virtual IP %s already set."% virtual_ip_address)
+    else:
+        try:
+            (rc, resp) = request(manager_url+ '/cluster/api-virtual-ip?action=set_virtual_ip&ip_address=%s' % virtual_ip_address, data='', headers=headers, method='POST', url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+        except Exception as err:
+            module.fail_json(msg="Failed to add virtual IP address. Error[%s]." % to_native(err))
 
-    time.sleep(5)
-    module.exit_json(changed=True, result=resp, message="Virtual IP address is set with ip address: %s " % virtual_ip_address)
+        time.sleep(5)
+        module.exit_json(changed=True, result=resp, message="Virtual IP address is set with ip address: %s " % virtual_ip_address)
 
   elif state == 'absent':
     # delete virtual IP address
     is_virtual_ip_set = True
     virtual_ip_address = get_attribute_from_endpoint(module, manager_url, '/cluster/api-virtual-ip', mgr_username, mgr_password, validate_certs, 'ip_address') 
     if virtual_ip_address is None or virtual_ip_address == '0.0.0.0':
-      virtual_ip_address = "Virtual IP address is not set"
-      is_virtual_ip_set = False
+        virtual_ip_address = "Virtual IP address is not set"
+        is_virtual_ip_set = False
     if module.check_mode:
-      if not is_virtual_ip_set:
-        module.exit_json(changed=True, debug_out='Virtual IP address is not set', id=virtual_ip_address)
-      else:
-        module.exit_json(changed=True, debug_out='Virtual IP address is set to %s. Will be removed.'% virtual_ip_address, id=virtual_ip_address)
-    try:
-       (rc, resp) = request(manager_url+ '/cluster/api-virtual-ip?action=clear_virtual_ip', data='', headers=headers, method='POST',
-                            url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-    except Exception as err:
-      module.fail_json(msg="Failed to clear virtual IP address. Error[%s]." % to_native(err))
+        if not is_virtual_ip_set:
+            module.exit_json(changed=True, debug_out='Virtual IP address is not set', id=virtual_ip_address)
+        else:
+            module.exit_json(changed=True, debug_out='Virtual IP address is set to %s. Will be removed.'% virtual_ip_address, id=virtual_ip_address)
 
     time.sleep(5)
-    if is_virtual_ip_set:
-      module.exit_json(changed=True, object_name=virtual_ip_address, message="Cleared cluster virtual IP address.")
-    else:
-      module.exit_json(changed=False, object_name="Virtual IP was not set before.", message="Cleared cluster virtual IP address.")
-
+    if not is_virtual_ip_set:
+        module.exit_json(changed=False, object_name="Virtual IP was not set before.", message="Cleared cluster virtual IP address.")
+    try:
+        (rc, resp) = request(manager_url+ '/cluster/api-virtual-ip?action=clear_virtual_ip', data='', headers=headers, method='POST',
+                            url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+        module.fail_json(msg="Failed to clear virtual IP address. Error[%s]." % to_native(err))
+    module.exit_json(changed=True, object_name=virtual_ip_address, message="Cleared cluster virtual IP address.")
 
 if __name__ == '__main__':
     main()

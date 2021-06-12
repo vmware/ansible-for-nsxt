@@ -149,9 +149,8 @@ def get_certificate_with_display_name(module, manager_url, mgr_username, mgr_pas
   result: returns the certificate object with the display name provided
   '''
   certificates = get_certificates(module, manager_url, mgr_username, mgr_password, validate_certs)
-  if certificates and certificates['result_count']>0:
-    for certificate in certificates['results']:
-      if certificate.__contains__('display_name') and certificate['display_name'] == display_name:
+  for certificate in certificates['results']:
+     if certificate.__contains__('display_name') and certificate['display_name'] == display_name:
         return certificate
   return None
 
@@ -163,7 +162,7 @@ def main():
                        port=dict(type='int', default=443),
                        validate_certs=dict(type='bool', requried=False, default=True),
                        display_name=dict(required=True, type='str'),
-                       pem_encoded_file=dict(required=True, type='str', no_log=True), 
+                       pem_encoded_file=dict(required=False, type='str', no_log=True), 
                        private_key_file=dict(required=False, type='str', no_log=True),
                        passphrase=dict(required=False, type='str', no_log=True),
                        description=dict(required=False, type='str'),
@@ -178,7 +177,6 @@ def main():
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   certificate_params = get_certificate_params(module.params.copy())
-  certificate_params = update_params_with_pem_encoding(certificate_params)
   state = module.params['state']
   mgr_hostname = module.params['hostname']
   mgr_username = module.params['username']
@@ -188,9 +186,6 @@ def main():
 
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
-  headers = dict(Accept="application/json")
-  headers['Content-Type'] = 'application/json'
-  request_data = json.dumps(certificate_params)
   certificate_with_display_name = get_certificate_with_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
 
 
@@ -199,6 +194,10 @@ def main():
     if certificate_with_display_name:
       module.fail_json(msg="Certificate with display name \'%s\' already exists." % display_name)  
     try:
+      certificate_params = update_params_with_pem_encoding(certificate_params)
+      headers = dict(Accept="application/json")
+      headers['Content-Type'] = 'application/json'
+      request_data = json.dumps(certificate_params)
       (rc, resp) = request(manager_url+ '/trust-management/certificates?action=import', data=request_data, headers=headers, method='POST',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
