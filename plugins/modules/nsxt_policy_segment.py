@@ -1130,7 +1130,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
         self._updateSubnetsAsPerIpvType(nsx_resource_params)
 
     def _updateSubnetsAsPerIpvType(self, nsx_resource_params):
-        subnets = nsx_resource_params['subnets']
+        subnets = nsx_resource_params.get('subnets', [])
         for subnet in subnets:
             dhcp_config = subnet.get('dhcp_config')
             if dhcp_config:
