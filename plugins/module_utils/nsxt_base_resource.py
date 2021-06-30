@@ -398,7 +398,7 @@ class NSXTBaseRealizableResource(ABC):
             (_, resp) = self._send_request_to_API(
                 resource_base_url=resource_base_url)
             matched_resource = None
-            for resource in resp['results']:
+            for resource in resp:
                 if (resource.__contains__('display_name') and
                         resource['display_name'] == resource_display_name):
                     if matched_resource is None:
@@ -735,7 +735,7 @@ class NSXTBaseRealizableResource(ABC):
             self.module.fail_json(
                 "Invalid URL to retrieve all configured {} NSX "
                 "resources".format(self.get_spec_identifier()))
-        return resp['results']
+        return resp
 
     def _achieve_state(self, resource_params,
                        successful_resource_exec_logs=[]):

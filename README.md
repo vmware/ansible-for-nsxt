@@ -21,8 +21,6 @@ The following versions of NSX are supported:
  * NSX-T 3.1
  * NSX-T 3.0
  * NSX-T 2.5.1
- * NSX-T 2.5
- * NSX-T 2.4
 
 ## Prerequisites
 
@@ -33,32 +31,34 @@ Using Ansible-for-nsxt requires the following packages to be installated. Instal
 * pip >= 9.x Python Installation [PIP installation](https://pip.pypa.io/en/stable/installing/)
 * PyVmOmi - Python library for vCenter api. Installation via pip: [pyVmomi installation](https://pypi.org/project/pyvmomi/)
 * OVF Tools >= 4.4.x - Ovftool is used for ovf deployment [OVFTool Download and Installation](https://code.vmware.com/web/tool/4.4.0/ovf)
-* Git (Optional)
 
 ## Installation
 
-Installation of ansible-for-nsxt modules is straightforward. Just download or clone this repository to get all the required files.
+ansible-for-nsxt modules are distributed as Ansible Galaxy collection. Please use the following command to install it
 
-```git clone https://github.com/vmware/ansible-for-nsxt.git```
-
-This creates a clone of the repository on your system. You can also downlod the source by downloading the ZIP of the sources. Once downloaded, just extract to your desired folder.
+```
+ansible-galaxy collection install vmware.ansible_for_nsxt
+```
 
 
 ## Usage
 
-Once installed, the modules can be directly run with ansible-playbook:
+Once installed, the modules can be directly run with ansible-playbook. For example, you can run:
 
-```ansible-playbook  test_logical_switches.yml```
+```
+ansible-playbook  test_logical_switches.yml
+```
 
 The modules require you to provide details about how to authenticate with NSX-T.
 
 
-### Using modules in the Example folder
+### Using modules in the tests folder
 
-There are complete workflow example modules in the Example folder. To use them, edit the corresponding vars file. Then copy them to the main folder (folder where this Readme is present). Then run using ansible-playbook
+There are complete workflow example modules in the tests/playbooks folder. To use them, edit the corresponding vars file if rqeuired. Then run using ansible-playbook. For example,
 
-```cp examples/policy_modules/01_create_t0_gateway.yml .```
-```ansible-playbook 01_create_t0_gateway.yml```
+```
+ansible-playbook 01_create_t0_gateway.yml
+```
 
 
 ### Supported NSX Objects/Workflows
@@ -70,7 +70,8 @@ MP API modules can be used to configure an NSX resource with one-to-one mapping.
 ### Branch Information
 This repository has different branches with each branch providing support for upto a specific NSX-T release. Below is the list:
 * Master: Latest code, under development
-* v3.0.0: NSX-T 3.0 and below
+* v3.0.1: NSX-T 3.1.x and below
+* v3.0.0: NSX-T 3.0.x and below
 * v1.1.0: NSX-T 2.4, NSX-T 2.5
 * v1.0.0: NSX-T 2.3
 
@@ -150,18 +151,6 @@ pip install --upgrade pyvmomi pyvim requests ssl
 ### Download and Install Ovf tool 4.3 - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL430&productId=742)
 (Note: Using ovftool version 4.0/4.1 causes OVA/OVF deployment failure with Error: cURL error: SSL connect error\nCompleted with errors\n)
 
-### Download [ansible-for-nsxt](https://github.com/vmware/ansible-for-nsxt/archive/dev.zip).
-```
-unzip ansible-for-nsxt-dev.zip
-cd ansible-for-nsxt-dev
-```
-To run a sample Ansible playbook - To create a sample test topology using deployments and install module.
-
-Edit test_basic_topology.yml and answerfile.yml to match values to your environment.
-```
-ansible-playbook test_basic_topology.yml -vvv
-```
-
 ### Authentication
 
 #### Using MP API
@@ -229,7 +218,7 @@ There are 2 ways to consume the Principal Identity certificates.
 ###### Using Environment variable
 This is same as explained in the previous section: **Certificate based authentication**
 
-###### Specying in the playbook
+###### Specifying in the playbook
 By specifying the following fields in the playbook:
 1. **nsx_cert_path**: Path to the certificate created for the Principal Identity using which the CRUD operations should be performed. If the certificate is a .p12 file, only this attribute is required. Otherwise, *nsx_key_path* is also required.
 2. **nsx_key_path**: Path to the certificate key created for the Principal Identity using which the CRUD operations should be performed
@@ -286,11 +275,6 @@ For example:
         state: present
 ```
 
-# Unit Testing
-To test the Ansible modules or see examples of playbooks, please put the respective playbook from unit_tests folder to the base folder and run the ansible-playbook.
-
-Please note that you must specify the correct vmware args in order to successfully update the resources.
-
 # Contributing
 
 The ansible-for-nsxt project team welcomes contributions from the community. Before you start working with ansible-for-nsxt, please read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on as an open-source patch. For more detailed information, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -300,6 +284,7 @@ Please open a Pull-Request against the Master branch.
 # Support
 
 Released NSX-T Ansible modules are fully supported by VMware. The released modules are available in the specific numbered release branches:
+* v3.0.1
 * v3.0.0
 * v1.1.0
 * v1.0.0
