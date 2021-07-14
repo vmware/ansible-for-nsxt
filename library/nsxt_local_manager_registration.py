@@ -168,6 +168,8 @@ def main():
                         password=dict(required=False, type='str'),
                         thumbprint=dict(required=False, type='str'),
                         fqdn=dict(required=True, type='str')),
+                        fail_if_rtt_exceeded=dict(required=False, type='bool'),
+                        maximum_rtt=dict(required=False, type='int'),
                         state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
