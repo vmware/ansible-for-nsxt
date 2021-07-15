@@ -1,0 +1,31 @@
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - upgrade_vars.yml
+  tasks:
+    - name: Create upgrade groups
+      vmware.ansible_for_nsxt.nsxt_upgrade_groups:
+        hostname: "{{ nsx_manager }}"
+        username: "{{ nsx_username }}"
+        password: "{{ nsx_password }}"
+        validate_certs: "{{ validate_certs }}"
+        display_name: "TestGroupAnsible"
+        type: "HOST"
+        parallel: "False"
+        enabled: "true"
+        upgrade_units: "{{ hosts }}"
+        state: "present"
+#        extended_configuration:
+#          - key: "upgrade_mode"
+#            value: "in_place"
+#          - key: "rebootless_upgrade"
+#            value: "true"
+        extended_configuration:
+          - key: "upgrade_mode"
+            value: "maintenance_mode"
+          - key: "rebootless_upgrade"
+            value: "true"
+          - key: "maintenance_mode_config_evacuate_powerd_off_vms"
+            value: "false"
+        state: "present"

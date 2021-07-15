@@ -1,0 +1,18 @@
+---
+#
+# Playbook to register Compute Managers with NSX Appliance
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Make the global manager as Active
+      vmware.ansible_for_nsxt.nsxt_global_manager_enable_service:
+          hostname: "{{ global_managers[0].fqdn }}"
+          username: "{{ global_managers[0].username }}"
+          password: "{{ global_managers[0].password }}"
+          validate_certs: "{{ validate_certs }}"
+          id: "{{ global_managers[0].id }}"
+          display_name: "{{ global_managers[0].display_name }}"

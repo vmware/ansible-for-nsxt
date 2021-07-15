@@ -1,0 +1,22 @@
+# Copyright 2019 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Create upgrade groups
+      vmware.ansible_for_nsxt.nsxt_upgrade_groups:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "TestGroupAnsible"
+        type: "HOST"
+        parallel: "true"
+        enabled: "true"
+        upgrade_units:
+        - host_name: "10.160.165.71"
+        state: "present"

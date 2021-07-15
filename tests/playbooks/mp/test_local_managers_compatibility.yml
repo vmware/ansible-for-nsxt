@@ -1,0 +1,24 @@
+---
+#
+# Playbook to register Compute Managers with NSX Appliance
+#
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile.yml
+  tasks:
+    - name: Checks the compatibility of a local manager for registration with a global manager
+      vmware.ansible_for_nsxt.nsxt_local_managers_compatibility:
+          hostname: "{{ hostname }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          validate_certs: "{{ validate_certs }}"
+          site_connection_info:
+            fqdn: "{{ local_managers[0].fqdn }}"
+            username: "{{ local_managers[0].username }}"
+            password: "{{ local_managers[0].password }}"
+            thumbprint: "{{ local_managers[0].thumbprint }}"
+      register: task_output
+    - debug:
+        var: task_output.version_compatible
