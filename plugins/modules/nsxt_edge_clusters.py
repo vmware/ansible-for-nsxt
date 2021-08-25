@@ -103,7 +103,7 @@ options:
                       'absent' is used to delete resource."
         required: true
 
-    
+
 '''
 
 EXAMPLES = '''
@@ -195,6 +195,12 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         for count, member in enumerate(existing_edge_cluster['members']):
             if member['transport_node_id'] != edge_cluster_with_id['members'][count]['transport_node_id']:
                 module.fail_json(msg='Existing [%s] new [%s]' % (member['transport_node_id'], edge_cluster_with_id['members'][count]['transport_node_id']))
+                return True
+    if existing_edge_cluster.__contains__('cluster_profile_bindings') and edge_cluster_with_id.__contains__('cluster_profile_bindings'):
+        if len(existing_edge_cluster['cluster_profile_bindings']) != len(edge_cluster_with_id['cluster_profile_bindings']):
+            return True
+        for count, member in enumerate(existing_edge_cluster['cluster_profile_bindings']):
+            if member['profile_id'] != edge_cluster_with_id['cluster_profile_bindings'][count]['profile_id']:
                 return True
     return False
 
