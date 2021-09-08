@@ -569,7 +569,7 @@ class NSXTBaseRealizableResource(ABC):
             # updated in the YAML.
             if self.module.check_mode:
                 successful_resource_exec_logs.append({
-                    "changed": True,
+                    "changed": False if self.existing_resource else True,
                     "debug_out": self.resource_params,
                     "id": '12345',
                     "resource_type": self.get_resource_name()

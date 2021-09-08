@@ -308,7 +308,7 @@ def main():
     if not updated:
       # add the block
       if module.check_mode:
-          module.exit_json(changed=True, debug_out=str(json.dumps(profile_params)), id='12345')
+          module.exit_json(changed=False, debug_out=str(json.dumps(profile_params)), id='12345')
       request_data = json.dumps(profile_params)
       try:
           if host_switch_profile_id:

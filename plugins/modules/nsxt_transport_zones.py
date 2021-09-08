@@ -236,7 +236,7 @@ def main():
     if not updated:
       # add the node
       if module.check_mode:
-        module.exit_json(changed=True, debug_out=str(json.dumps(transport_zone_params)), id='12345')
+        module.exit_json(changed=False, debug_out=str(json.dumps(transport_zone_params)), id='12345')
       request_data = json.dumps(transport_zone_params)
       try:
         if zone_id:
