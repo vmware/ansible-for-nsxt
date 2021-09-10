@@ -19,6 +19,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import diff_for_update
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import PolicyCommunicator
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import DuplicateRequestError
 
@@ -256,44 +257,6 @@ class NSXTBaseRealizableResource(ABC):
         # the API call.
         # Should be overridden in the subclass if needed
         pass
-
-    def check_for_update(self, existing_params, resource_params):
-        """
-            resource_params: dict
-            existing_params: dict
-            Compares the existing_params with resource_params and returns
-            True if they are different. At a base level, it traverses the
-            params and matches one-to-one. If the value to be matched is a
-            - dict, it traverses that also.
-            - list, it merely compares the order.
-            Can be overriden in the subclass for specific custom checking.
-            Returns true if the params differ
-        """
-        if not existing_params:
-            return False
-        for k, v in resource_params.items():
-            if k not in existing_params:
-                return True
-            elif type(v).__name__ == 'dict':
-                if self.check_for_update(existing_params[k], v):
-                    return True
-            elif v != existing_params[k]:
-                def compare_lists(list1, list2):
-                    # Returns True if list1 and list2 differ
-                    try:
-                        # If the lists can be converted into sets, do so and
-                        # compare lists as sets.
-                        set1 = set(list1)
-                        set2 = set(list2)
-                        return set1 != set2
-                    except Exception:
-                        return True
-                if type(v).__name__ == 'list':
-                    if compare_lists(v, existing_params[k]):
-                        return True
-                    continue
-                return True
-        return False
 
     def update_parent_info(self, parent_info):
         # Override this and fill in self._parent_info if that is to be passed
@@ -562,8 +525,10 @@ class NSXTBaseRealizableResource(ABC):
 
     def _achieve_present_state(self, successful_resource_exec_logs):
         self.update_resource_params(self.nsx_resource_params)
-        is_resource_updated = self.check_for_update(
+
+        is_resource_updated, diff = diff_for_update(
             self.existing_resource, self.nsx_resource_params)
+
         if not is_resource_updated:
             # Either the resource does not exist or it exists but was not
             # updated in the YAML.
@@ -571,6 +536,7 @@ class NSXTBaseRealizableResource(ABC):
                 successful_resource_exec_logs.append({
                     "changed": False if self.existing_resource else True,
                     "debug_out": self.resource_params,
+                    "diff": diff,
                     "id": '12345',
                     "resource_type": self.get_resource_name()
                 })
@@ -580,6 +546,7 @@ class NSXTBaseRealizableResource(ABC):
                     # Resource already exists
                     successful_resource_exec_logs.append({
                         "changed": False,
+                        "diff": diff,
                         "id": self.id,
                         "message": "%s with id %s already exists." %
                         (self.get_resource_name(), self.id),
@@ -595,6 +562,7 @@ class NSXTBaseRealizableResource(ABC):
 
                 successful_resource_exec_logs.append({
                     "changed": True,
+                    "diff": diff,
                     "id": self.id,
                     "body": str(resp),
                     "message": "%s with id %s created." %
@@ -616,6 +584,7 @@ class NSXTBaseRealizableResource(ABC):
                 successful_resource_exec_logs.append({
                     "changed": True,
                     "debug_out": self.resource_params,
+                    "diff": diff,
                     "id": self.id,
                     "resource_type": self.get_resource_name()
                 })
@@ -633,6 +602,7 @@ class NSXTBaseRealizableResource(ABC):
                         '_revision'] != self.existing_resource_revision:
                     successful_resource_exec_logs.append({
                         "changed": True,
+                        "diff": diff,
                         "id": self.id,
                         "body": str(patch_resp),
                         "message": "%s with id %s updated." %
@@ -642,6 +612,7 @@ class NSXTBaseRealizableResource(ABC):
                 else:
                     successful_resource_exec_logs.append({
                         "changed": False,
+                        "diff": diff,
                         "id": self.id,
                         "message": "%s with id %s already exists." %
                         (self.get_resource_name(), self.id),
@@ -661,9 +632,13 @@ class NSXTBaseRealizableResource(ABC):
         if self.skip_delete():
             return
 
+        _is_updated, diff = diff_for_update(
+            self.existing_resource, self.nsx_resource_params)
+
         if self.existing_resource is None:
             successful_resource_exec_logs.append({
                 "changed": False,
+                "diff": diff,
                 "msg": 'No %s exist with id %s' %
                 (self.get_resource_name(), self.id),
                 "resource_type": self.get_resource_name()
@@ -672,6 +647,7 @@ class NSXTBaseRealizableResource(ABC):
         if self.module.check_mode:
             successful_resource_exec_logs.append({
                 "changed": True,
+                "diff": diff,
                 "debug_out": self.resource_params,
                 "id": self.id,
                 "resource_type": self.get_resource_name()
@@ -682,6 +658,7 @@ class NSXTBaseRealizableResource(ABC):
             self._wait_till_delete()
             successful_resource_exec_logs.append({
                 "changed": True,
+                "diff": diff,
                 "id": self.id,
                 "message": "%s with id %s deleted." %
                 (self.get_resource_name(), self.id)
@@ -778,6 +755,7 @@ class NSXTBaseRealizableResource(ABC):
                     break
             srel = successful_resource_exec_logs
             self.module.exit_json(changed=changed,
+                                  diff=successful_resource_exec_log["diff"],
                                   successfully_updated_resources=srel)
 
     def _get_sub_resources_class_of(self, resource_class):

@@ -169,3 +169,106 @@ def get_upgrade_orchestrator_node(module, mgr_hostname, mgr_username, mgr_passwo
         module.fail_json(changed=True, msg='Error getting ip address of the upgrade'
                         ' orchestrator node. Error: {}'.format(err))
     return resp['service_properties']['enabled_on'];
+
+def deep_same(a, b):
+    '''
+    params:
+    - a: A python literal, list, or dict
+    - b: A python literal, list, or dict
+
+    Compares a and b, including their subcomponents. Lists are compared
+    ignoring order.
+
+    Returns True if a and b are the same, False if they are not.
+    '''
+    if isinstance(a, dict) and isinstance(b, dict):
+        for k, v in a.items():
+            if k not in b:
+                return False
+            if not deep_same(v, b[k]):
+                return False
+        return True
+
+    if isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return False
+        # Compare the two lists as sets. The standard set() type cannot be used
+        # because lists and dicts are not hashable.
+        for subitem_a in a:
+            match_found = False
+            for subitem_b in b:
+                if deep_same(subitem_a, subitem_b):
+                    match_found = True
+                    break
+            if not match_found:
+                return False
+        return True
+
+    return a == b
+
+def check_for_update(existing_params, resource_params):
+    '''
+    params:
+    - existing_params: A dict representing the existing state
+    - resource_params: A dict representing the expected future state
+
+    Compares the existing_params with resource_params and returns
+    True if an update is needed.
+
+    Returns True if the params should trigger an update.
+    '''
+    # A resource exists in reality but not in ansible. No need to update.
+    if not existing_params:
+        return False
+
+    # An update is needed if they are not the same.
+    return not deep_same(existing_params, resource_params)
+
+def format_for_ansible_diff(before, after):
+    '''
+    params:
+    - before: An object representing the existing state
+    - after: An object representing the expected future state
+
+    If the before and after objects implement MutableMapping (e.g. dict), they
+    will be automatically serialized to json by ansible. If not, they should be
+    run through json.dumps() beforehand.
+
+    Returns a dict formatted for ansible diff
+    '''
+    return {'before': before, 'after': after}
+
+def diff_for_update(existing_params, resource_params, strict_keys=[], lazy_keys=[]):
+    '''
+    params:
+    - existing_params: A dict representing the current resource state
+    - resource_params: A dict representing the desired (unapplied) state
+    - strict_keys: Always compare these top-level keys. If strict_keys is
+                   empty, it will default to all keys in new_params.
+    - lazy_keys: Compare these keys only if they are defined in both sets of
+                 params. These may overlap with strict_keys.
+
+
+    Returns a tuple of (is_updated, diff)
+    '''
+    # Generate representative "before" and "after" objects for diff output with
+    # only the relevant keys.
+    old_params = existing_params or {}
+    new_params = resource_params or {}
+    before = {}
+    after = {}
+    keys = strict_keys if strict_keys else list(new_params.keys())
+    for key in set(keys + lazy_keys):
+        if key in lazy_keys and \
+           not (key in old_params and key in new_params):
+            continue
+        before[key] = old_params.get(key)
+        after[key] = new_params.get(key)
+
+    # Compute diff using before and after objects, rather than existing_params
+    # and new_params, so that the diff output matches the is_updated state.
+    # This allows support for lazy keys without showing them in the diff when
+    # they only exist in one set of params.
+    is_updated = check_for_update(before, after) if existing_params else False
+    diff = format_for_ansible_diff(before, after)
+    return (is_updated, diff)
