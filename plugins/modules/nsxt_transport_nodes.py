@@ -163,6 +163,14 @@ options:
         required: false
         type: str
     node_deployment_info:
+        display_name:
+            description: Identifier to use when displaying entity in logs or GUI
+                         This field is deprecated.
+                         TransportNode field 'display_name' must be used instead. 
+                         For HostNode, this field defaults to ID if not set.
+                         For EdgeNode and PublicCloudGatewayNode, this field is ignored if specified in request payload.
+            required: false
+            type: string
         allocation_list:
             description: List of logical router ids to which this edge node is allocated.
             required: false
@@ -221,12 +229,6 @@ options:
             required: false
             type: dict
             vm_deployment_config:
-                allow_ssh_root_login:
-                    description: 'If true, the root user will be allowed to log into the VM.
-                                  Allowing root SSH logins is not recommended for security 
-                                  reasons.'
-                    required: false
-                    type: boolean
                 compute:
                     description: 'The cluster node VM will be deployed on the specified cluster
                                   or resourcepool for specified VC server. If vc_username and 
@@ -252,28 +254,11 @@ options:
                     required: false
                     type: list
                 description: VM Deployment Configuration
-                dns_servers:
-                    description: 'List of DNS servers.
-                                  If DHCP is used, the default DNS servers associated with
-                                  the DHCP server will be used instead.
-                                  Required if using static IP.'
-                    required: false
-                    type: list
-                enable_ssh:
-                    description: 'If true, the SSH service will automatically be started on the
-                                  VM. Enabling SSH service is not recommended for security 
-                                  reasons.'
-                    required: false
-                    type: boolean
                 host:
                     description: "Name of the host where edge VM is to be deployed
                                   if vc_username and vc_password are present then
                                   this field takes host name else host id."
                     required: false
-                    type: str
-                hostname:
-                    description: Desired host name/FQDN for the VM to be deployed
-                    required: true
                     type: str
                 management_network:
                     description: 'Distributed portgroup identifier to which the management vnic
@@ -293,23 +278,12 @@ options:
                                   so this parameter should be specified.'
                     required: false
                     type: array of IPSubnet
-                ntp_servers:
-                    description: 'List of NTP servers.
-                      To use hostnames, a DNS server must be defined. If not using DHCP,
-                      a DNS server should be specified under dns_servers.'
-                    required: false
-                    type: list
                 placement_type:
                     description: "Specifies the config for the platform through which to deploy
                        the VM"
                     required: true
                     type: str
                 required: true
-                search_domains:
-                    description: 'List of domain names that are used to complete unqualified host
-                                  names.'
-                    required: false
-                    type: list
                 storage:
                     description: Moref or name of the datastore in VC. If it is to be taken from 'Agent
                                  VM Settings', then it should be empty If vc_username and vc_password are present then
@@ -358,7 +332,7 @@ options:
                 resource_allocation:
                     description: 'Resource reservation settings'
                     required: false
-                    type: dict'
+                    type: dict
                     cpu_count:
                         description: 'CPU count'
                         required: false
@@ -367,7 +341,48 @@ options:
                         description: 'Memory allocation in MB'
                         required: false
                         type: int
-
+        node_settings:
+            description: "Current configuration on edge node
+                          Reports the current configuration of the SSH, DHS, NTP and host name
+                          on this edge node. The deployment_config property is used during
+                          deployment and this counterpart property shows current values."
+            required: false
+            type: dict
+            allow_ssh_root_login:
+                description: "Allowing root SSH logins is not recommended for security reasons.
+                              Edit of this property is not supported when updating transport node.
+                              Use the CLI to change this property."
+                required: false
+                type: boolean
+            dns_servers:
+                description: "List of DNS servers."
+                required: false
+                type: list
+            enable_ssh:
+                description: "Enabling SSH service is not recommended for security reasons."
+                required: false
+                type: boolean
+            hostname:
+                description: "Enabling SSH service is not recommended for security reasons."
+                required: true
+                type: string
+            advanced_configuration:
+                description: "Array of additional specific properties for advanced or cloud-
+                              specific deployments in key-value format."
+                required: false
+                type: list
+            ntp_servers:
+                description: "List of NTP servers."
+                required: false
+                type: list
+            search_domains:
+                description: "List of domain names that are used to complete unqualified host names."
+                required: false
+                type: list
+            syslog_servers:
+                description: "List of Syslog server configuration."
+                required: false
+                type: list
         deployment_type:
             description: Specifies whether the service VM should be deployed on each host such
                           that it provides partner service locally on the host, or whether the 
@@ -837,22 +852,16 @@ def main():
                        audit_password=dict(required=False, type='str', no_log=True)),
                        vm_deployment_config=dict(required=True, type='dict',
                        data_networks=dict(required=True, type='list'),
-                       dns_servers=dict(required=False, type='list'),
-                       ntp_servers=dict(required=False, type='list'),
                        management_network=dict(required=True, type='str'),
                        vc_username=dict(required=False, type='str'),
                        vc_password=dict(required=False, type='str', no_log=True),
-                       enable_ssh=dict(required=False, type='boolean'),
-                       allow_ssh_root_login=dict(required=False, type='boolean'),
                        placement_type=dict(required=True, type='str'),
                        compute=dict(required=True, type='str'),
-                       search_domains=dict(required=False, type='list'),
                        vc_name=dict(required=True, type='str'),
                        storage=dict(required=True, type='str'),
                        default_gateway_addresses=dict(required=False, type='list'),
                        management_port_subnets=dict(required=False, type='list'),
                        host=dict(required=False, type='str'),
-                       hostname=dict(required=True, type='str'),
                        reservation_info=dict(required=False, type='dict',
                        cpu_reservation=dict(required=False, type='dict',
                        reservation_in_mhz=dict(required=False, type='int'),
@@ -865,6 +874,15 @@ def main():
                        form_factor=dict(required=False, type='str')),
                        discovered_ip_addresses=dict(required=False, type='list'),
                        ip_addresses=dict(required=False, type='list'),
+                       node_settings=dict(required=False, type='dict',
+                       advanced_configuration=dict(required=False, type='str'),
+                       allow_ssh_root_login=dict(required=False, type='boolean'),
+                       dns_servers=dict(required=False, type='str'),
+                       enable_ssh=dict(required=False, type='boolean'),
+                       hostname=dict(required=True, type='str'),
+                       ntp_servers=dict(required=False, type='list'),
+                       search_domains=dict(required=False, type='list'),
+                       syslog_servers=dict(required=False, type='list')),
                        fqdn=dict(required=False, type='str'),
                        os_version=dict(required=False, type='str'),
                        managed_by_server=dict(required=False, type='str'),
