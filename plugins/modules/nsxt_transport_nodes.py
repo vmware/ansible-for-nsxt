@@ -616,14 +616,14 @@ def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, v
     try:
       count = 0;
       while True:
+          time.sleep(10)
+          count = count + 1
           (rc, resp) = request(manager_url+ '/transport-nodes/%s/state'% node_id, headers=dict(Accept='application/json'),
                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
           if any(resp['state'] in progress_status for progress_status in IN_PROGRESS_STATES) and \
           any(resp['node_deployment_state']['state'] in progress_status for progress_status in IN_PROGRESS_STATES):
-              time.sleep(10)
-              count = count + 1
-              if count == 90:
-                  #Wait for max 15 minutes for host to realize
+              if count == 360:
+                  #Wait for max 60 minutes for host to realize
                   module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s, Failure message: %s'%(str(resp['state']), str(resp['node_deployment_state']['state']), str(resp['failure_message'])))
           elif any(resp['state'] in progress_status for progress_status in SUCCESS_STATES) and\
           any(resp['node_deployment_state']['state'] in progress_status for progress_status in SUCCESS_STATES):
@@ -633,8 +633,6 @@ def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, v
           any(resp['node_deployment_state']['state'] in progress_status for progress_status in FAILED_STATES):
               module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
           else:
-              time.sleep(10)
-              count = count + 1
               if count == 90:
                    module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
     except Exception as err:
