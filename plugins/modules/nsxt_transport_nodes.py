@@ -633,7 +633,7 @@ def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, v
           any(resp['node_deployment_state']['state'] in progress_status for progress_status in FAILED_STATES):
               module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
           else:
-              if count == 90:
+              if count == 360:
                    module.fail_json(msg= 'Error creating transport node: creation state %s, node_deployment_state %s'%(str(resp['state']), str(resp['node_deployment_state']['state'])))
     except Exception as err:
       module.fail_json(msg='Error accessing transport node. Error [%s]' % (to_native(err)))
