@@ -927,8 +927,6 @@ def main():
   if transport_node_dict:
     transport_node_id = transport_node_dict['id']
     revision = transport_node_dict['_revision']
-    if transport_node_dict.__contains__('node_deployment_info'):
-      node_deployment_revision = transport_node_dict['node_deployment_info']['_revision']
 
   if state == 'present':
     if transport_node_params.__contains__('node_deployment_info') and transport_node_params['node_deployment_info']['resource_type'] == 'EdgeNode':
@@ -971,12 +969,7 @@ def main():
           module.exit_json(changed=True, debug_out=str(json.dumps(body)), id=transport_node_id)
 
       body['_revision'] = revision # update current revision
-      # node deployment revision is also important - node id also has a revision
-      if body.__contains__('node_deployment_info') and node_deployment_revision is not None:
-          body['node_deployment_info']['_revision'] = node_deployment_revision
-      else:
-          module.fail_json(msg="Failed to update Transport Node. Either node deployment info is not provided or "
-            "node deployement revision couldn't be retrieved.")
+      
       #update node id with tn id - as result of FN TN unification
       body['node_id'] = transport_node_id
 
