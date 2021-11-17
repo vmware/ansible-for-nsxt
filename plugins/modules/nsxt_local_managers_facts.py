@@ -57,7 +57,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible.module_utils._text import to_native
 import ssl
 import socket
