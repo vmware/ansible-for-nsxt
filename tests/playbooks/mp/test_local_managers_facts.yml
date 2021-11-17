@@ -9,7 +9,7 @@
     - answerfile.yml
   tasks:
     - name: Register local manager
-      nsxt_local_managers_facts:
+      vmware.ansible_for_nsxt.nsxt_local_managers_facts:
           hostname: "{{hostname}}"
           username: "{{username}}"
           password: "{{password}}"
