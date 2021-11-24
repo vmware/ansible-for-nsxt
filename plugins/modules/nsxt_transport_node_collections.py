@@ -223,7 +223,8 @@ def main():
                     transport_node_profile_name=dict(required=True, type='str'),
                     compute_manager_name=dict(required=False, type='str'),
                     cluster_name=dict(required=False, type='str'),
-                    state=dict(required=True, choices=['present', 'absent']))
+                    state=dict(required=True, choices=['present', 'absent']),
+                    tags=dict(required=False, type='list'))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   transport_node_collections_params = get_transport_node_collections_params(module.params.copy())
