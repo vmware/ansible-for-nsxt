@@ -22,8 +22,6 @@ The following versions of NSX are supported:
  * NSX-T 3.0
  * NSX-T 2.5.1
 
-//
-
 ## Prerequisites
 
 Using Ansible-for-nsxt requires the following packages to be installated. Installation steps differ based on the platform (Mac/iOS, Ubuntu, Debian, CentOS, RHEL etc). Please follow the links below to pick the right platform.

@@ -4,13 +4,13 @@
 # Copyright 2018 VMware, Inc.
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -241,6 +241,14 @@ options:
                       and vc_password are present then this field takes names else id."
                     required: true
                     type: list
+                ignore_ssl_connection:
+                    description: 'This is a boolean value which will work as a flag to control whether SSL
+                        should be used while connecting to VC or not. 
+                        If this is True, SSL will not be used to connect to VC.
+                        If the value is False, SSL will be used to connect to the VC. 
+                        If this parameter is not specified, then it will be True.'
+                    required: false
+                    type: boolean
                 default_gateway_addresses:
                     description: 'The default gateway for the VM to be deployed must be specified
                                   if all the other VMs it communicates with are not in the same subnet.
@@ -514,10 +522,6 @@ options:
                       'present' is used to create or update resource. 
                       'absent' is used to delete resource."
         required: true
-    transport_zone_endpoints:
-        description: Transport zone endpoints.
-        required: false
-        type: array of TransportZoneEndPoint
     
 '''
 
@@ -736,6 +740,13 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     if existing_transport_node.__contains__('description') and not transport_node_with_ids.__contains__('description'):
         return True
+    if existing_transport_node.__contains__('tags') and not transport_node_with_ids.__contains__('tags'):
+        return True
+    if not existing_transport_node.__contains__('tags') and transport_node_with_ids.__contains__('tags'):
+        return True
+    if existing_transport_node.__contains__('tags') and transport_node_with_ids.__contains__('tags') and (not compareTags(existing_transport_node, transport_node_with_ids)):
+        return True
+
     if transport_node_with_ids.__contains__('host_switch_spec') and transport_node_with_ids['host_switch_spec'].__contains__('host_switches'):
         existing_host_switches = existing_transport_node['host_switch_spec']['host_switches']
         sorted_existing_host_switches = sorted(existing_host_switches, key = lambda i: i['host_switch_name'])
@@ -773,7 +784,10 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
     by transport node api using pyvmomi functions.
   '''
   vm_deployment_config = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']
-      
+  if vm_deployment_config.__contains__('ignore_ssl_verification'):
+      ignore_ssl_verification = vm_deployment_config['ignore_ssl_verification']
+  else:
+      ignore_ssl_verification = True
   if vm_deployment_config.__contains__('vc_username') and vm_deployment_config.__contains__('vc_password'):
     vc_name = vm_deployment_config['vc_name']
     vc_ip = get_vc_ip_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
@@ -786,28 +800,28 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
 
     if vm_deployment_config.__contains__('host'):
       host = vm_deployment_config.pop('host', None)
-      host_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
-                                    'host', host)
+      host_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                    'host', host, ignore_ssl_verification)
       transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['host_id'] = str(host_id)
-        
+
     storage = vm_deployment_config.pop('storage')
-    storage_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
-                                           'storage', storage)
+    storage_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'storage', storage, ignore_ssl_verification)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = str(storage_id)
 
     cluster = vm_deployment_config.pop('compute')
-    cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
-                                           'cluster', cluster)
+    cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'cluster', cluster, ignore_ssl_verification)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = str(cluster_id)
 
     management_network = vm_deployment_config.pop('management_network')
-    management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password, 
-                                               'network', management_network)
+    management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                               'network', management_network, ignore_ssl_verification)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = str(management_network_id)
 
     data_networks = vm_deployment_config.pop('data_networks')
-    data_network_ids = get_data_network_id_from_name(module, vc_ip, vc_username, vc_password, 
-                                                data_networks)
+    data_network_ids = get_data_network_id_from_name(module, vc_ip, vc_username, vc_password,
+                                                data_networks, ignore_ssl_verification)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
         
     if vm_deployment_config.__contains__('host'):
@@ -830,11 +844,13 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = storage_id
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = management_network_id
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
+    transport_node_params['node_deployment_info']['vm_deployment_config'].pop('ignore_ssl_verification', None)
 
 
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
+                       ignore_ssl_verification=dict(required=False, type='boolean'),
                        description=dict(required=False, type='str'),
                        host_switch_spec=dict(required=False, type='dict',
                        host_switches=dict(required=True, type='list'),
@@ -909,7 +925,6 @@ def main():
                        subnet_mask=dict(required=False, type='dict',
                        IPAddress=dict(required=False, type='str')))),
                        tags=dict(required=False, type='list'),
-                       transport_zone_endpoints=dict(required=False, type='list'),
                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -1001,6 +1016,18 @@ def main():
     time.sleep(5)
     module.exit_json(changed=True, object_name=id, message="Transport node with node id %s deleted." % id)
 
+
+def compareTags(existing_transport_node, new_transport_nodes):
+    return ordered(existing_transport_node['tags']) == ordered(new_transport_nodes['tags'])
+
+
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
 
 
 if __name__ == '__main__':

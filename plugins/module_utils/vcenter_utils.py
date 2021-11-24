@@ -15,96 +15,116 @@ import ssl
 import requests
 import atexit
 
-from pyVim import connect
+from pyvim import connect
 from pyVmomi import vmodl
 from pyVmomi import vim
 
-def establish_vcenter_connection(module, vCenter_host, username, password):
-    '''
+
+def establish_vcenter_connection(module, vCenter_host, username, password, ignore_ssl_verification):
+    """
     params:
     - vCenter_host: vCenter host IP
     - username: vCenter username
     - password: vCenter password
     result:
-    Retrieves vCenter information from service instance and returns as content object. 
-    '''
-    try:
-        service_instance = connect.SmartConnect(host=vCenter_host,
-                                                user=username,
-                                                pwd=password,
-                                                port=443)
-        if not service_instance:
-            module.fail_json(msg="Could not connect to the specified vCenter "
-                  "host using specified username and password")
-
-        atexit.register(connect.Disconnect, service_instance)
-    except (requests.ConnectionError, ssl.SSLError):
+    Retrieves vCenter information from service instance and returns as content object.
+    """
+    if ignore_ssl_verification is False:
         try:
             sslContext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             sslContext.verify_mode = ssl.CERT_NONE
             service_instance = connect.SmartConnect(host=vCenter_host,
-                                                user=username,
-                                                pwd=password,
-                                                port=443,
-                                                sslContext=sslContext)
+                                                    user=username,
+                                                    pwd=password,
+                                                    port=443,
+                                                    sslContext=sslContext)
             if not service_instance:
                 module.fail_json(msg="Could not connect to the specified vCenter "
-                      "host using specified username and password")
+                                     "host using specified username and password")
 
             atexit.register(connect.Disconnect, service_instance)
         except vmodl.MethodFault as error:
             module.fail_json(msg="Caught vmodl fault while connecting to vCenter: " + error.msg)
+    else:
+        try:
+            service_instance = connect.SmartConnect(host=vCenter_host,
+                                                    user=username,
+                                                    pwd=password,
+                                                    port=443)
+            if not service_instance:
+                module.fail_json(msg="Could not connect to the specified vCenter "
+                                     "host using specified username and password")
+
+            atexit.register(connect.Disconnect, service_instance)
+        except (requests.ConnectionError, ssl.SSLError):
+            try:
+                sslContext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                sslContext.verify_mode = ssl.CERT_NONE
+                service_instance = connect.SmartConnect(host=vCenter_host,
+                                                        user=username,
+                                                        pwd=password,
+                                                        port=443,
+                                                        sslContext=sslContext)
+                if not service_instance:
+                    module.fail_json(msg="Could not connect to the specified vCenter "
+                                         "host using specified username and password")
+
+                atexit.register(connect.Disconnect, service_instance)
+            except vmodl.MethodFault as error:
+                module.fail_json(msg="Caught vmodl fault while connecting to vCenter: " + error.msg)
     return service_instance.RetrieveContent()
 
-def get_resource_id_from_name(module, vCenter_host, username, password, 
-                              resource_type, resource_name):
-    '''
+
+def get_resource_id_from_name(module, vCenter_host, username, password,
+                              resource_type, resource_name, ignore_ssl_verification):
+    """
     params:
-    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage' and 'network'. 
-    - resouce_name: Name of the resource.
+    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage' and 'network'.
+    - resource_name: Name of the resource.
     result:
     - moref id of the resource name and type given.
-    '''
+    """
     try:
-        content = establish_vcenter_connection(module, vCenter_host, username, password)
+        content = establish_vcenter_connection(module, vCenter_host, username, password, ignore_ssl_verification)
         if resource_type == 'host':
             objview = content.viewManager.CreateContainerView(content.rootFolder,
-                                  [vim.HostSystem], True)
+                                                              [vim.HostSystem], True)
         elif resource_type == 'cluster':
-            objview = content.viewManager.CreateContainerView(content.rootFolder, 
-                                  [vim.ClusterComputeResource], True)
+            objview = content.viewManager.CreateContainerView(content.rootFolder,
+                                                              [vim.ClusterComputeResource], True)
         elif resource_type == 'storage':
             objview = content.viewManager.CreateContainerView(content.rootFolder,
-                                  [vim.Datastore], True)
+                                                              [vim.Datastore], True)
         elif resource_type == 'network':
             objview = content.viewManager.CreateContainerView(content.rootFolder,
-                                  [vim.Network], True)
+                                                              [vim.Network], True)
         else:
-            module.fail_json(msg='Resource type provided by user either doesn\'t' 
+            module.fail_json(msg='Resource type provided by user either doesn\'t'
                                  ' exist or is not supported')
         all_resources = objview.view
         objview.Destroy()
         for resource in all_resources:
             if resource.name == resource_name:
                 return resource._moId
-        module.fail_json(msg='%s doesnt exist in %s' % (resource_name, 
+        module.fail_json(msg='%s doesnt exist in %s' % (resource_name,
                                                         resource_type))
     except vmodl.MethodFault as error:
         print("Caught vmodl fault while fetching info from vCenter: " + error.msg)
         return -1
 
-def get_data_network_id_from_name(module, vCenter_host, username, password, 
-                                 data_network_name_list):
-    '''
+
+def get_data_network_id_from_name(module, vCenter_host, username, password,
+                                  data_network_name_list, ignore_ssl_verification):
+    """
     params:
     - data_network_name_list: List of data network names
     result:
-    list of data network ids. 
-    '''
+    list of data network ids.
+    """
     try:
-        content = establish_vcenter_connection(module, vCenter_host, username, password)
+        content = establish_vcenter_connection(module, vCenter_host, username, password, ignore_ssl_verification)
         objview = content.viewManager.CreateContainerView(content.rootFolder,
-                                   [vim.Network], True)
+                                                          [vim.Network], True)
         all_networks = objview.view
         objview.Destroy()
         network_dict = {}

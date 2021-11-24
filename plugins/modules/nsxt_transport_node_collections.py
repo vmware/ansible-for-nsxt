@@ -19,7 +19,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: nsxt_transport_node_collections
@@ -192,7 +191,27 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_tnc is None:
         return False
     if existing_tnc['compute_collection_id'] == transport_node_collection_with_ids['compute_collection_id'] and \
-        existing_tnc['transport_node_profile_id'] != transport_node_collection_with_ids['transport_node_profile_id']:
+            existing_tnc['transport_node_profile_id'] != \
+            transport_node_collection_with_ids['transport_node_profile_id']:
+        return True
+    if existing_tnc.__contains__('description') and not transport_node_collection_with_ids.__contains__('description'):
+        return True
+    if not existing_tnc.__contains__('description') and transport_node_collection_with_ids.__contains__('description'):
+        return True
+    if existing_tnc.__contains__('description') and transport_node_collection_with_ids.__contains__('description') and \
+            existing_tnc['description'] != transport_node_collection_with_ids['description']:
+        return True
+    if existing_tnc.__contains__('transport_node_profile_name') and \
+            transport_node_collection_with_ids.__contains__('transport_node_profile_name') \
+            and existing_tnc['transport_node_profile_name'] != \
+            transport_node_collection_with_ids['transport_node_profile_name']:
+        return True
+    if existing_tnc.__contains__('tags') and not transport_node_collection_with_ids.__contains__('tags'):
+        return True
+    if not existing_tnc.__contains__('tags') and transport_node_collection_with_ids.__contains__('tags'):
+        return True
+    if existing_tnc.__contains__('tags') and transport_node_collection_with_ids.__contains__('tags') and \
+            (not compareTags(existing_tnc, transport_node_collection_with_ids)):
         return True
     return False
 
@@ -271,6 +290,19 @@ def main():
     wait_till_delete(id, module, manager_url, mgr_username, mgr_password, validate_certs)
 
     module.exit_json(changed=True, id=id, message="transport-node-collection with name %s deleted." % display_name)
+
+
+def compareTags(existing_tnc, new_tnc):
+    return ordered(existing_tnc['tags']) == ordered(new_tnc['tags'])
+
+
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
 
 
 if __name__ == '__main__':
