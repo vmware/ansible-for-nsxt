@@ -30,7 +30,6 @@ description and display_name. This api is now deprecated. Please use new api -
 PUT /infra/sites/<site-id>/enforcement-points/<enforcementpoint- 
 id>/transport-zones/<zone-id>
 
-
 version_added: "2.7"
 author: Rahul Raghuvanshi
 options:

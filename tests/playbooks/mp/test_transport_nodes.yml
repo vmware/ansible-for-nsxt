@@ -17,7 +17,6 @@
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
           host_switches: "{{item.host_switches}}"
-        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
         node_deployment_info: "{{item.node_deployment_info}}"
           # Host node deployment info
           # resource_type: "{{item.node_deployment_info.resource_type}}"
@@ -54,4 +53,4 @@
               #   prefix_length: "{{item.node_deployment_info.deployment_config.vm_deployment_config.management_port_subnets.prefix_length}}"
         state: present
       with_items:
-        - "{{transport_nodes}}"
+        - "{{host_transport_nodes}}"

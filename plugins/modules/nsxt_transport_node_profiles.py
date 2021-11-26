@@ -77,11 +77,6 @@ options:
                       'present' is used to create or update resource. 
                       'absent' is used to delete resource."
         required: true
-    transport_zone_endpoints:
-        description: Transport zone endpoints.
-        required: False
-        type: array of TransportZoneEndPoint
-    
 '''
 
 EXAMPLES = '''
@@ -254,6 +249,12 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         transport_node_profile_with_ids.__contains__('host_switch_spec') and transport_node_profile_with_ids['host_switch_spec'].__contains__('host_switches') and \
         existing_transport_node_profile['host_switch_spec']['host_switches'] != transport_node_profile_with_ids['host_switch_spec']['host_switches']:
         return True
+    if existing_transport_node_profile.__contains__('tags') and not transport_node_profile_with_ids.__contains__('tags'):
+        return True
+    if not existing_transport_node_profile.__contains__('tags') and transport_node_profile_with_ids.__contains__('tags'):
+        return True
+    if existing_transport_node_profile.__contains__('tags') and transport_node_profile_with_ids.__contains__('tags') and (not compareTags(existing_transport_node_profile, transport_node_profile_with_ids)):
+        return True
     return False
 
 
@@ -266,7 +267,8 @@ def main():
                 resource_type=dict(required=True, type='str')),
                 resource_type=dict(required=True, type='str'),
                 transport_zone_endpoints=dict(required=False, type='list'),
-                state=dict(required=True, choices=['present', 'absent']))
+                state=dict(required=True, choices=['present', 'absent']),
+                tags=dict(required=False, type='list'))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   transport_node_profile_params = get_transport_node_profile_params(module.params.copy())
@@ -339,6 +341,19 @@ def main():
 
     time.sleep(5)
     module.exit_json(changed=True, object_name=id, message="transport node profile with node id %s deleted." % id)
+
+
+def compareTags(existing_tnp, new_tnp):
+    return ordered(existing_tnp['tags']) == ordered(new_tnp['tags'])
+
+
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
 
 
 

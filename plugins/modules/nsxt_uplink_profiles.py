@@ -226,6 +226,10 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_profile.__contains__('transport_vlan') and profile_params.__contains__('transport_vlan') and \
         existing_profile['transport_vlan'] != profile_params['transport_vlan']:
         return True
+    if existing_profile.__contains__('lags') and not profile_params.__contains__('lags'):
+        return True
+    if not existing_profile.__contains__('lags') and profile_params.__contains__('lags'):
+        return True
     if profile_params.__contains__('lags') and profile_params['lags']:
        existing_lags = existing_profile['lags']
        new_lags = profile_params['lags']
