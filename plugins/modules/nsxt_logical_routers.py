@@ -15,7 +15,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -51,7 +50,7 @@ options:
             type: list
         ha_vip_configs:
             description: This configuration can be defined only for Active-Standby LogicalRouter
-                          to provide redundancy. For mulitple uplink ports, multiple HaVipConfigs 
+                          to provide redundancy. For multiple uplink ports, multiple HaVipConfigs 
                           must be defined and each config will pair exactly two uplink ports. 
                           The VIP will move and will always be owned by the Active node. 
                           Note - when HaVipConfig[s] are defined, configuring dynamic-routing is 
@@ -246,7 +245,7 @@ def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, va
     for result in resp['results']:
         if result.__contains__('display_name') and result['display_name'] == display_name:
             return result['id']
-    module.fail_json(msg='No id existe with display name %s' % display_name)
+    module.fail_json(msg='No id exists with display name %s' % display_name)
 
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_params ):
 
@@ -265,7 +264,7 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         if logical_router_params['ipv6_profiles'].__contains__('ndra_profile_name'):
             ndra_profile_name = logical_router_params['ipv6_profiles'].pop('ndra_profile_name')
             logical_router_params['ipv6_profiles']['ndra_profile_id'] = get_id_from_display_name (module, manager_url,
-                                                                                                   mgr_username, mgr_password, 
+                                                                                                   mgr_username, mgr_password,
                                                                                                    validate_certs,
                                                                                                    "/ipv6/nd-ra-profiles",
                                                                                                   ndra_profile_name)
@@ -274,21 +273,180 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
         logical_router_params['advanced_config']['transport_zone_id'] = get_id_from_display_name (module, manager_url,
                                                                                 mgr_username, mgr_password, validate_certs,
                                                                                 "/transport-zones", transport_zone_name)
+
+    if logical_router_params.__contains__('advanced_config') and logical_router_params['advanced_config'].__contains__(
+            'ha_vip_configs'):
+        for i in range(len(logical_router_params['advanced_config']['ha_vip_configs'])):
+            ha_vip_config = logical_router_params['advanced_config']['ha_vip_configs'][i]
+            if ha_vip_config.__contains__('redundant_uplink_port_ids') and ha_vip_config.__contains__(
+                    'redundant_uplink_port_names'):
+                ha_vip_config.pop('redundant_uplink_port_ids', None)
+            if ha_vip_config.__contains__('redundant_uplink_port_ids') and not ha_vip_config.__contains__(
+                    'redundant_uplink_port_names'):
+                continue
+            if not ha_vip_config.__contains__('redundant_uplink_port_ids') and not ha_vip_config.__contains__(
+                    'redundant_uplink_port_names'):
+                continue
+
+            uplink_profiles_names = ha_vip_config['redundant_uplink_port_names']
+            ha_vip_config.pop('redundant_uplink_port_names', None)
+            uplink_profile_ids = get_id_from_display_name_uplink(module, manager_url, mgr_username, mgr_password,
+                                                                 validate_certs,
+                                                                 "/logical-router-ports", uplink_profiles_names)
+            ha_vip_config['redundant_uplink_port_ids'] = uplink_profile_ids
+            logical_router_params['advanced_config']['ha_vip_configs'][i] = ha_vip_config
+
     return logical_router_params
+
+
+def get_id_from_display_name_uplink(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint,
+                                    uplink_profiles_display_names):
+    uplink_profile_display_name1 = uplink_profiles_display_names[0]
+    uplink_profile_display_name2 = uplink_profiles_display_names[1]
+    try:
+        (rc, resp) = request(manager_url + endpoint, headers=dict(Accept='application/json'),
+                             url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
+                             ignore_errors=True)
+    except Exception as err:
+        module.fail_json(msg='Error accessing id for uplink display names %s, %s. Error [%s]' % (
+        uplink_profile_display_name1, uplink_profile_display_name2, to_native(err)))
+
+    uplink_profile_ids = []
+
+    for result in resp['results']:
+        if result.__contains__('display_name') and (result['display_name'] == uplink_profile_display_name1 or result[
+            'display_name'] == uplink_profile_display_name2):
+            uplink_profile_ids.append(result['id'])
+    if uplink_profile_ids is None or len(uplink_profile_ids) < 2:
+        module.fail_json(msg='No id exists with uplink display name %s, %s' % (
+        uplink_profile_display_name1, uplink_profile_display_name2))
+    return uplink_profile_ids
+
 
 def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_with_ids):
     existing_logical_router = get_lr_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_with_ids['display_name'])
     if existing_logical_router is None:
         return False
-    if existing_logical_router.__contains__('edge_cluster_id') and logical_router_with_ids.__contains__('edge_cluster_id') and \
-        existing_logical_router['edge_cluster_id'] != logical_router_with_ids['edge_cluster_id']:
+    if existing_logical_router.__contains__('failover_mode') and \
+            not logical_router_with_ids.__contains__('failover_mode'):
         return True
-    if existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__('advanced_config'):
-        if existing_logical_router['advanced_config'].__contains__('internal_transit_networks') and logical_router_with_ids['advanced_config'].__contains__('internal_transit_networks') and \
-            existing_logical_router['advanced_config']['internal_transit_networks'] != logical_router_with_ids['advanced_config']['internal_transit_networks']:
+    if not existing_logical_router.__contains__('failover_mode') and \
+            logical_router_with_ids.__contains__('failover_mode'):
+        return True
+    if existing_logical_router.__contains__('failover_mode') and \
+            logical_router_with_ids.__contains__('failover_mode') and \
+            existing_logical_router['failover_mode'] != logical_router_with_ids['failover_mode']:
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') and \
+            not logical_router_with_ids.__contains__('ipv6_profiles'):
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            not logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name'):
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            not existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name'):
+        return True
+    if not existing_logical_router.__contains__('ipv6_profiles') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name'):
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name') and \
+            existing_logical_router['dad_profile_name'] != logical_router_with_ids['dad_profile_name']:
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') and \
+            not logical_router_with_ids.__contains__('ipv6_profiles'):
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            not logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name'):
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') and \
+            not existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name'):
+        return True
+    if not existing_logical_router.__contains__('ipv6_profiles') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name'):
+        return True
+    if existing_logical_router.__contains__('ipv6_profiles') \
+            and existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') \
+            and logical_router_with_ids.__contains__('ipv6_profiles') and \
+            logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name') and \
+            existing_logical_router['ndra_profile_name'] != logical_router_with_ids['ndra_profile_name']:
+        return True
+    if existing_logical_router.__contains__('edge_cluster_member_indices') and \
+            not logical_router_with_ids.__contains__('edge_cluster_member_indices'):
+        return True
+    if not existing_logical_router.__contains__('edge_cluster_member_indices') and \
+            logical_router_with_ids.__contains__('edge_cluster_member_indices'):
+        return True
+    if existing_logical_router.__contains__('edge_cluster_member_indices') and \
+            existing_logical_router.__contains__('edge_cluster_member_indices') and \
+            sorted(existing_logical_router['edge_cluster_member_indices']) != \
+            sorted(logical_router_with_ids['edge_cluster_member_indices']):
+        return True
+    if existing_logical_router.__contains__('tags') and not logical_router_with_ids.__contains__('tags'):
+        return True
+    if not existing_logical_router.__contains__('tags') and logical_router_with_ids.__contains__('tags'):
+        return True
+    if existing_logical_router.__contains__('tags') and logical_router_with_ids.__contains__('tags') and (
+            not compareTags(existing_logical_router, logical_router_with_ids)):
+        return True
+    if existing_logical_router.__contains__('edge_cluster_id') and logical_router_with_ids.__contains__(
+            'edge_cluster_id') and existing_logical_router['edge_cluster_id'] != logical_router_with_ids[
+        'edge_cluster_id']:
+        return True
+    if existing_logical_router.__contains__('advanced_config') and not logical_router_with_ids.__contains__(
+            'advanced_config'):
+        return True
+    if not existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
+            'advanced_config'):
+        return True
+    if existing_logical_router.__contains__('advanced_config') and not logical_router_with_ids.__contains__(
+            'advanced_config'):
+        return True
+    if not existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
+            'advanced_config'):
+        return True
+    if existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
+            'advanced_config') and \
+            existing_logical_router['advanced_config'].__contains__('ha_vip_configs') and not logical_router_with_ids[
+        'advanced_config'].__contains__('ha_vip_configs'):
+        return True
+    if existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
+            'advanced_config') and not \
+            existing_logical_router['advanced_config'].__contains__('ha_vip_configs') and logical_router_with_ids[
+        'advanced_config'].__contains__('ha_vip_configs'):
+        return True
+    if existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
+            'advanced_config') and \
+            existing_logical_router['advanced_config'].__contains__('ha_vip_configs') and logical_router_with_ids[
+        'advanced_config'].__contains__('ha_vip_configs') and \
+            not checkRedundantUplinkPortIds(existing_logical_router['advanced_config']['ha_vip_configs'],
+                                            logical_router_with_ids['advanced_config']['ha_vip_configs']):
+        return True
+    if existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
+            'advanced_config'):
+        if existing_logical_router['advanced_config'].__contains__('internal_transit_network') and \
+                logical_router_with_ids['advanced_config'].__contains__('internal_transit_network') and \
+                existing_logical_router['advanced_config']['internal_transit_network'] != \
+                logical_router_with_ids['advanced_config']['internal_transit_network']:
             return True
-        if existing_logical_router['advanced_config'].__contains__('external_transit_networks') and logical_router_with_ids['advanced_config'].__contains__('external_transit_networks') and \
-            existing_logical_router['advanced_config']['external_transit_networks'] != logical_router_with_ids['advanced_config']['external_transit_networks']:
+        if existing_logical_router['advanced_config'].__contains__('external_transit_networks') and \
+                logical_router_with_ids['advanced_config'].__contains__('external_transit_networks') and \
+                existing_logical_router['advanced_config']['external_transit_networks'] != \
+                logical_router_with_ids['advanced_config']['external_transit_networks']:
             return True
         if existing_logical_router['advanced_config'].__contains__('ha_vip_configs') is False and \
             logical_router_with_ids['advanced_config'].__contains__('ha_vip_configs') is True:
@@ -311,7 +469,13 @@ def main():
                             transport_zone_name=dict(required=False, type='str'),
                             internal_transit_networks=dict(required=False, type='list'),
                             internal_routing_network=dict(required=False, type='str'),
-                            ha_vip_configs=dict(required=False, type='list'),
+                            ha_vip_configs=dict(required=False, type='list',
+                                enabled=dict(required=False, type='boolean'),
+                                ha_vip_subnets=dict(required=False, type='list',
+                                    active_vip_addresses=dict(required=False, type='list'),
+                                    prefix_length=dict(required=False, type='str')),
+                                redundant_uplink_port_ids=dict(required=False, type='list'),
+                                redundant_uplink_port_names=dict(required=False,type='list')),
                             external_transit_networks=dict(required=False, type='list')),
                         router_type=dict(required=True, type='str'),
                         preferred_edge_cluster_member_index=dict(required=False, type='int'),
@@ -393,6 +557,30 @@ def main():
 
     time.sleep(5)
     module.exit_json(changed=True, object_name=id, message="logical router with id %s deleted." % id)
+
+
+def checkRedundantUplinkPortIds(existingHaVipConfigs, newHaVipConfigs):
+    if len(existingHaVipConfigs) != len(newHaVipConfigs):
+        return False
+    for i in range(len(existingHaVipConfigs)):
+        firstVal = ordered(existingHaVipConfigs[i]['redundant_uplink_port_ids'])
+        secondVal = ordered(newHaVipConfigs[i]['redundant_uplink_port_ids'])
+        if firstVal != secondVal:
+            return False
+    return True
+
+
+def compareTags(existing_logical_router, new_logical_router):
+    return ordered(existing_logical_router['tags']) == ordered(new_logical_router['tags'])
+
+
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
 
 
 if __name__ == '__main__':

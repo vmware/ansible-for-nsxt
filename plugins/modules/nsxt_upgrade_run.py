@@ -15,7 +15,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -72,6 +71,8 @@ def get_upgrade_status(module, manager_url, mgr_username, mgr_password, validate
   '''
   no_of_checks = 0
   while True:
+    endpoint = "/upgrade/upgrade-unit-groups?sync=true"
+    call_get_sync(manager_url, endpoint, mgr_username, mgr_password, validate_certs)
     upgrade_status = get_attribute_from_endpoint(module, manager_url, '/upgrade/status-summary',
                      mgr_username, mgr_password, validate_certs, 'overall_upgrade_status', 
                      False)
@@ -86,7 +87,13 @@ def get_upgrade_status(module, manager_url, mgr_username, mgr_password, validate
       return upgrade_status
     time.sleep(20)
 
-def decide_next_step(module, manager_url, mgr_username, mgr_password, 
+
+def call_get_sync(managerUrl, endpoint, mgrUsername, mgrPassword, validateCerts):
+    request(managerUrl + endpoint, method='GET', url_username=mgrUsername, url_password=mgrPassword,
+            validate_certs=validateCerts, ignore_errors=True)
+
+
+def decide_next_step(module, manager_url, mgr_username, mgr_password,
                      validate_certs, can_continue, is_failed):
   '''
   params:
