@@ -37,7 +37,7 @@ Using Ansible-for-nsxt requires the following packages to be installated. Instal
 ansible-for-nsxt modules are distributed as Ansible Galaxy collection. Please use the following command to install it
 
 ```
-ansible-galaxy collection install vmware.ansible_for_nsxt
+ansible-galaxy collection install git+https://github.com/vmware/ansible-for-nsxt
 ```
 
 
@@ -146,7 +146,7 @@ Note that to add a new modules in Policy API, it's base class name should be add
 
 ### Install PyVmOmi
 ```
-pip install --upgrade pyvmomi pyvim requests ssl
+pip install --upgrade pyvmomi requests ssl
 ```
 ### Download and Install Ovf tool 4.3 - [Ovftool](https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL430&productId=742)
 (Note: Using ovftool version 4.0/4.1 causes OVA/OVF deployment failure with Error: cURL error: SSL connect error\nCompleted with errors\n)
