@@ -327,75 +327,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     existing_logical_router = get_lr_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, logical_router_with_ids['display_name'])
     if existing_logical_router is None:
         return False
-    if existing_logical_router.__contains__('failover_mode') and \
-            not logical_router_with_ids.__contains__('failover_mode'):
-        return True
-    if not existing_logical_router.__contains__('failover_mode') and \
-            logical_router_with_ids.__contains__('failover_mode'):
-        return True
-    if existing_logical_router.__contains__('failover_mode') and \
-            logical_router_with_ids.__contains__('failover_mode') and \
-            existing_logical_router['failover_mode'] != logical_router_with_ids['failover_mode']:
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') and \
-            not logical_router_with_ids.__contains__('ipv6_profiles'):
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            not logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name'):
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            not existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name'):
-        return True
-    if not existing_logical_router.__contains__('ipv6_profiles') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name'):
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            existing_logical_router['ipv6_profiles'].__contains__('dad_profile_name') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            logical_router_with_ids['ipv6_profiles'].__contains__('dad_profile_name') and \
-            existing_logical_router['dad_profile_name'] != logical_router_with_ids['dad_profile_name']:
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') and \
-            not logical_router_with_ids.__contains__('ipv6_profiles'):
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            not logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name'):
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') and \
-            not existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name'):
-        return True
-    if not existing_logical_router.__contains__('ipv6_profiles') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name'):
-        return True
-    if existing_logical_router.__contains__('ipv6_profiles') \
-            and existing_logical_router['ipv6_profiles'].__contains__('ndra_profile_name') \
-            and logical_router_with_ids.__contains__('ipv6_profiles') and \
-            logical_router_with_ids['ipv6_profiles'].__contains__('ndra_profile_name') and \
-            existing_logical_router['ndra_profile_name'] != logical_router_with_ids['ndra_profile_name']:
-        return True
-    if existing_logical_router.__contains__('edge_cluster_member_indices') and \
-            not logical_router_with_ids.__contains__('edge_cluster_member_indices'):
-        return True
-    if not existing_logical_router.__contains__('edge_cluster_member_indices') and \
-            logical_router_with_ids.__contains__('edge_cluster_member_indices'):
-        return True
-    if existing_logical_router.__contains__('edge_cluster_member_indices') and \
-            existing_logical_router.__contains__('edge_cluster_member_indices') and \
-            sorted(existing_logical_router['edge_cluster_member_indices']) != \
-            sorted(logical_router_with_ids['edge_cluster_member_indices']):
-        return True
     if existing_logical_router.__contains__('tags') and not logical_router_with_ids.__contains__('tags'):
         return True
     if not existing_logical_router.__contains__('tags') and logical_router_with_ids.__contains__('tags'):
@@ -406,12 +337,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_logical_router.__contains__('edge_cluster_id') and logical_router_with_ids.__contains__(
             'edge_cluster_id') and existing_logical_router['edge_cluster_id'] != logical_router_with_ids[
         'edge_cluster_id']:
-        return True
-    if existing_logical_router.__contains__('advanced_config') and not logical_router_with_ids.__contains__(
-            'advanced_config'):
-        return True
-    if not existing_logical_router.__contains__('advanced_config') and logical_router_with_ids.__contains__(
-            'advanced_config'):
         return True
     if existing_logical_router.__contains__('advanced_config') and not logical_router_with_ids.__contains__(
             'advanced_config'):
