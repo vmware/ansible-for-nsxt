@@ -18,6 +18,7 @@ Documentation on the NSX platform can be found at the [NSX-T Documentation page]
 
 The following versions of NSX are supported:
 
+ * NSX-T 3.2
  * NSX-T 3.1
  * NSX-T 3.0
  * NSX-T 2.5.1
@@ -37,7 +38,7 @@ Using Ansible-for-nsxt requires the following packages to be installated. Instal
 ansible-for-nsxt modules are distributed as Ansible Galaxy collection. Please use the following command to install it
 
 ```
-ansible-galaxy collection install vmware.ansible_for_nsxt
+ansible-galaxy collection install git+https://github.com/vmware/ansible-for-nsxt
 ```
 
 
@@ -70,6 +71,7 @@ MP API modules can be used to configure an NSX resource with one-to-one mapping.
 ### Branch Information
 This repository has different branches with each branch providing support for upto a specific NSX-T release. Below is the list:
 * Master: Latest code, under development
+* v3.2.0: NSX-T 3.2.x and below
 * v3.0.1: NSX-T 3.1.x and below
 * v3.0.0: NSX-T 3.0.x and below
 * v1.1.0: NSX-T 2.4, NSX-T 2.5
@@ -139,6 +141,8 @@ Note that the Policy modules are supported only for NSX-T 3.0 and above.
 7. IP Blocks (nsxt_policy_ip_block)
 8. BFD Profile (nsxt_policy_bfd_profile)
 9. VM Tags (nsxt_vm_tags)
+10. Gateway Policy (nsxt_policy_gateway_policy)
+11. L2 Bridge Endpoint Profile (nsxt_policy_l2_bridge_ep_profile)
 
 Note that to add a new modules in Policy API, it's base class name should be added in the BASE_RESOURCES in module_utils/nsxt_base_resource.py
 
@@ -284,6 +288,7 @@ Please open a Pull-Request against the Master branch.
 # Support
 
 Released NSX-T Ansible modules are fully supported by VMware. The released modules are available in the specific numbered release branches:
+* v3.2.0
 * v3.0.1
 * v3.0.0
 * v1.1.0
