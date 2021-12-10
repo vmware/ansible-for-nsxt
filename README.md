@@ -41,6 +41,11 @@ ansible-for-nsxt modules are distributed as Ansible Galaxy collection. Please us
 ansible-galaxy collection install git+https://github.com/vmware/ansible-for-nsxt
 ```
 
+Specify latest supported release branch
+
+```
+ansible-galaxy collection install git+https://github.com/vmware/ansible-for-nsxt.git,v3.2.0
+```
 
 ## Usage
 
