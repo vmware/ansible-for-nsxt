@@ -84,6 +84,7 @@ EXAMPLES = '''
           placement_type: VsphereClusterNodeVMDeploymentConfig
           vc_id: "7503e86e-c502-46fc-8d91-45a06d314d88"
           management_network: "network-44"
+          ignore_ssl_verification: True
           disk_provisioning: "LAZY_ZEROED_THICK"
           hostname: "manager-2"
           compute: "domain-c49"
@@ -214,6 +215,10 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
   '''
   for deployment_request in node_params['deployment_requests']:
     deployment_config = deployment_request['deployment_config']
+    if deployment_config.__contains__('ignore_ssl_verification'):
+        ignore_ssl_verification = deployment_config['ignore_ssl_verification']
+    else:
+        ignore_ssl_verification = True
     if deployment_config.__contains__('vc_username') and deployment_config.__contains__('vc_password'):
       vc_name = deployment_config['vc_name']
       vc_ip = get_vc_ip_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
@@ -227,24 +232,24 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
       if deployment_config.__contains__('host'):
         host = deployment_config.pop('host', None)
         host_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
-                                      'host', host)
+                                      'host', host, ignore_ssl_verification)
         deployment_request['deployment_config']['host_id'] = str(host_id)
 
       storage = deployment_config.pop('storage')
       storage_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
-                                           'storage', storage)
+                                           'storage', storage, ignore_ssl_verification)
 
       deployment_request['deployment_config']['storage_id'] = str(storage_id)
 
       cluster = deployment_config.pop('compute')
       cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
-                                           'cluster', cluster)
+                                           'cluster', cluster, ignore_ssl_verification)
 
       deployment_request['deployment_config']['compute_id'] = str(cluster_id)
 
       management_network = deployment_config.pop('management_network')
       management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
-                                               'network', management_network)
+                                               'network', management_network, ignore_ssl_verification)
 
       deployment_request['deployment_config']['management_network_id'] = str(management_network_id)
 
@@ -261,6 +266,7 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
       cluster_id = deployment_request['deployment_config'].pop('compute', None)
       storage_id = deployment_request['deployment_config'].pop('storage', None)
       management_network_id = deployment_request['deployment_config'].pop('management_network', None)
+      deployment_request['deployment_config'].pop('ignore_ssl_verification', None)
  
       deployment_request['deployment_config']['compute_id'] = cluster_id
       deployment_request['deployment_config']['storage_id'] = storage_id
