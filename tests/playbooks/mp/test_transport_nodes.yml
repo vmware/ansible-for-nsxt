@@ -17,7 +17,6 @@
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
           host_switches: "{{item.host_switches}}"
-        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
         node_deployment_info: "{{item.node_deployment_info}}"
           # Host node deployment info
           # resource_type: "{{item.node_deployment_info.resource_type}}"
