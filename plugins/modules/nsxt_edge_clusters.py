@@ -194,7 +194,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
             return True
         for count, member in enumerate(existing_edge_cluster['members']):
             if member['transport_node_id'] != edge_cluster_with_id['members'][count]['transport_node_id']:
-                module.fail_json(msg='Existing [%s] new [%s]' % (member['transport_node_id'], edge_cluster_with_id['members'][count]['transport_node_id']))
                 return True
     return False
 

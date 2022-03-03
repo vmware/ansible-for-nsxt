@@ -15,7 +15,10 @@ import ssl
 import requests
 import atexit
 
-from pyvim import connect
+try:
+    from pyvim import connect
+except:
+    from pyVim import connect
 from pyVmomi import vmodl
 from pyVmomi import vim
 
