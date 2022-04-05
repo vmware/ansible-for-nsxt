@@ -101,7 +101,10 @@ options:
         type: string
         default: undef
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Added modules to retrieve policy group and security policy objects
 '''
 
 EXAMPLES = '''
@@ -111,7 +114,10 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
+<<<<<<< HEAD
     domain_id: default
+=======
+>>>>>>> Added modules to retrieve policy group and security policy objects
 '''
 
 RETURN = '''# '''
