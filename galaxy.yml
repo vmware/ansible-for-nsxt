@@ -2,19 +2,15 @@ namespace: vmware
 
 name: ansible_for_nsxt
 
-version: 1.0.0
+version: 1.0.2
 
 readme: README.md
 
 authors:
-- Gautam Verma @ggverma (https://vmware.slack.com/archives/CTE293BSS)
-- Rahul Raghuvanshi @r-raghu (https://vmware.slack.com/archives/CTE293BSS)
+- Gautam Verma 
+- Rahul Raghuvanshi 
 
 description: Ansible Modules for NSX-t
-
-license:
-- GPL-3.0-only
-- BSD-2-Clause-FreeBSD
 
 license_file: LICENSE.txt 
 
