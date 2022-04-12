@@ -2,7 +2,7 @@ namespace: vmware
 
 name: ansible_for_nsxt
 
-version: 1.0.2
+version: 1.0.3
 
 readme: README.md
 
