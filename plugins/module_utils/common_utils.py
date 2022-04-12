@@ -164,3 +164,82 @@ def get_upgrade_orchestrator_node(module, mgr_hostname, mgr_username, mgr_passwo
         module.fail_json(changed=True, msg='Error getting ip address of the upgrade'
                         ' orchestrator node. Error: {}'.format(err))
     return resp['service_properties']['enabled_on'];
+
+def build_url_query_string(parm_dict):
+    '''
+    This function just builds up a URL query string of the form:
+    
+    ?parm1=val1&bool1=True&bool2=False
+    
+    '''
+    qstring = ""
+    qlist = list()
+    for dkey in parm_dict.keys():
+        if parm_dict[dkey] is not None:
+            if type(parm_dict[dkey]) is bool:
+                qlist.append("{}={}".format(dkey,str(parm_dict[dkey])))
+            else:
+                qlist.append("{}={}".format(dkey,parm_dict[dkey]))
+    if qlist:
+        qstring = "?{}".format("&".join(qlist))
+    return qstring
+
+def build_url_query_dict(params,query_keys):
+    '''
+    The params dict in many of the modules contains a lot of keys. Some keys pertain
+    to the URL path, some to things like credentials, certificates etc.
+    We only want to process the ones relating to the query section of a URL. So the whole set of params is passed here
+    along with a filter defined as the set of keys pertaining to the query section.
+    The fields are filtered down
+    '''
+    query_params_dict = { k:v for (k,v) in params.items() if k in query_keys }
+    return query_params_dict
+
+def do_objects_get(module,manager_url,module_params,
+                        headers=dict(Accept='application/json'), validate_certs=True, ignore_errors=False):
+    
+    mgr_username = module_params["username"]
+    mgr_password = module_params["password"]
+    nsx_cert_path = module_params["nsx_cert_path"]
+    nsx_key_path = module_params["nsx_key_path"]
+    # If a cursor was provided, or a page size then we are making a single call
+    # If we test for a key that doesn't exist and trap
+    mp_keys = module_params.keys()
+    if ('cursor' in mp_keys and module_params['cursor'] is not None ) or ('page_size' in mp_keys  and module_params['page_size'] is not None):
+        try:
+            (rc, resp) = request(manager_url, headers=dict(Accept='application/json'),
+                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+        except Exception as err:
+            module.fail_json(msg='Error retrieving groups. Error [%s]' % (to_native(err)))
+    else:
+        # No cursor parameter was provided so all data is being fetched
+        # This might still require multiple calls if there are more objects than are allowed to be returned in a single call
+        still_more_groups = True
+        cursor = None
+        all_group_data = dict()
+    #        all_group_data["results"] = list()
+        while still_more_groups:
+            if cursor:
+                # Add the cursor to the URL
+                url_with_cursor = "{}&cursor={}".format(manager_url,cursor)
+            else:
+                url_with_cursor = manager_url
+            try:
+                (rc, resp) = request(url_with_cursor, headers=dict(Accept='application/json'),
+                        url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+            except Exception as err:
+                module.fail_json(msg='Error retrieving groups. Error [%s]' % (to_native(err)))
+            if not "cursor" in resp:
+                still_more_groups = False
+            else:
+                cursor = resp["cursor"]
+            # Add new results to existing results
+            # If this is the first add, all the other data besides the "results" needs to be added
+            if not "results" in all_group_data:
+                all_group_data = resp
+            else:
+                # JUst add the additionally fetched results
+                all_group_data["results"] += resp["results"]
+        resp = all_group_data
+    return resp
+    
