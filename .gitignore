@@ -4,3 +4,12 @@
 .DS_Store
 # test output
 *.retry
+# Eclipse IDE and Pydev Stuff
+.project
+org.eclipse.*
+.settings/*
+.pydevproject
+.project
+#tests/pydbg/*
+Pipfile*
+tests/pydbg
