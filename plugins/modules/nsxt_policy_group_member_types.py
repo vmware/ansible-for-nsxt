@@ -76,7 +76,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import PolicyCommunicator
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import build_url_query_dict, build_url_query_string, do_objects_get
-
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import GLOBAL_POLICY_URL, LOCAL_POLICY_URL
 from ansible.module_utils._text import to_native
 
 def main():
@@ -101,11 +101,11 @@ def main():
     domain_id = module.params['domain_id']
     group_id = module.params['group_id'] 
     if module.params['global_infra']:
-        infra_string = 'global-infra'
+        url_path_root = GLOBAL_POLICY_URL
     else:
-        infra_string = 'infra'
+        url_path_root = LOCAL_POLICY_URL
     
-    manager_url = 'https://{}/policy/api/v1/{}/domains/{}/groups/{}/member-types'.format(mgr_hostname,infra_string,domain_id,group_id)
+    manager_url = 'https://{}{}/domains/{}/groups/{}/member-types'.format(mgr_hostname,url_path_root,domain_id,group_id)
 
     changed = False
     '''

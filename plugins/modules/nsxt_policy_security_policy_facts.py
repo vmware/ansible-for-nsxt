@@ -116,6 +116,7 @@ from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsx
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import PolicyCommunicator
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import build_url_query_dict, build_url_query_string, do_objects_get
 from ansible.module_utils._text import to_native
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import GLOBAL_POLICY_URL, LOCAL_POLICY_URL
 
 def main():
     # Fetch the specification of the absolute basic arguments needed to connect to the NSX Manager
@@ -158,13 +159,13 @@ def main():
     validate_certs = module.params['validate_certs']
     domain_id = module.params['domain_id']
     if module.params['global_infra']:
-        infra_string = 'global-infra'
+        url_path_root = GLOBAL_POLICY_URL
     else:
-        infra_string = 'infra'
+        url_path_root = LOCAL_POLICY_URL
     
     # Need to build up a query string
     url_query_string = build_url_query_string( build_url_query_dict(module.params, URL_query_spec.keys() ) )
-    manager_url = 'https://{}/policy/api/v1/{}/domains/{}/security-policies{}'.format(mgr_hostname,infra_string,domain_id,url_query_string)
+    manager_url = 'https://{}{}/domains/{}/security-policies{}'.format(mgr_hostname,url_path_root,domain_id,url_query_string)
 
     changed = False
     '''

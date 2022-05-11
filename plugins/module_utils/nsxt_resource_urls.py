@@ -67,3 +67,6 @@ VM_UPDATE_URL = ('/infra/realized-state/enforcement-points/' +
 BFD_PROFILE_URL = '/infra/bfd-profiles'
 
 GATEWAY_POLICY_URL = _DOMAIN_URL + '/{}/gateway-policies'
+
+LOCAL_POLICY_URL = '/policy/api/v1/infra'
+GLOBAL_POLICY_URL = '/global-manager/api/v1/global-infra'

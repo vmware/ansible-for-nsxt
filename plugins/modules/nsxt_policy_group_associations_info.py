@@ -10,10 +10,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_policy_security_policy_rules_facts
-short_description: List Policy Security Policy rules
-description: Returns paginated list of firewall rules for a policy security policy
-             Security Policies are collections of firewall rules
+module: nsxt_policy_group_associations_info
+short_description: List policy groups associated with the specified object
+
 
 version_added: "X.Y"
 author: Ed McGuigan <ed.mcguigan@palmbeachschools.org>
@@ -50,68 +49,59 @@ options:
         description: Flag set to True when targeting a Global NSX Manager (Federation)
         required: false
         type: bool
-        
-    domain_id:
-        description: The domain string value to be used in the query, usually "default"
-        required: false
-        type: string
-        default: default
-        
-    policy_id:
-        description: the UUID for a specific security policy
+                
+    intent_path:
+        description: All of these URLs are specific to a single group and an ID is needed
         required: true
         type: string
-        default: NONE
         
+    enforcement_point_path:
+        description: Required for some of the member types ( don't even understand it to be honest )
+        required: false
+        type: string
+                
     page_size:
         description: if there is a desire to fetch the data in chunks rather than all at
                      once, an integer specifying the maximum number of objects to fetch
         required: false
-        type: integer
-        
+        type: integer        
     cursor:
         description: when a page_size is specified, the returned data includes a "cursor" that
                      must be provided in a subsequent call in order to carry on where the prior call
                      left off. User would need to capture the cursor value from one call and provide it
                      in the next call
         required: false
-        type: string
-        
+        type: string        
     sort_ascending:
         description: Used to reverse sort order by setting it to False
         required: false
         type: bool
-        default: True
-        
+        default: True        
     sort_by:
         description: Field to sort on
         required: false
         type: string
         default: 
-        
     include_mark_for_delete_objects:
         description: Show groups marked for deletion
         required: false
         type: bool
         default: False
-        
-    included_fields:
-        description: Comma separated list of fields that should be included in query result
-        required: false
-        type: string
-        default: undef
-
 
 '''
-
 EXAMPLES = '''
-- name: List Policy Security Policies
-  nsxt_policy_security_policy_facts:
-    hostname: "10.192.167.137"
-    username: "admin"
-    password: "Admin!23Admin"
-    validate_certs: False
-    domain_id: default
+  - name: Find referencing groups
+    vmware.ansible_for_nsxt.nsxt_policy_group_associations_info:
+      hostname: "{{ inventory_hostname }}"
+      "username": "{{ username }}"
+      "password": "{{ password }}"
+      validate_certs: False
+      global_infra: "{{ global_infra }}"
+      intent_path: "{{ item.0 }}"
+      enforcement_point_path: "{{ item.1 }}"
+    register: group_associations
+    delegate_to: 127.0.0.1
+    loop: "{{ groups_wo_drs|product(enf_point_paths)|list }}"  
 '''
 
 RETURN = '''# '''
@@ -120,50 +110,38 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import PolicyCommunicator
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import build_url_query_dict, build_url_query_string, do_objects_get
-from ansible.module_utils._text import to_native
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import GLOBAL_POLICY_URL, LOCAL_POLICY_URL
+
+from ansible.module_utils._text import to_native
 
 def main():
     # Fetch the specification of the absolute basic arguments needed to connect to the NSX Manager
     argument_spec = PolicyCommunicator.get_vmware_argument_spec()
     # The URL will need to be specified as being non-global or global and we will need a domain
     URL_path_spec = dict(
-        global_infra=dict(type='bool', required=False, default=False),
-        domain_id=dict(type='str', required=False, default='default'),
-        policy_id=dict(type='str', required=True)
+        global_infra=dict(type='bool', required=False, default=False)
         )
-    '''
-    Now add the arguments relating to query field in the URL for this GET method
-    All the options from the API are offered, including paging. Not sure when a user
-    might want to use paging but the option is provided.
-    If no paging specification is provided, I need to make sure that 
-    all data is retrieved, looking for a returned cursor in the response
-    indicating that there is more data to fetch.
-    
-    NOTE: I suspect that the member_types filter parameter is not actually valid
-    for a Policy Group where membership is described by a series of expressions
-    and this may be an error when converting from MP ( Management Plane ) Groups
-    to Policy Groups
-    '''
     URL_query_spec = dict(
-                            include_mark_for_delete_objects=dict(type='bool', required=False),
-                            included_fields=dict(type='str', required=False),
-                            sort_ascending=dict(type='bool', required=False, default=True),
-                            sort_by=dict(type='str', required=False),
-                            page_size=dict(type='int'   , required=False ),
-                            cursor=dict(type='str', required=False )
-                            )
-    # Combine the base URL, URL path spec and URL query argument specs
-    URL_path_spec.update(URL_query_spec)
+                        cursor=dict(type='str', required=False ),
+                        intent_path=dict(type='str', required=True ),
+                        enforcement_point_path=dict(type='str', required=False ),
+                        include_mark_for_delete_objects=dict(type='bool', required=False),
+                        included_fields=dict(type='str', required=False),
+                        page_size=dict(type='int'   , required=False ),
+                        sort_ascending=dict(type='bool', required=False, default=True),
+                        sort_by=dict(type='str', required=False)
+                        )
+    # Combine the base URL and URL path spec
     argument_spec.update(URL_path_spec)
+    argument_spec.update(URL_query_spec)
     # Some code to validate the arguments provided with the invocation of the module
-    # in a playbook versus the defined argument spec.
+    # in a playbook versus the defined argument spec and to get the require AnsibleModule object
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     mgr_hostname = module.params['hostname']
+    mgr_username = module.params['username']
+    mgr_password = module.params['password']
     validate_certs = module.params['validate_certs']
-    domain_id = module.params['domain_id']
-    policy_id = module.params['policy_id']
     if module.params['global_infra']:
         url_path_root = GLOBAL_POLICY_URL
     else:
@@ -171,7 +149,7 @@ def main():
     
     # Need to build up a query string
     url_query_string = build_url_query_string( build_url_query_dict(module.params, URL_query_spec.keys() ) )
-    manager_url = 'https://{}{}/domains/{}/security-policies/{}/rules{}'.format(mgr_hostname,url_path_root,domain_id,policy_id,url_query_string)
+    manager_url = 'https://{}{}/group-associations{}'.format(mgr_hostname,url_path_root,url_query_string)
 
     changed = False
     '''

@@ -10,10 +10,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_policy_security_policy_rules_facts
-short_description: List Policy Security Policy rules
-description: Returns paginated list of firewall rules for a policy security policy
-             Security Policies are collections of firewall rules
+module: nsxt_policy_domain_info
+short_description: List Policy Domains
+description: Returns paginated list of policy domains
+             Policy Domains are associated with policy groups and DFW Policies to determine the sites
+             where those objects are used ( applied to ). On a local manager, there is only the default domain
+               
 
 version_added: "X.Y"
 author: Ed McGuigan <ed.mcguigan@palmbeachschools.org>
@@ -51,17 +53,6 @@ options:
         required: false
         type: bool
         
-    domain_id:
-        description: The domain string value to be used in the query, usually "default"
-        required: false
-        type: string
-        default: default
-        
-    policy_id:
-        description: the UUID for a specific security policy
-        required: true
-        type: string
-        default: NONE
         
     page_size:
         description: if there is a desire to fetch the data in chunks rather than all at
@@ -77,6 +68,18 @@ options:
         required: false
         type: string
         
+    include_mark_for_delete_objects:
+        description: Show groups marked for deletion
+        required: false
+        type: bool
+        default: False
+        
+    included_fields:
+        description: Show groups marked for deletion
+        required: Comma separated list of fields that should be included in query result
+        type: string
+        default: False
+                
     sort_ascending:
         description: Used to reverse sort order by setting it to False
         required: false
@@ -88,30 +91,16 @@ options:
         required: false
         type: string
         default: 
-        
-    include_mark_for_delete_objects:
-        description: Show groups marked for deletion
-        required: false
-        type: bool
-        default: False
-        
-    included_fields:
-        description: Comma separated list of fields that should be included in query result
-        required: false
-        type: string
-        default: undef
-
 
 '''
 
 EXAMPLES = '''
-- name: List Policy Security Policies
-  nsxt_policy_security_policy_facts:
+- name: List Policy Groups
+  nsxt_policy_group_facts:
     hostname: "10.192.167.137"
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    domain_id: default
 '''
 
 RETURN = '''# '''
@@ -128,9 +117,7 @@ def main():
     argument_spec = PolicyCommunicator.get_vmware_argument_spec()
     # The URL will need to be specified as being non-global or global and we will need a domain
     URL_path_spec = dict(
-        global_infra=dict(type='bool', required=False, default=False),
-        domain_id=dict(type='str', required=False, default='default'),
-        policy_id=dict(type='str', required=True)
+        global_infra=dict(type='bool', required=False, default=False)
         )
     '''
     Now add the arguments relating to query field in the URL for this GET method
@@ -162,16 +149,13 @@ def main():
 
     mgr_hostname = module.params['hostname']
     validate_certs = module.params['validate_certs']
-    domain_id = module.params['domain_id']
-    policy_id = module.params['policy_id']
     if module.params['global_infra']:
         url_path_root = GLOBAL_POLICY_URL
     else:
         url_path_root = LOCAL_POLICY_URL
-    
     # Need to build up a query string
     url_query_string = build_url_query_string( build_url_query_dict(module.params, URL_query_spec.keys() ) )
-    manager_url = 'https://{}{}/domains/{}/security-policies/{}/rules{}'.format(mgr_hostname,url_path_root,domain_id,policy_id,url_query_string)
+    manager_url = 'https://{}{}/domains'.format(mgr_hostname,url_path_root,url_query_string)
 
     changed = False
     '''

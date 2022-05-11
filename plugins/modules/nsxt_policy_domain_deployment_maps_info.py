@@ -10,10 +10,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: nsxt_policy_security_policy_rules_facts
-short_description: List Policy Security Policy rules
-description: Returns paginated list of firewall rules for a policy security policy
-             Security Policies are collections of firewall rules
+module: nsxt_policy_domain_deployment_maps_info
+short_description: List deployment maps for policy domain
+description: Returns paginated list of policy domain deployment maps
+             Deployment maps relate to the local manager sites associated with a domain
+               
 
 version_added: "X.Y"
 author: Ed McGuigan <ed.mcguigan@palmbeachschools.org>
@@ -52,16 +53,9 @@ options:
         type: bool
         
     domain_id:
-        description: The domain string value to be used in the query, usually "default"
-        required: false
-        type: string
-        default: default
-        
-    policy_id:
-        description: the UUID for a specific security policy
+        description: domain id for domain for which deployment maps 
         required: true
         type: string
-        default: NONE
         
     page_size:
         description: if there is a desire to fetch the data in chunks rather than all at
@@ -77,6 +71,18 @@ options:
         required: false
         type: string
         
+    include_mark_for_delete_objects:
+        description: Show groups marked for deletion
+        required: false
+        type: bool
+        default: False
+        
+    included_fields:
+        description: Show groups marked for deletion
+        required: Comma separated list of fields that should be included in query result
+        type: string
+        default: False
+                
     sort_ascending:
         description: Used to reverse sort order by setting it to False
         required: false
@@ -88,30 +94,19 @@ options:
         required: false
         type: string
         default: 
-        
-    include_mark_for_delete_objects:
-        description: Show groups marked for deletion
-        required: false
-        type: bool
-        default: False
-        
-    included_fields:
-        description: Comma separated list of fields that should be included in query result
-        required: false
-        type: string
-        default: undef
-
 
 '''
 
 EXAMPLES = '''
-- name: List Policy Security Policies
-  nsxt_policy_security_policy_facts:
-    hostname: "10.192.167.137"
-    username: "admin"
-    password: "Admin!23Admin"
-    validate_certs: False
-    domain_id: default
+     - name: List domain deployment maps
+        vmware.ansible_for_nsxt.nsxt_policy_domain_deployment_maps:
+          hostname: "{{ inventory_hostname }}"
+          "username": "{{ username }}"
+          "password": "{{ password }}"
+          validate_certs: False
+          domain_id: "{{ nsxt_domain }}"
+        register: nsxt_domain_deployment_maps
+        delegate_to: 127.0.0.1
 '''
 
 RETURN = '''# '''
@@ -129,8 +124,7 @@ def main():
     # The URL will need to be specified as being non-global or global and we will need a domain
     URL_path_spec = dict(
         global_infra=dict(type='bool', required=False, default=False),
-        domain_id=dict(type='str', required=False, default='default'),
-        policy_id=dict(type='str', required=True)
+        domain_id=dict(type='str', required=False, default='default')
         )
     '''
     Now add the arguments relating to query field in the URL for this GET method
@@ -163,7 +157,6 @@ def main():
     mgr_hostname = module.params['hostname']
     validate_certs = module.params['validate_certs']
     domain_id = module.params['domain_id']
-    policy_id = module.params['policy_id']
     if module.params['global_infra']:
         url_path_root = GLOBAL_POLICY_URL
     else:
@@ -171,7 +164,7 @@ def main():
     
     # Need to build up a query string
     url_query_string = build_url_query_string( build_url_query_dict(module.params, URL_query_spec.keys() ) )
-    manager_url = 'https://{}{}/domains/{}/security-policies/{}/rules{}'.format(mgr_hostname,url_path_root,domain_id,policy_id,url_query_string)
+    manager_url = 'https://{}{}/domains/{}/domain-deployment-maps'.format(mgr_hostname,url_path_root,domain_id,url_query_string)
 
     changed = False
     '''

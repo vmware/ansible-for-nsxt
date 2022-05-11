@@ -118,6 +118,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_communicator import PolicyCommunicator
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import build_url_query_dict, build_url_query_string, do_objects_get
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import GLOBAL_POLICY_URL, LOCAL_POLICY_URL
 
 from ansible.module_utils._text import to_native
 
@@ -153,15 +154,15 @@ def main():
     validate_certs = module.params['validate_certs']
     member_type = module.params['member_type']
     domain_id = module.params['domain_id']
-    group_id = module.params['group_id'] 
+    group_id = module.params['group_id']
     if module.params['global_infra']:
-        infra_string = 'global-infra'
+        url_path_root = GLOBAL_POLICY_URL
     else:
-        infra_string = 'infra'
+        url_path_root = LOCAL_POLICY_URL
     
     # Need to build up a query string
     url_query_string = build_url_query_string( build_url_query_dict(module.params, URL_query_spec.keys() ) )
-    manager_url = 'https://{}/policy/api/v1/{}/domains/{}/groups/{}/members/{}{}'.format(mgr_hostname,infra_string,domain_id,group_id,member_type,url_query_string)
+    manager_url = 'https://{}{}/domains/{}/groups/{}/members/{}{}'.format(mgr_hostname,url_path_root,domain_id,group_id,member_type,url_query_string)
 
     changed = False
     '''
