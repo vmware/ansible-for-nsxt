@@ -99,6 +99,7 @@ class PolicyCommunicator:
             self.validate_certs = validate_certs
 
             self.policy_url = 'https://{}/policy/api/v1'.format(mgr_hostname)
+            self.fabric_url = 'https://{}/api/v1/fabric'.format(mgr_hostname)
             self.active_requests = set()
 
             PolicyCommunicator.__instances[key] = self
@@ -136,9 +137,16 @@ class PolicyCommunicator:
 
     def request(self, url, data=None, method='GET',
                 use_proxy=True, force=False, last_mod_time=None,
-                timeout=300, http_agent=None, ignore_errors=False):
-        # prepend the policy url
-        url = self.policy_url + url
+                timeout=300, http_agent=None, ignore_errors=False, base_url='policy'):
+        if base_url == 'policy':
+            # prepend the policy url
+            # this is the default behavior if base_url is not specified
+            url = self.policy_url + url
+        elif base_url == 'fabric':
+            # prepend the fabric url
+            url = self.fabric_url + url
+        else:
+            raise Exception("invalid base_url specified in request call")
         # create a request ID associated with this request
         request_id = self._get_request_id(url, data, method)
         if self.register_request(request_id):
