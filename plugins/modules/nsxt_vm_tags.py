@@ -269,12 +269,7 @@ def realize():
         final_tags = persistent_tags
         final_tags_set = _get_tags_as_set(tags=final_tags)
         for tag in _read_tags_from_module_params(module.params, 'add_tags'):
-            if TagElement(tag) in final_tags_set:
-                for final_tag in final_tags:
-                    if final_tag['scope'] == tag['scope']:
-                        final_tag['tag'] = tag['tag']
-                        break
-            else:
+            if TagElement(tag) not in final_tags_set:
                 final_tags += tag,
         final_tags_set = _get_tags_as_set(tags=final_tags)
 
