@@ -199,6 +199,8 @@ def _get_tags_as_set(tags=[], scope_list=[]):
     tag_set = set()
     if tags:
         for tag in tags:
+            if tag['scope'] is None:
+                tag['scope'] = ''
             tag_set.add(TagElement(tag))
     if scope_list:
         for scope in scope_list:
