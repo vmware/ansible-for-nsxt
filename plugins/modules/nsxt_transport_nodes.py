@@ -522,6 +522,11 @@ options:
                       'present' is used to create or update resource. 
                       'absent' is used to delete resource."
         required: true
+    force_delete:
+        description: "Force transport node deletion. 
+                     Only effective if state 'absent' is set"
+        required: false
+        type: bool
     
 '''
 
@@ -567,6 +572,7 @@ EXAMPLES = '''
 RETURN = '''# '''
 
 import json, time
+from urllib.parse import urlencode
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request, get_vc_ip_from_display_name
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vcenter_utils import get_resource_id_from_name, get_data_network_id_from_name
@@ -925,7 +931,8 @@ def main():
                        subnet_mask=dict(required=False, type='dict',
                        IPAddress=dict(required=False, type='str')))),
                        tags=dict(required=False, type='list'),
-                       state=dict(required=True, choices=['present', 'absent']))
+                       state=dict(required=True, choices=['present', 'absent']),
+                       force_delete=dict(required=False, default=False))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
   transport_node_params = get_transport_node_params(module.params.copy())
@@ -936,6 +943,7 @@ def main():
   validate_certs = module.params['validate_certs']
   display_name = module.params['display_name']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
+  force_delete = module.params['force_delete']
 
   transport_node_dict = get_tn_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   transport_node_id, revision, node_deployment_revision = None, None, None
@@ -948,6 +956,7 @@ def main():
       inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params)
 
     body = update_params_with_id(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params)
+    del body['force_delete']
     updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, body)
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
@@ -1007,7 +1016,14 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True, debug_out=str(json.dumps(transport_node_params)), id=id)
     try:
-        (rc, resp) = request(manager_url + "/transport-nodes/%s" % id, method='DELETE',
+        _url = "%s/transport-nodes/%s" % (manager_url, id)
+
+        # check if deletion should be forced
+        if force_delete:
+            force_delete = str(force_delete).lower()
+            _url = add_query(_url, force=force_delete, unprepare_host='false')
+
+        (rc, resp) = request(_url, method='DELETE',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
     except Exception as err:
         module.fail_json(msg="Failed to delete transport node with id %s. Error[%s]." % (id, to_native(err)))
@@ -1015,6 +1031,14 @@ def main():
     wait_till_delete(id, module, manager_url, mgr_username, mgr_password, validate_certs)
     time.sleep(5)
     module.exit_json(changed=True, object_name=id, message="Transport node with node id %s deleted." % id)
+
+def add_query(url, **kwargs):
+    """Add queries to request URL"""
+
+    query = urlencode(kwargs)
+    _url = "%s?%s" % (url, query)
+
+    return _url
 
 
 def compareTags(existing_transport_node, new_transport_nodes):
