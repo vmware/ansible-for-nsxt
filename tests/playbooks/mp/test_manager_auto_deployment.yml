@@ -25,13 +25,13 @@
             deployment_config:
               ignore_ssl_verification: False
               placement_type: VsphereClusterNodeVMDeploymentConfig
-              vc_name: "CM1"
-              vc_username: "baahubali@vsphere.local"
-              vc_password: "VMwarensbu_1"
-              management_network: "NSX-DVPG-1045"
-              hostname: "middhap-nsxt-manager-09"
-              compute: "Install-Manual"
-              storage: "NSBU-TKT3376789-10TB-08"
+              vc_name: "VC1"
+              vc_username: "administrator@vsphere.local"
+              vc_password: "Admin!23"
+              management_network: "VM Network"
+              hostname: "manager5.vmware.com"
+              compute: "HostCluster"
+              storage: "datastore01"
               disk_provisioning: "THIN"
               default_gateway_addresses:
                 - 10.176.135.253
