@@ -229,6 +229,14 @@ options:
             required: false
             type: dict
             vm_deployment_config:
+                ipv4_assignment_enabled:
+                    description: 'Its a boolean flag, if assigned as false then Edge TN would be created using Static Ipv6 only'
+                    required: false
+                    type: boolean
+                ipv6_assignment_type:
+                    description: 'Its enum which will have value as 'STATIC', this variable is explicitly for Edge TN creation'
+                    required: false
+                    type: str
                 compute:
                     description: 'The cluster node VM will be deployed on the specified cluster
                                   or resourcepool for specified VC server. If vc_username and 
@@ -578,6 +586,7 @@ import ssl
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
 SUCCESS_STATES = ["partial_success", "success", "NODE_READY"]
+FABRIC_VIRTUAL_SWITCH_TYPE = ["VDS"]
 
 def get_transport_node_params(args=None):
     args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
@@ -595,6 +604,16 @@ def get_transport_nodes(module, manager_url, mgr_username, mgr_password, validat
     except Exception as err:
       module.fail_json(msg='Error accessing transport nodes. Error [%s]' % (to_native(err)))
     return resp
+
+
+def get_discovered_nodes(module, manager_url, mgr_username, mgr_password, validate_certs):
+  try:
+    (rc, resp) = request(manager_url + '/fabric/discovered-nodes', headers=dict(Accept='application/json'),
+                         url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
+                         ignore_errors=True)
+  except Exception as err:
+    module.fail_json(msg='Error accessing discovered nodes. Error [%s]' % (to_native(err)))
+  return resp
 
 def get_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint, display_name, exit_if_not_found=True):
     try:
@@ -615,6 +634,28 @@ def get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, va
         if transport_node.__contains__('display_name') and transport_node['display_name'] == display_name:
             return transport_node
     return None
+
+def get_dn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
+  transport_nodes = get_discovered_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
+  for transport_node in transport_nodes['results']:
+    if transport_node.__contains__('display_name') and transport_node['display_name'] == display_name:
+      return transport_node
+  return None
+
+def get_host_switch_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint,
+                                           display_name, exit_if_not_found=True):
+    try:
+      (rc, resp) = request(manager_url + endpoint, headers=dict(Accept='application/json'),
+                           url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
+                           ignore_errors=True)
+    except Exception as err:
+      module.fail_json(msg='Error accessing id for display name %s. Error [%s]' % (display_name, to_native(err)))
+
+    for result in resp['results']:
+      if result.__contains__('display_name') and result['display_name'] == display_name:
+        return result['uuid']
+    if exit_if_not_found:
+      module.fail_json(msg='No id exist with display name %s' % display_name)
 
 def wait_till_create(node_id, module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
@@ -672,6 +713,17 @@ def cmp_dict(dict1, dict2): # dict1 contain dict2
 def update_params_with_id (module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params ):
     if transport_node_params.__contains__('host_switch_spec'):
         for host_switch in transport_node_params['host_switch_spec']['host_switches']:
+            if host_switch.__contains__('host_switch_type') and host_switch[
+              'host_switch_type'] in FABRIC_VIRTUAL_SWITCH_TYPE:
+                if host_switch.__contains__('host_switch_name'):
+                  host_switch['host_switch_id'] = get_host_switch_id_from_display_name(module, manager_url, mgr_username,
+                                                                                   mgr_password, validate_certs,
+                                                                                   '/fabric/virtual-switches',
+                                                                                   host_switch['host_switch_name'])
+                else:
+                  module.fail_json(
+                    msg='Failing as host_switch_name is not provided for host switch of type: %s' % host_switch[
+                      'host_switch_type'])
             host_switch_profiles = host_switch.pop('host_switch_profiles', None)
 
             host_switch_profile_ids = []
@@ -872,6 +924,8 @@ def main():
                        placement_type=dict(required=True, type='str'),
                        compute=dict(required=True, type='str'),
                        vc_name=dict(required=True, type='str'),
+                       ipv4_assignment_enabled=dict(required=False, type='boolean'),
+                       ipv6_assignment_type=dict(required=False, type='str'),
                        storage=dict(required=True, type='str'),
                        default_gateway_addresses=dict(required=False, type='list'),
                        management_port_subnets=dict(required=False, type='list'),
@@ -937,6 +991,12 @@ def main():
   display_name = module.params['display_name']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
+  discovered_node_dict = get_dn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                 display_name)
+  discovered_node_id, revision, node_deployment_revision = None, None, None
+  if discovered_node_dict:
+    discovered_node_id = discovered_node_dict['external_id']
+
   transport_node_dict = get_tn_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   transport_node_id, revision, node_deployment_revision = None, None, None
   if transport_node_dict:
@@ -971,7 +1031,12 @@ def main():
               transport_node_id = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, '/transport-nodes', display_name, exit_if_not_found=False)
           if transport_node_id:
               module.exit_json(changed=False, id=transport_node_id, message="Transport node with display_name %s already exist."% module.params['display_name'])
-          (rc, resp) = request(manager_url+ '/transport-nodes', data=request_data, headers=headers, method='POST',
+          if discovered_node_id:
+            (rc, resp) = request(manager_url + '/fabric/discovered-nodes/%s?action=create_transport_node' %discovered_node_id, data=request_data, headers=headers, method='POST',
+                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
+                                 ignore_errors=True)
+          else:
+            (rc, resp) = request(manager_url+ '/transport-nodes', data=request_data, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
            module.fail_json(msg="Failed to add transport node. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
