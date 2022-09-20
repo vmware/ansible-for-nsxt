@@ -727,12 +727,13 @@ def update_params_with_id (module, manager_url, mgr_username, mgr_password, vali
             host_switch_profiles = host_switch.pop('host_switch_profiles', None)
 
             host_switch_profile_ids = []
-            for host_switch_profile in host_switch_profiles:
-                profile_obj = {}
-                profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
+            if host_switch_profiles is not None:
+                for host_switch_profile in host_switch_profiles:
+                    profile_obj = {}
+                    profile_obj['value'] = get_id_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs,
                                                         "/host-switch-profiles?include_system_owned=true", host_switch_profile['name'])
-                profile_obj['key'] = host_switch_profile['type']
-                host_switch_profile_ids.append(profile_obj)
+                    profile_obj['key'] = host_switch_profile['type']
+                    host_switch_profile_ids.append(profile_obj)
             host_switch['host_switch_profile_ids'] = host_switch_profile_ids
             ip_pool_id = None
             if host_switch.__contains__('ip_assignment_spec') and host_switch['ip_assignment_spec']['resource_type'] == 'StaticIpPoolSpec':

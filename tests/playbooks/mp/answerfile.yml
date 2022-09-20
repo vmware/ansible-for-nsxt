@@ -1,7 +1,7 @@
 # Copyright 2018 VMware, Inc.
 # SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
 ---
-hostname: "10.161.153.186"
+hostname: "10.192.254.207"
 username: "admin"
 password: "Admin!23Admin"
 validate_certs: False
@@ -18,8 +18,7 @@ transportzones:
 - display_name: "TZ1"
   tz_type: "VLAN_BACKED"
 # - display_name: "TZ2"
-#   transport_type: "VLAN"
-#   host_switch_name: "hostswitch2"
+#   tz_type: "OVERLAY_BACKED"
 
 uplink_profiles:
 - display_name: uplinkProfile1
