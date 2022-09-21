@@ -14,8 +14,9 @@
 import time
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import request
 from ansible.module_utils._text import to_native
+import ipaddress
 
-def check_if_valid_ip(ip_address):
+def check_if_valid_ip(address):
     '''
     params:
     - ip_address: IP Address in string format
@@ -23,11 +24,15 @@ def check_if_valid_ip(ip_address):
     checks if the IP address is valid or not.
     '''
     try:
-        ip_octets = ip_address.split('.')
-        valid_ip_octets = [int(ip_octet) for ip_octet in ip_octets]
-        valid_ip_octets = [ip_octet for ip_octet in valid_ip_octets if ip_octet >= 0 and ip_octet<=255]
-        return len(ip_octets) == 4 and len(valid_ip_octets) == 4
-    except:
+        ip = ipaddress.ip_address(address)
+        if isinstance(ip, ipaddress.IPv4Address):
+            ip_octets = address.split('.')
+            valid_ip_octets = [int(ip_octet) for ip_octet in ip_octets]
+            valid_ip_octets = [ip_octet for ip_octet in valid_ip_octets if ip_octet >= 0 and ip_octet<=255]
+            return len(ip_octets) == 4 and len(valid_ip_octets) == 4
+        elif isinstance(ip, ipaddress.IPv6Address):
+            return True
+    except ValueError:
         return False
 
 def traverse_and_retrieve_value(object , attribute_list):

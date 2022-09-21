@@ -21,7 +21,9 @@
             user_settings:
               cli_password: "Admin!23Admin"
               root_password: "Admin!23Admin"
+              audit_password: "Admin!23Admin"
             deployment_config:
+              ignore_ssl_verification: False
               placement_type: VsphereClusterNodeVMDeploymentConfig
               vc_name: "VC1"
               vc_username: "administrator@vsphere.local"
@@ -30,5 +32,21 @@
               hostname: "manager5.vmware.com"
               compute: "HostCluster"
               storage: "datastore01"
+              disk_provisioning: "THIN"
+              default_gateway_addresses:
+                - 10.176.135.253
+              management_port_subnets:
+                - ip_addresses:
+                    - 10.176.132.57
+                  prefix_length: "19"
+              dns_servers:
+                - 10.172.40.1
+                - FD01:1:3:1001::10
+              management_port_ipv6_subnets:
+                - ip_addresses:
+                    - 2620:124:6020:1045::1b
+                  prefix_length: "64"
+              default_ipv6_gateway_addresses:
+                - 2620:124:6020:1045::253
           #node_id: 7503e86e-c502-46fc-8d91-45a06d314d88
           state: present

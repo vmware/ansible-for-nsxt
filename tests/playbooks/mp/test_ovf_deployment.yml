@@ -10,25 +10,34 @@
     - name: deploy NSX Manager OVA
       vmware.ansible_for_nsxt.nsxt_deploy_ova:
         ovftool_path: "/usr/bin"
-        folder: 'folder-os-datacenter'
+        #folder: 'folder-os-datacenter'
         datacenter: "os-datacenter"
         datastore: "datastore"
         portgroup: "VM Network"
         cluster: "os-compute-cluster-1"
         vmname: "nsxt-manager"
         hostname: "nsxt-manager-10"
-        dns_server: "10.161.244.213"
+        dns_server: "10.172.40.1 FD01:1:3:1001::10"
         dns_domain: "eng.vmware.com"
-        ntp_server: "123.108.200.124"
-        gateway: "10.112.203.253"
-        ip_address: "10.112.201.24"
-        netmask: "255.255.224.0"
+        ntp_server: "10.172.40.1 FD01:1:3:1001::10"
+        gateway: "10.176.135.253"
+        gateway6_0: "2620:124:6020:1045::253"
+        ip_address: "10.176.132.59"
+        ip_address6_0: "2620:124:6020:1045::1a"
+        netmask: "255.255.252.0"
+        netmask6_0: "64"
         admin_password: "Admin!23Admin"
         cli_password: "Admin!23Admin"
-        path_to_ova: "http://build-squid.eng.vmware.com/build/mts/release/bora-10566174/publish/nsx-unified-appliance/exports/ovf/"
-        ova_file: "nsx-unified-appliance-2.4.0.0.0.10566180.ovf"
-        vcenter: "10.92.114.248"
+        path_to_ova: "http://build-squid.eng.vmware.com/build/mts/release/bora-19956989/publish/nsx-unified-appliance/exports/ovf"
+        ova_file: "nsx-unified-appliance-4.0.1.0.0.19956985.ovf"
+        vcenter: "10.176.132.1"
         vcenter_user: "administrator@vsphere.local"
         vcenter_passwd: "Admin!23"
         deployment_size: "small"
-        role: "nsx-manager nsx-controller"
+        role: "NSX Manager"
+        ssh_enabled: true
+        allow_ssh_root_login: true
+        disk_mode: thin
+        ip_protocol: IPv6
+
+

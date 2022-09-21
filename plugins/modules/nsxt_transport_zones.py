@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_zones
 short_description: Create a Transport Zone
-description: Creates a new transport zone. The required parameters is display_name
+description: Creates a new transport zone. The required parameters are display_name
 and tz_type (OVERLAY_BACKED or VLAN_BACKED). The optional parameters are
 description and resource_type. 
 
