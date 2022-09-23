@@ -582,6 +582,7 @@ from ansible.module_utils._text import to_native
 import socket
 import hashlib
 import ssl
+import ipaddress
 
 FAILED_STATES = ["failed"]
 IN_PROGRESS_STATES = ["pending", "in_progress"]
@@ -813,7 +814,11 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     return False
 
 def get_api_cert_thumbprint(ip_address, module):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip = ipaddress.ip_address(ip_address)
+    if isinstance(ip, ipaddress.IPv4Address):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    elif isinstance(ip, ipaddress.IPv6Address):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     sock.settimeout(1)
     wrappedSocket = ssl.wrap_socket(sock)
     try:
