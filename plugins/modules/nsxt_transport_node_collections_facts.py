@@ -45,7 +45,7 @@ options:
 
 EXAMPLES = '''
 - name: List Transport Node collections
-  nsxt_fabric_compute_managers_facts:
+nsxt_transport_node_collections_facts:
       hostname: "10.192.167.137"
       username: "admin"
       password: "Admin!23Admin"
