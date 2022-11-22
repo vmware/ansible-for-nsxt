@@ -45,13 +45,13 @@ options:
         required: true
         type: str
     display_name:
-        description:'Identifier to use when displaying entity in logs or GUI'
+        description: 'Identifier to use when displaying entity in logs or GUI'
         required: true
         type: str
     pem_encoded_file:
         description: 'File containing pem encoded certificate data'
         required: true
-        type='str' 
+        type: str
     private_key_file:
         description: 'File containing private key data'
         required: false

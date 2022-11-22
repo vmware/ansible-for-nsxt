@@ -41,7 +41,7 @@ options:
         required: true
         type: str
     display_name:
-        description: "Identifier to use when displaying entity in logs or GUI. Defaults to ID if not set'
+        description: 'Identifier to use when displaying entity in logs or GUI. Defaults to ID if not set'
         required: false
         type: str
     id:

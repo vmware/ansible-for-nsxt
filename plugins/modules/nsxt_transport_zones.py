@@ -24,9 +24,11 @@ DOCUMENTATION = '''
 ---
 module: nsxt_transport_zones
 short_description: Create a Transport Zone
-description: Creates a new transport zone. The required parameters are display_name
-and tz_type (OVERLAY_BACKED or VLAN_BACKED). The optional parameters are
-description and resource_type. 
+description: "Creates a new transport zone. The required parameters are host_switch_name
+and transport_type (OVERLAY or VLAN). The optional parameters are
+description and display_name. This api is now deprecated. Please use new api - 
+PUT /infra/sites/<site-id>/enforcement-points/<enforcementpoint- 
+id>/transport-zones/<zone-id>"
 
 version_added: "2.7"
 author: Rahul Raghuvanshi
