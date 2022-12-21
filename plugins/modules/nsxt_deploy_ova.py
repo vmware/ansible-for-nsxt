@@ -278,7 +278,7 @@ def main():
             vcenter_passwd=dict(required=True, type='str', no_log=True),
             extra_para=dict(type='str'),
             role=dict(required=True, type='str'),
-            ip_protocol=dict(required=True, type='str')
+            ip_protocol=dict(required=False, type='str')
         ),
         supports_check_mode=True,
         required_together=[['gateway6_0', 'ip_address6_0', 'netmask6_0'], ['portgroup_ext', 'portgroup_transport']]
@@ -303,9 +303,11 @@ def main():
     ovf_base_options = ['--acceptAllEulas', '--skipManifestCheck', '--X:injectOvfEnv', '--powerOn', '--noSSLVerify',
                         '--allowExtraConfig', '--diskMode={}'.format(module.params['disk_mode']),
                         '--datastore={}'.format(module.params['datastore']),
-                        '--name={}'.format(module.params['vmname']),
-                        '--ipProtocol={}'.format(module.params['ip_protocol'])
+                        '--name={}'.format(module.params['vmname'])
                         ]
+
+    if module.params['ip_protocol']:
+        ovf_base_options.extend(['--ipProtocol={}'.format(module.params['ip_protocol'])])
 
     if module.params['portgroup_ext']:
         ovf_base_options.extend(['--net:Network 0={}'.format(module.params['portgroup']),
