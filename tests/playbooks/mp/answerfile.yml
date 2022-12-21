@@ -93,6 +93,14 @@ edge_transport_nodes:
         cli_password: "Admin!23Admin"
         root_password: "Admin!23Admin"
       vm_deployment_config:
+        ipv4_assignment_enabled: false
+        ipv6_assignment_type: "STATIC"
+        management_port_subnets:
+          - ip_addresses:
+              - "2002:0:0:0:0:0:0:10"
+            prefix_length: 64
+        default_gateway_addresses:
+          - "2002:0:0:0:0:0:0:10"
         placement_type: VsphereDeploymentConfig
         vc_name: "VC"
         vc_username: "administrator@vsphere.local"

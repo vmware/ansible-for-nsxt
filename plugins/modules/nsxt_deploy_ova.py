@@ -93,12 +93,24 @@ options:
         description: Gateway Address
         required: true
         type: 'str'
+    gateway6_0:
+        description: Gateway6 Address
+        required: false
+        type: 'str'
     ip_address:
         description: IP Address
         required: true
         type: 'str'
+    ip_address6_0:
+        description: IPv6 Address
+        required: false
+        type: 'str'
     netmask:
         description: Netmask
+        required: true
+        type: 'str'
+    netmask6_0:
+        description: Netmask6
         required: true
         type: 'str'
     admin_password:
@@ -153,6 +165,10 @@ options:
         description: Roles
         required: true
         type: 'str'
+    ip_protocol:
+        description: IP Protocol
+        required: false
+        type: 'str'
 requirements:
     - PyVmOmi - Python library for vCenter api.
     - OVF Tools - Ovftool is used for ovf deployment.
@@ -172,8 +188,11 @@ EXAMPLES = '''
     dns_domain: "eng.vmware.com"
     ntp_server: "123.108.200.124"
     gateway: "10.112.203.253"
+    gateway6_0: "2620:124:6020:1045::253"
     ip_address: "10.112.201.24"
+    ip_address6_0: "2620:124:6020:1045::1a"
     netmask: "255.255.224.0"
+    netmask6_0: "64"
     admin_password: "Admin!23Admin"
     cli_password: "Admin!23Admin"
     path_to_ova: "http://build-squid.eng.vmware.com/build/mts/release/bora-8411846/publish/nsx-unified-appliance/exports/ovf"
@@ -183,6 +202,8 @@ EXAMPLES = '''
     vcenter_passwd: "Admin!23"
     deployment_size: "small"
     role: "nsx-manager nsx-controller"
+    ip_protocol: IPv6
+
 '''
 
 RETURN = '''# '''
@@ -239,8 +260,11 @@ def main():
             ntp_server=dict(required=True, type='str'),
             dns_domain=dict(required=True, type='str'),
             gateway=dict(required=True, type='str'),
+            gateway6_0=dict(type='str'),
             ip_address=dict(required=True, type='str'),
+            ip_address6_0=dict(type='str'),
             netmask=dict(required=True, type='str'),
+            netmask6_0=dict(type='str'),
             admin_password=dict(required=True, type='str', no_log=True),
             cli_password=dict(required=True, type='str', no_log=True),
             ssh_enabled=dict(default=False),
@@ -253,10 +277,11 @@ def main():
             vcenter_user=dict(required=True, type='str'),
             vcenter_passwd=dict(required=True, type='str', no_log=True),
             extra_para=dict(type='str'),
-            role=dict(required=True, type='str')
+            role=dict(required=True, type='str'),
+            ip_protocol=dict(required=True, type='str')
         ),
         supports_check_mode=True,
-        required_together=[['portgroup_ext', 'portgroup_transport']]
+        required_together=[['gateway6_0', 'ip_address6_0', 'netmask6_0'], ['portgroup_ext', 'portgroup_transport']]
     )
 
     try:
@@ -278,7 +303,10 @@ def main():
     ovf_base_options = ['--acceptAllEulas', '--skipManifestCheck', '--X:injectOvfEnv', '--powerOn', '--noSSLVerify',
                         '--allowExtraConfig', '--diskMode={}'.format(module.params['disk_mode']),
                         '--datastore={}'.format(module.params['datastore']),
-                        '--name={}'.format(module.params['vmname'])]
+                        '--name={}'.format(module.params['vmname']),
+                        '--ipProtocol={}'.format(module.params['ip_protocol'])
+                        ]
+
     if module.params['portgroup_ext']:
         ovf_base_options.extend(['--net:Network 0={}'.format(module.params['portgroup']),
                                  '--net:Network 1={}'.format(module.params['portgroup_ext']),
@@ -292,27 +320,36 @@ def main():
     ovf_command.extend(ovf_deployement_size)
 
     ovf_ext_prop = ['--prop:nsx_hostname={}'.format(module.params['hostname']),
-                   '--prop:nsx_dns1_0={}'.format(module.params['dns_server']),
-                   '--prop:nsx_domain_0={}'.format(module.params['dns_domain']),
-                   '--prop:nsx_ntp_0={}'.format(module.params['ntp_server']),
-                   '--prop:nsx_gateway_0={}'.format(module.params['gateway']),
-                   '--prop:nsx_ip_0={}'.format(module.params['ip_address']),
-                   '--prop:nsx_netmask_0={}'.format(module.params['netmask']),
-                   '--prop:nsx_passwd_0={}'.format(module.params['admin_password']),
-                   '--prop:nsx_cli_passwd_0={}'.format(module.params['cli_password']),
-                   '--prop:nsx_isSSHEnabled={}'.format(module.params['ssh_enabled']),
-                   '--prop:nsx_allowSSHRootLogin={}'.format(module.params['allow_ssh_root_login']),
-                   '--prop:nsx_role={}'.format(module.params['role'])]
+                    '--prop:nsx_dns1_0={}'.format(module.params['dns_server']),
+                    '--prop:nsx_domain_0={}'.format(module.params['dns_domain']),
+                    '--prop:nsx_ntp_0={}'.format(module.params['ntp_server']),
+                    '--prop:nsx_gateway_0={}'.format(module.params['gateway']),
+                    '--prop:nsx_ip_0={}'.format(module.params['ip_address']),
+                    '--prop:nsx_netmask_0={}'.format(module.params['netmask']),
+                    '--prop:nsx_passwd_0={}'.format(module.params['admin_password']),
+                    '--prop:nsx_cli_passwd_0={}'.format(module.params['cli_password']),
+                    '--prop:nsx_isSSHEnabled={}'.format(module.params['ssh_enabled']),
+                    '--prop:nsx_allowSSHRootLogin={}'.format(module.params['allow_ssh_root_login']),
+                    '--prop:nsx_role={}'.format(module.params['role'])]
     ovf_command.extend(ovf_ext_prop)
 
     if module.params['extra_para']:
         ovf_command.extend(['--prop:extraPara={}'.format(module.params['extra_para'])])
 
+    if module.params['gateway6_0']:
+        ovf_command.extend(['--prop:nsx_gateway6_0={}'.format(module.params['gateway6_0'])])
+
+    if module.params['ip_address6_0']:
+        ovf_command.extend(['--prop:nsx_ip6_0={}'.format(module.params['ip_address6_0'])])
+
+    if module.params['netmask6_0']:
+        ovf_command.extend(['--prop:nsx_netmask6_0={}'.format(module.params['netmask6_0'])])
+
     ova_file = '{}/{}'.format(module.params['path_to_ova'], module.params['ova_file'])
     ovf_command.append(ova_file)
 
     vi_string = 'vi://{}:{}@{}/'.format(module.params['vcenter_user'],
-                                                   module.params['vcenter_passwd'], module.params['vcenter'])
+                                        module.params['vcenter_passwd'], module.params['vcenter'])
     if module.params.__contains__('folder') and module.params['folder']:
         vi_string = vi_string + module.params['folder']
 

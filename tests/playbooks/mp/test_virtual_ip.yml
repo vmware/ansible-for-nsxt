@@ -13,5 +13,7 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        virtual_ip_address: "10.105.15.211"
+        virtual_ip_address: "10.186.94.5"
+        virtual_ip6_address: "2620:124:6020:c308::10"
+        action: clear_virtual_ip
         state: absent

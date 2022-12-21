@@ -95,6 +95,12 @@ EXAMPLES = '''
           - ip_addresses:
             - 10.112.201.25
             prefix_length: "19"
+           management_port_ipv6_subnets:
+                - ip_addresses:
+                    - 2620:124:6020:1045::1c
+                  prefix_length: "64"
+              default_ipv6_gateway_addresses:
+                - 2620:124:6020:1045::253
       state: present
 '''
 
@@ -258,6 +264,8 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
       deployment_request['deployment_config'].pop('cluster', None)
       deployment_request['deployment_config'].pop('storage', None)
       deployment_request['deployment_config'].pop('management_network', None)
+      deployment_request['deployment_config'].pop('ignore_ssl_verification', None)
+
     else:
       if deployment_config.__contains__('host'):
         host_id = deployment_request['deployment_config'].pop('host', None)
