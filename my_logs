@@ -1,0 +1,16 @@
+['Backup', 'Backup222']
+tags_to_remove {scope: Backup; tag: , scope: Backup222; tag: }
+init_tags_set {scope: Backup; tag: , scope: Application; tag: TestTag3, scope: ApplicationType; tag: Database, scope: Application; tag: TestTag2, scope: Application; tag: TestTag1}
+final_tags_set {scope: Application; tag: TestTag1, scope: ApplicationType; tag: Database, scope: Application; tag: TestTag2, scope: Application; tag: TestTag3}
+['Backup', 'Backup222']
+tags_to_remove {scope: Backup222; tag: , scope: Backup; tag: }
+init_tags_set {scope: Application; tag: TestTag3, scope: Application; tag: TestTag1, scope: Application; tag: TestTag2, scope: ApplicationType; tag: Database}
+final_tags_set {scope: Application; tag: TestTag3, scope: Application; tag: TestTag1, scope: Application; tag: TestTag2, scope: ApplicationType; tag: Database}
+['Backup', 'Backup222']
+tags_to_remove {scope: Backup; tag: , scope: Backup222; tag: }
+init_tags_set {scope: Application; tag: TestTag3, scope: Application; tag: TestTag2, scope: ApplicationType; tag: Database, scope: Application; tag: TestTag1}
+final_tags_set {scope: Application; tag: TestTag3, scope: Application; tag: TestTag1, scope: Application; tag: TestTag2, scope: ApplicationType; tag: Database, scope: ApplicationType; tag: Database22}
+['Backup', 'Backup222']
+tags_to_remove {scope: Backup; tag: , scope: Backup222; tag: }
+init_tags_set {scope: Application; tag: TestTag2, scope: Application; tag: TestTag3, scope: ApplicationType; tag: Database, scope: ApplicationType; tag: Database22, scope: Application; tag: TestTag1}
+final_tags_set {scope: Application; tag: TestTag2, scope: Application; tag: TestTag3, scope: ApplicationType; tag: Database, scope: ApplicationType; tag: Database22, scope: Application; tag: TestTag1}

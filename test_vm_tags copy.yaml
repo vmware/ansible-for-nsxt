@@ -1,0 +1,40 @@
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Update Tags on VMs 1
+      register: output
+      vmware.ansible_for_nsxt.nsxt_vm_tags:
+        hostname: "10.40.127.195"
+        username: admin
+        password: Admin!23Admin
+        validate_certs: False
+        virtual_machine_display_name: jumphost-1
+        remove_other_tags: False
+        add_tags:
+          - scope: "Application"
+            tag: "TestTag1"
+          - scope: "Application"
+            tag: "TestTag2"
+          - scope: "Application"
+            tag: "TestTag3"
+          - scope: "Application"
+            tag: "TestTag2"
+          - scope: "ApplicationType"
+            tag: "Database"
+          - scope: "ApplicationType"
+            tag: "Database22"
+        remove_tags_with_scope:
+          - "Backup"
+          - "Backup222"
+        #     tag: "Bkp-None"
+        #   - scope: "Class"
+        #     tag: "Pub"
+        #   - scope: "Domain"
+        #     tag: "domain.com"
+        #   - scope: "OS"
+        #     tag: "Windows"
+        #   - scope: "Secure"
+        #     tag: "True"
+        #   - scope: "Tenant"
+        #     tag: "Customer1"
