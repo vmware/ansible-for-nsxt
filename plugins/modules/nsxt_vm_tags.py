@@ -76,11 +76,11 @@ options:
         suboptions:
             scope:
                 description: Tag scope.
-                required: true
+                default: ""
                 type: str
             tag:
                 description: Tag value.
-                required: true
+                default: ""
                 type: str
     remove_tags_with_scope:
         type: list
@@ -139,14 +139,11 @@ def get_resource_spec():
         virtual_machine_display_name=dict(type='str'),
         add_tags=dict(type='list', elements='dict', default=[],
                       options=dict(
-                          scope=dict(required=True, type='str'),
-                          tag=dict(required=True, type='str'))),
+                          scope=dict(required=False, type='str', default=""),
+                          tag=dict(required=False, type='str', default=""))),
         remove_other_tags=dict(
             required=False, default=False, type='bool')),
-        remove_tags_with_scope=dict(type='list', elements='str', default=[],
-                                    options=dict(
-                                        scope=dict(required=True, type='str'),
-                                        tag=dict(required=False, type='str'))))
+        remove_tags_with_scope=dict(type='list', elements='str', default=[]))
     return vm_tag_spec
 
 
@@ -161,8 +158,7 @@ class TagElement(object):
         return self.element == other.element
 
     def __hash__(self):
-        return hash(self.scope)
-
+        return hash(self.element)
 
 def _fetch_all_tags_on_vm_and_infer_id(
         vm_id, policy_communicator, vm_display_name, module):
@@ -204,7 +200,7 @@ def _get_tags_as_set(tags=[], scope_list=[]):
             tag_set.add(TagElement(tag))
     if scope_list:
         for scope in scope_list:
-            tag_set.add(TagElement({'scope': scope}))
+            tag_set.add(TagElement({'scope': scope, 'tag': ""}))
     return tag_set
 
 
@@ -263,17 +259,14 @@ def realize():
             for i, tag in enumerate(all_tags):
                 if TagElement(tag) in tags_to_remove:
                     all_tags[i] = None
-        persistent_tags = []
-        for tag in all_tags:
-            if tag:
-                persistent_tags += tag,
 
-        final_tags = persistent_tags
+        final_tags = [tag for tag in all_tags if tag is not None]
         final_tags_set = _get_tags_as_set(tags=final_tags)
         for tag in _read_tags_from_module_params(module.params, 'add_tags'):
-            if TagElement(tag) not in final_tags_set:
+            tag_element = TagElement(tag)
+            if tag_element not in final_tags_set:
                 final_tags += tag,
-        final_tags_set = _get_tags_as_set(tags=final_tags)
+                final_tags_set.add(tag_element)
 
         if init_tags_set == final_tags_set:
             module.exit_json(msg="No tags detected to update")
@@ -282,7 +275,7 @@ def realize():
             "external_id": virtual_machine_id,
             "tags": final_tags
         }
-        _, resp = policy_communicator.request(
+        policy_communicator.request(
             VM_UPDATE_URL + '?action=update_tags', data=post_body,
             method="POST", base_url='fabric')
         module.exit_json(msg="Successfully updated tags on VM {}".format(
