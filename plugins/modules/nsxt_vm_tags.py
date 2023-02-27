@@ -166,35 +166,41 @@ class TagElement(object):
 
 def _fetch_all_tags_on_vm_and_infer_id(
         vm_id, policy_communicator, vm_display_name, module):
-    _, vms = policy_communicator.get_all_results(VM_LIST_URL)
     target_vm = None
     if vm_id:
-        for vm in vms:
-            if vm['external_id'] == vm_id:
-                return vm.get('tags', []), vm_id
-        module.fail_json(msg="No VM found with the provided "
-                         "virtual_machine_id")
+        _, vms = policy_communicator.request(VM_LIST_URL+'?external_id='+vm_id, base_url='fabric')
+        if vms['result_count'] == 0:
+            module.fail_json(msg="No VM found with the provided "
+                    "virtual_machine_id")
+        elif vms['result_count'] == 1:
+            return vms['results'][0].get('tags', []), vm_id
+        else:
+            # Multiple VMs with same external id name.
+            # This should not happen.
+            module.fail_json(msg="Multiple VMs with same external "
+                    "id. Please investigate the environment.")
     else:
-        for vm in vms:
-            if vm['display_name'] == vm_display_name:
-                if target_vm is not None:
-                    # Multiple VMs with same display name. Ask user
-                    # to provide VM ID instead
-                    module.fail_json(msg="Multiple VMs with same display "
-                                     "name. Please provide "
-                                     "virtual_machine_id to identify the "
-                                     "target VM")
-                target_vm = vm
-        if target_vm:
-            return target_vm.get('tags', []), target_vm['external_id']
-        module.fail_json(msg="No VM found with the provided "
-                         "virtual_machine_display_name")
+        _, vms = policy_communicator.request(VM_LIST_URL+'?display_name='+vm_display_name, base_url='fabric')
+        if vms['result_count'] == 0:
+            module.fail_json(msg="No VM found with the provided "
+                    "virtual_machine_display_name")
+        elif vms['result_count'] == 1:
+            return vms['results'][0].get('tags', []), vms['results'][0]['external_id']
+        else:
+            # Multiple VMs with same display name. Ask user
+            # to provide VM ID instead
+            module.fail_json(msg="Multiple VMs with same display "
+                    "name. Please provide "
+                    "virtual_machine_id to identify the "
+                    "target VM")
 
 
 def _get_tags_as_set(tags=[], scope_list=[]):
     tag_set = set()
     if tags:
         for tag in tags:
+            if tag['scope'] is None:
+                tag['scope'] = ''
             tag_set.add(TagElement(tag))
     if scope_list:
         for scope in scope_list:
@@ -265,12 +271,7 @@ def realize():
         final_tags = persistent_tags
         final_tags_set = _get_tags_as_set(tags=final_tags)
         for tag in _read_tags_from_module_params(module.params, 'add_tags'):
-            if TagElement(tag) in final_tags_set:
-                for final_tag in final_tags:
-                    if final_tag['scope'] == tag['scope']:
-                        final_tag['tag'] = tag['tag']
-                        break
-            else:
+            if TagElement(tag) not in final_tags_set:
                 final_tags += tag,
         final_tags_set = _get_tags_as_set(tags=final_tags)
 
@@ -278,12 +279,12 @@ def realize():
             module.exit_json(msg="No tags detected to update")
 
         post_body = {
-            "virtual_machine_id": virtual_machine_id,
+            "external_id": virtual_machine_id,
             "tags": final_tags
         }
         _, resp = policy_communicator.request(
             VM_UPDATE_URL + '?action=update_tags', data=post_body,
-            method="POST")
+            method="POST", base_url='fabric')
         module.exit_json(msg="Successfully updated tags on VM {}".format(
             virtual_machine_id), changed=True)
     except Exception as err:

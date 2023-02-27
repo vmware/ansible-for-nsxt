@@ -60,9 +60,8 @@ DHCP_RELAY_CONFIG_URL = '/infra/dhcp-relay-configs'
 EDGE_CLUSTER_URL = _ENFORCEMENT_POINT_URL + '/{}/edge-clusters'
 EDGE_NODE_URL = EDGE_CLUSTER_URL + '/{}/edge-nodes'
 
-VM_LIST_URL = '/infra/realized-state/virtual-machines'
-VM_UPDATE_URL = ('/infra/realized-state/enforcement-points/' +
-                 'default/virtual-machines')
+VM_LIST_URL = '/virtual-machines'
+VM_UPDATE_URL = '/virtual-machines'
 
 BFD_PROFILE_URL = '/infra/bfd-profiles'
 
