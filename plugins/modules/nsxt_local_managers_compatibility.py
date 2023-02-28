@@ -41,6 +41,7 @@ options:
         required: true
         type: str
     site_connection_info:
+        description: 'Site Connection ofno (fqdn, password...'
         fqdn:
             description: 'IP address or hostname of local manager'
             required: true
