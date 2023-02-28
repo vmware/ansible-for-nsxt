@@ -27,9 +27,9 @@ The following versions of NSX are supported:
 
 Using Ansible-for-nsxt requires the following packages to be installated. Installation steps differ based on the platform (Mac/iOS, Ubuntu, Debian, CentOS, RHEL etc). Please follow the links below to pick the right platform.
 
-* Ansible >= 2.9.x [Ansible Installation Documentation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+* Ansible >= 2.10.x [Ansible Installation Documentation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 * Python3 >= 3.6.x [Python Documentation](https://www.python.org/downloads/)
-* pip >= 9.x Python Installation [PIP installation](https://pip.pypa.io/en/stable/installing/)
+* pip3 >= 9.x Python Installation [PIP installation](https://pip.pypa.io/en/stable/installing/)
 * PyVmOmi - Python library for vCenter api. Installation via pip: [pyVmomi installation](https://pypi.org/project/pyvmomi/)
 * OVF Tools >= 4.4.x - Ovftool is used for ovf deployment [OVFTool Download and Installation](https://code.vmware.com/web/tool/4.4.0/ovf)
 
