@@ -218,19 +218,27 @@ class VMwareNSXTRest():
 
         if self.method == "post" or self.method == "put" or self.method == "patch":
             before_resp = self.operate_nsxt(method="get", ignore_errors=True)
-            if before_resp:
+            before_revision = ""
+
+            if before_resp and "_revision" in before_resp :
                 before_revision = before_resp["_revision"]
-            else:
-                before_revision = ""
 
             _ = self.operate_nsxt(method=self.method)
 
             after_resp = self.operate_nsxt(method="get")
-            after_revision = after_resp["_revision"]
+            after_revision = ""
 
-            if before_revision == after_revision:
-                self.module.exit_json(changed=False, body=after_resp)
+            if after_resp and "_revision" in after_resp :
+                after_revision = after_resp["_revision"]
+
+                if before_revision == after_revision:
+                    self.module.exit_json(changed=False, body=after_resp)
+                else:
+                    self.module.exit_json(changed=True, body=after_resp)
+
             else:
+                self.module.warn("_revision key in dict is missing")
+                self.module.warn("Count change but possibly nothing change. Cause : _revision key in dict is missing.")
                 self.module.exit_json(changed=True, body=after_resp)
 
         if self.method == "delete":
