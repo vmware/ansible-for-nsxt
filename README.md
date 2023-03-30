@@ -18,6 +18,8 @@ Documentation on the NSX platform can be found at the [NSX-T Documentation page]
 
 The following versions of NSX are supported:
 
+ * NSX 4.1.0
+ * NSX 4.0.1
  * NSX-T 3.2
  * NSX-T 3.1
  * NSX-T 3.0
