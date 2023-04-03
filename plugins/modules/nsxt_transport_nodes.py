@@ -230,11 +230,14 @@ options:
             type: dict
             vm_deployment_config:
                 ipv4_assignment_enabled:
-                    description: 'Its a boolean flag, if assigned as false then Edge TN would be created using Static Ipv6 only'
+                    description: 'Its a boolean flag, if assigned as false then Edge TN would be created using Static 
+                    Ipv6 only. This field is deprecated.'
                     required: false
                     type: boolean
                 ipv6_assignment_type:
-                    description: 'Its enum which will have value as 'STATIC', this variable is explicitly for Edge TN creation'
+                    description: 'IPv6 assignment type e.g STATIC, DHCPV6, SLAAC. if enum value is STATIC then
+                    management_port_subnets is mandatory. In this iteration DHCPV6 and SLAAC are
+                    not supported.'
                     required: false
                     type: str
                 compute:
