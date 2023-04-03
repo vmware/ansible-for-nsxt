@@ -230,7 +230,8 @@ options:
             type: dict
             vm_deployment_config:
                 ipv4_assignment_enabled:
-                    description: 'Its a boolean flag, if assigned as false then Edge TN would be created using Static Ipv6 only'
+                    description: 'Its a boolean flag, if assigned as false then Edge TN would be created using Static 
+                    Ipv6 only'. This field is deprecated. 
                     required: false
                     type: boolean
                 ipv6_assignment_type:
