@@ -335,7 +335,6 @@ options:
     replication_mode:
         description: Replication mode of the Segment
         type: str
-        default: MTEP
         choices:
             - MTEP
             - SOURCE
@@ -939,7 +938,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
             ),
             replication_mode=dict(
                 type='str',
-                default="MTEP",
                 choices=["MTEP", "SOURCE"]
             ),
             site_id=dict(
