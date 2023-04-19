@@ -150,7 +150,6 @@ options:
         choices:
             - UP
             - DOWN
-        default: UP
     advanced_config:
         description: Advanced configuration for Segment.
         type: dict
@@ -792,8 +791,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
             ),
             admin_state=dict(
                 type='str',
-                choices=['UP', 'DOWN'],
-                default='UP'
+                choices=['UP', 'DOWN']
             ),
             advanced_config=dict(
                 required=False,
@@ -1185,7 +1183,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 admin_state=dict(
                     required=False,
                     type='str',
-                    default='UP',
                     choices=['UP', 'DOWN']
                 ),
                 attachment=dict(
