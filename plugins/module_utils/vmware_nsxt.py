@@ -91,12 +91,9 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                                    force_basic_auth=force_basic_auth)
                 if resp_code != 200:
                     return resp_code, None
-                if page is not None:
-                    if isinstance(page, dict):
-                        resp_data['results'].extend(page.get('results', []))
-                        cursor = page.get('cursor', NULL_CURSOR_PREFIX)
-                    else:
-                        cursor = NULL_CURSOR_PREFIX
+                if page is not None and isinstance(page, dict):
+                    resp_data['results'].extend(page.get('results', []))
+                    cursor = page.get('cursor', NULL_CURSOR_PREFIX)
                 else:
                     cursor = NULL_CURSOR_PREFIX
             return resp_code, resp_data
