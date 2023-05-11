@@ -16,6 +16,7 @@ import json, os, re
 from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
+import six.moves.urllib.parse as urlparse
 
 def vmware_argument_spec():
     return dict(
@@ -44,6 +45,8 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         client_cert = None
 
     ca_path = get_certificate_file_path('NSX_MANAGER_CA_PATH')
+    NULL_CURSOR_PREFIX = '0000'
+    resp_data = None
 
     try:
         r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
@@ -57,9 +60,9 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         raw_data = r.read()
         if raw_data:
             if is_json(raw_data):
-                data = json.loads(raw_data)
+                resp_data = json.loads(raw_data)
             else:
-                data = raw_data
+                resp_data = raw_data
         else:
             raw_data = None
     except:
@@ -71,11 +74,30 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     resp_code = r.getcode()
 
     if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    if not (data is None) and data.__contains__('error_code'):
-        raise Exception (data['error_code'], data)
+        raise Exception(resp_code, resp_data)
+    if not (resp_data is None) and resp_data.__contains__('error_code'):
+        raise Exception (resp_data['error_code'], resp_data)
     else:
-        return resp_code, data
+        if resp_code != 200:
+            return resp_code, resp_data
+        if resp_data is not None:
+            cursor = resp_data.get('cursor', NULL_CURSOR_PREFIX)
+            op = '&' if urlparse.urlparse(url).query else '?'
+            url += op + 'cursor='
+            while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
+                resp_code, page = request(url + cursor, data=data, headers=headers, method=method, use_proxy=use_proxy,
+                                   force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
+                                   url_username=url_username, url_password=url_password, http_agent=http_agent,
+                                   force_basic_auth=force_basic_auth)
+                if resp_code != 200:
+                    return resp_code, None
+                if page is not None and isinstance(page, dict):
+                    resp_data['results'].extend(page.get('results', []))
+                    cursor = page.get('cursor', NULL_CURSOR_PREFIX)
+                else:
+                    cursor = NULL_CURSOR_PREFIX
+            return resp_code, resp_data
+        return resp_code, resp_data
 
 def get_certificate_string(crt_file):
     '''
@@ -130,8 +152,8 @@ def get_private_key_string(p12_file):
 def get_certificate_file_path(environment_variable):
     return os.getenv(environment_variable)
 
-def get_vc_ip_from_display_name(module, manager_url, mgr_username, mgr_password, 
-                                validate_certs, endpoint, display_name, 
+def get_vc_ip_from_display_name(module, manager_url, mgr_username, mgr_password,
+                                validate_certs, endpoint, display_name,
                                 exit_if_not_found=True):
     '''
     param:
@@ -141,7 +163,7 @@ def get_vc_ip_from_display_name(module, manager_url, mgr_username, mgr_password,
     '''
     try:
       (rc, resp) = request(manager_url+ endpoint, headers=dict(Accept='application/json'),
-                      url_username=mgr_username, url_password=mgr_password, 
+                      url_username=mgr_username, url_password=mgr_password,
                       validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
       module.fail_json(msg='Error occured while retrieving vCenter IP for %s. '
