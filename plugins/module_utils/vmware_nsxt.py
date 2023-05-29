@@ -47,6 +47,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     ca_path = get_certificate_file_path('NSX_MANAGER_CA_PATH')
     NULL_CURSOR_PREFIX = '0000'
     resp_data = None
+    raw_data = None
 
     try:
         r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
@@ -63,13 +64,11 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                 resp_data = json.loads(raw_data)
             else:
                 resp_data = raw_data
-        else:
-            raw_data = None
-    except:
+    except Exception as e:
         if ignore_errors:
             pass
         else:
-            raise Exception(raw_data)
+            raise Exception(e)
 
     resp_code = r.getcode()
 
@@ -78,20 +77,23 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     if not (resp_data is None) and resp_data.__contains__('error_code'):
         raise Exception (resp_data['error_code'], resp_data)
     else:
-        if resp_code != 200:
-            return resp_code, resp_data
-        if resp_data is not None:
+        if resp_code == 200 and resp_data is not None:
             cursor = resp_data.get('cursor', NULL_CURSOR_PREFIX)
-            op = '&' if urlparse.urlparse(url).query else '?'
-            url += op + 'cursor='
+            parsed_url = urlparse.urlparse(url)
+            query_params = urlparse.parse_qs(parsed_url.query)
             while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
-                resp_code, page = request(url + cursor, data=data, headers=headers, method=method, use_proxy=use_proxy,
+                # Add or update the query parameter
+                query_params['cursor'] = cursor
+
+                # Reconstruct the URL with updated query parameters
+                updated_query = urlparse.urlencode(query_params, doseq=True)
+                updated_url = urlparse.urlunparse(parsed_url._replace(query=updated_query))
+
+                resp_code, page = request(updated_url, data=data, headers=headers, method=method, use_proxy=use_proxy,
                                    force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                                    url_username=url_username, url_password=url_password, http_agent=http_agent,
                                    force_basic_auth=force_basic_auth)
-                if resp_code != 200:
-                    return resp_code, None
-                if page is not None and isinstance(page, dict):
+                if resp_code == 200 and page is not None and isinstance(page, dict):
                     resp_data['results'].extend(page.get('results', []))
                     cursor = page.get('cursor', NULL_CURSOR_PREFIX)
                 else:
