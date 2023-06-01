@@ -32,6 +32,9 @@ POLICY_GROUP_URL = _DOMAIN_URL + '/{}/groups'
 
 SECURITY_POLICY_URL = _DOMAIN_URL + '/{}/security-policies'
 
+SERVICE_URL = '/infra/services'
+SERVICE_ENTRIES_URL = SERVICE_URL + '/{}/service-entries'
+
 SEGMENT_URL = '/infra/segments'
 SEGMENT_PORT_URL = SEGMENT_URL + '/{}/ports'
 
