@@ -16,7 +16,7 @@ import json, os, re
 from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
-import six.moves.urllib.parse as urlparse
+from urllib.parse import urlparse, parse_qs, urlencode, unquote, urlunparse
 
 def vmware_argument_spec():
     return dict(
@@ -47,8 +47,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     ca_path = get_certificate_file_path('NSX_MANAGER_CA_PATH')
     NULL_CURSOR_PREFIX = '0000'
     resp_data = None
-    raw_data = None
-
+    page = None
     try:
         r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
@@ -76,30 +75,32 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         raise Exception(resp_code, resp_data)
     if not (resp_data is None) and resp_data.__contains__('error_code'):
         raise Exception (resp_data['error_code'], resp_data)
-    else:
-        if resp_code == 200 and resp_data is not None:
-            cursor = resp_data.get('cursor', NULL_CURSOR_PREFIX)
-            parsed_url = urlparse.urlparse(url)
-            query_params = urlparse.parse_qs(parsed_url.query)
-            while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
-                # Add or update the query parameter
-                query_params['cursor'] = cursor
-
-                # Reconstruct the URL with updated query parameters
-                updated_query = urlparse.urlencode(query_params, doseq=True)
-                updated_url = urlparse.urlunparse(parsed_url._replace(query=updated_query))
-
-                resp_code, page = request(updated_url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                                   force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                                   url_username=url_username, url_password=url_password, http_agent=http_agent,
-                                   force_basic_auth=force_basic_auth)
-                if resp_code == 200 and page is not None and isinstance(page, dict):
-                    resp_data['results'].extend(page.get('results', []))
-                    cursor = page.get('cursor', NULL_CURSOR_PREFIX)
-                else:
-                    cursor = NULL_CURSOR_PREFIX
-            return resp_code, resp_data
+    if resp_code != 200:
         return resp_code, resp_data
+
+    elif resp_code == 200 and resp_data is not None:
+        cursor = resp_data.get('cursor', NULL_CURSOR_PREFIX)
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
+            if page is not None and isinstance(page, dict):
+                resp_data['results'].extend(page.get('results', []))
+                cursor = page.get('cursor', NULL_CURSOR_PREFIX)
+            if cursor == NULL_CURSOR_PREFIX:
+                return resp_code, resp_data
+
+            # Add or update the query parameter
+            query_params['cursor'] = cursor
+            # Reconstruct the URL with updated query parameters
+            updated_query = urlencode(query_params, doseq=True)
+            updated_url = unquote(urlunparse(parsed_url._replace(query=updated_query)))
+            resp_code, page = request(updated_url, data=data, headers=headers, method=method, use_proxy=use_proxy,
+                            force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
+                            url_username=url_username, url_password=url_password, http_agent=http_agent,
+                            force_basic_auth=force_basic_auth)
+
+        return resp_code, resp_data
+    return resp_code, resp_data
 
 def get_certificate_string(crt_file):
     '''
