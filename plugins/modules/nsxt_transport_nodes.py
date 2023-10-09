@@ -572,6 +572,90 @@ EXAMPLES = '''
         password: "ca$hc0w"
         thumbprint: "e7fd7dd84267da10f991812ca62b2bedea3a4a62965396a04728da1e7f8e1cb9"
     state: "present"
+    
+    
+- name: Create edge transport nodes
+  vmware.ansible_for_nsxt.nsxt_transport_nodes:
+    hostname: "{{mgr_0_ip_address}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: False
+    display_name: "{{display_name}}"
+    description: "{{description}}"
+    host_switch_spec:
+      resource_type: StandardHostSwitchSpec
+      host_switches:
+      - host_switch_profiles:
+        - name: "{{uplink_profile_name}}"
+          type: UplinkHostSwitchProfile
+        host_switch_name: "{{host_switch_name}}"
+        host_switch_mode: "{{host_switch_mode}}"
+        pnics:
+        - device_name: "{{device_name}}"
+          uplink_name: "{{uplink_name}}"
+        ip_assignment_spec:
+          resource_type: StaticIpPoolSpec
+          ip_pool_name: "{{ip_pool_display_name}}"
+        transport_zone_endpoints:
+        - transport_zone_name: "{{transport_zone_display_name_1}}"
+        - transport_zone_name: "{{transport_zone_display_name_2}}"
+    node_deployment_info:
+      resource_type: EdgeNode
+      display_name: "{{node_display_name}}"
+      deployment_type: VIRTUAL_MACHINE
+      fqdn: "{{ip_address}}"
+      ip_addresses:
+        - "{{ip_address}}"
+      node_settings:
+        allow_ssh_root_login: "{{allow_ssh_root_login}}"
+        enable_ssh: "{{enable_ssh}}"
+        dns_servers:
+        - "{{dns_server}}"
+        ntp_servers:
+        - "{{ntp_server}}"
+        hostname: "{{node_display_name}}"
+        search_domains:
+        - "{{search_domains}}"
+      tags:
+      - tag: "{{edge_tag}}"
+        scope: "{{edge_scope}}"
+      deployment_config:
+        form_factor: "{{form_factor}}"
+        node_user_settings:
+          cli_password: "{{password}}"
+          root_password: "{{password}}"
+        vm_deployment_config:
+          placement_type: VsphereDeploymentConfig
+          vc_name: "{{prod_vc_display_name}}"
+          vc_username: "{{prod_vc_username}}"
+          vc_password: "{{prod_vc_password}}"
+          host: "{{prod_esx_ip}}"
+          compute: "{{prod_vc_cluster}}"
+          storage: "{{prod_vc_datastore}}"
+          management_network: "{{prod_vc_portgroup}}"
+          data_networks:
+          - "{{prod_vc_portgroup}}"
+          - "{{prod_vc_portgroup}}"
+          - "{{prod_vc_portgroup}}"
+          management_port_subnets:
+          - ip_addresses:
+            - "{{ip_address}}"
+            prefix_length: "{{prefix_length}}"
+          default_gateway_addresses:
+          - "{{gateway}}"
+          reservation_info:
+            cpu_reservation:
+              reservation_in_mhz: "{{reservation_in_mhz}}"
+              reservation_in_shares: "{{reservation_in_shares}}"
+            memory_reservation:
+              reservation_percentage: "{{reservation_percentage}}"
+          resource_allocation:
+            cpu_count: "{{cpu_count}}"
+            memory_allocation_in_mb: "{{memory_allocation_in_mb}}"
+    tags:
+    - tag: "{{edge_tn_tag}}"
+      scope: "{{edge_tn_scope}}"
+    state: "{{state}}"
 
 '''
 
