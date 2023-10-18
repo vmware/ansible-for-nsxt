@@ -150,7 +150,6 @@ options:
         choices:
             - UP
             - DOWN
-        default: UP
     advanced_config:
         description: Advanced configuration for Segment.
         type: dict
@@ -336,7 +335,6 @@ options:
     replication_mode:
         description: Replication mode of the Segment
         type: str
-        default: MTEP
         choices:
             - MTEP
             - SOURCE
@@ -792,8 +790,7 @@ class NSXTSegment(NSXTBaseRealizableResource):
             ),
             admin_state=dict(
                 type='str',
-                choices=['UP', 'DOWN'],
-                default='UP'
+                choices=['UP', 'DOWN']
             ),
             advanced_config=dict(
                 required=False,
@@ -941,7 +938,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
             ),
             replication_mode=dict(
                 type='str',
-                default="MTEP",
                 choices=["MTEP", "SOURCE"]
             ),
             site_id=dict(
@@ -1185,7 +1181,6 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 admin_state=dict(
                     required=False,
                     type='str',
-                    default='UP',
                     choices=['UP', 'DOWN']
                 ),
                 attachment=dict(
