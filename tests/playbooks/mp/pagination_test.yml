@@ -1,0 +1,60 @@
+
+# 
+---
+- name: Pagination test
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - vmware.ansible_for_nsxt
+  vars:
+    hostname: "{{ lookup('ansible.builtin.env', 'NSX_MANAGER_IP') }}"
+    username: "{{ lookup('ansible.builtin.env', 'NSX_USERNAME') }}"
+    password: "{{ lookup('ansible.builtin.env', 'NSX_PASSWORD') }}"
+    sequence: "1-1001"
+    label_prefix: "ANSIBLE_INTEGRATION_TESTING"
+  tasks:
+
+    - name: Create switches and test they are all visible
+      block:
+        - name: Create logical switches
+          nsxt_logical_switches:
+            hostname: "{{ hostname }}"
+            username: "{{ username }}"
+            password: "{{ password }}"
+            validate_certs: False
+            display_name: "{{ label_prefix }}-ls-{{ item }}"
+            admin_state: "UP"
+            transport_zone_name: "nsx-overlay-transportzone"
+            state: "present"
+          with_sequence:
+            - "{{ sequence }}"
+        
+        - name: Create logical switch
+          nsxt_logical_switches_facts:
+            hostname: "{{ hostname }}"
+            username: "{{ username }}"
+            password: "{{ password }}"
+            validate_certs: False
+          register: result_switches
+
+        - name: Check length of get requests
+          ansible.builtin.assert:
+            that:
+              - result_switches.results | length > 1000
+            fail_msg: |
+              After creating 1001 switches facts only returns {{ result_switches.results | length }}.
+              Pagination failure!
+            success_msg: "Pagination of get requests OK"
+      always:
+        - name: Delete logical switches
+          nsxt_logical_switches:
+            hostname: "{{ hostname }}"
+            username: "{{ username }}"
+            password: "{{ password }}"
+            validate_certs: False
+            display_name: "{{ label_prefix }}-ls-{{ item }}"
+            state: "absent"
+            admin_state: "UP"
+            transport_zone_name: "nsx-overlay-transportzone"
+          with_sequence:
+            - "{{ sequence }}"
