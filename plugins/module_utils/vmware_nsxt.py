@@ -58,7 +58,6 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             continue
         
         return resp_code, collated_response
-    
 
 def request_api(url, data=None, headers=None, method='GET', use_proxy=True,
             force=False, last_mod_time=None, timeout=300, validate_certs=True,
