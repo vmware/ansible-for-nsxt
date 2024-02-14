@@ -99,6 +99,13 @@ options:
                         this flag should be set as true. This is specific to TKGS. NSX-T 3.0 only"
         required: false
         type: bool
+    create_service_account:
+    description: "Specifies whether service account is created or not on compute manager
+                    Enable this flag to create service account user on compute manager. This is
+                    required by features such as vSphere Lifecycle Manager for authentication with
+                    vAPIs from nsx."
+    required: false
+    type: bool
     state:
         choices:
             - present
@@ -236,6 +243,9 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
     if existing_compute_manager.__contains__('set_as_oidc_provider') and compute_manager_with_ids.__contains__('set_as_oidc_provider') and \
         existing_compute_manager['set_as_oidc_provider'] != compute_manager_with_ids['set_as_oidc_provider']:
         return True
+    if existing_compute_manager.__contains__('create_service_account') and compute_manager_with_ids.__contains__('create_service_account') and \
+        existing_compute_manager['create_service_account'] != compute_manager_with_ids['create_service_account']:
+        return True
     return False
 
 def main():
@@ -253,6 +263,7 @@ def main():
                     description=dict(required=False, type='str'),
                     server=dict(required=True, type='str'),
                     set_as_oidc_provider=dict(required=False, type='bool'),
+                    create_service_account=dict(required=False, type='bool'),
                     state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
