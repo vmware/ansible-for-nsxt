@@ -240,7 +240,9 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
        both_lags_same = True
        for i in range(len(sorted_existing_lags)):
            diff_obj = {k: sorted_existing_lags[i][k] for k in sorted_existing_lags[i] if k in sorted_new_lags[i] and sorted_existing_lags[i][k] != sorted_new_lags[i][k]}
-           del diff_obj['uplinks']
+           uplinks = diff_obj.get('uplinks', None)
+           if uplinks:
+               del diff_obj['uplinks']
            if not cmp_dict(diff_obj, sorted_new_lags[i]):
               both_lags_same = False
        if not both_lags_same:
