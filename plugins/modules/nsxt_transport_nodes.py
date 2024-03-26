@@ -249,9 +249,27 @@ options:
                 data_networks:
                     description: "List of distributed portgroup or VLAN logical identifiers or names to
                        which the datapath serving vnics of edge node vm will be connected. If vc_username 
-                      and vc_password are present then this field takes names else id."
-                    required: true
+                      and vc_password are present then this field takes names else id. If 'data_network_ids' and 
+                      'data_networks' is provided, this will error out."
+                    required: false
                     type: list
+                data_network_ids:
+                    description: 
+                      - List of data network IDs to which the datapath serving vnics of edge node vm will be connected.
+                      - This parameter can be used instead of 'data_networks' to directly specify the data network IDs.
+                      - If 'data_network_ids' and 'data_networks' is provided, this will error out.
+                    required: false
+                    type: list
+                    example:
+                      - "/infra/segments/segment-1"
+                      - "/infra/segments/segment-2"
+                vm_folder:
+                    description:
+                      - The folder in the vCenter inventory where the VM should be placed.
+                      - Example: "TargetFolder"
+                      - If the specified folder path does not exist, the module will fail with an appropriate error message.
+                    required: false
+                    type: str
                 ignore_ssl_connection:
                     description: 'This is a boolean value which will work as a flag to control whether SSL
                         should be used while connecting to VC or not. 
@@ -634,9 +652,13 @@ EXAMPLES = '''
           storage: "{{prod_vc_datastore}}"
           management_network: "{{prod_vc_portgroup}}"
           data_networks:
-          - "{{prod_vc_portgroup}}"
-          - "{{prod_vc_portgroup}}"
-          - "{{prod_vc_portgroup}}"
+            - "{{ prod_vc_portgroup }}"
+            - "{{ prod_vc_portgroup }}"
+            - "{{ prod_vc_portgroup }}"
+          data_network_ids:
+            - "/infra/segments/nsx-vlan-trunk"
+            - "/infra/segments/nsx-vlan-trunk"
+          vm_folder: "NSX Edge Nodes"
           management_port_subnets:
           - ip_addresses:
             - "{{ip_address}}"
@@ -919,7 +941,6 @@ def get_api_cert_thumbprint(ip_address, module):
     finally:
         wrappedSocket.close()
 
-
 def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validate_certs, transport_node_params):
   '''
   params:
@@ -964,17 +985,31 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
                                                'network', management_network, ignore_ssl_verification)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = str(management_network_id)
 
-    data_networks = vm_deployment_config.pop('data_networks')
-    data_network_ids = get_data_network_id_from_name(module, vc_ip, vc_username, vc_password,
-                                                data_networks, ignore_ssl_verification)
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
+    if vm_deployment_config.__contains__('data_network_ids') and vm_deployment_config.__contains__('data_networks'):
+        module.fail_json(msg="Error: Either 'data_network_ids' or 'data_networks' should be provided, but not both.")
+    elif vm_deployment_config.__contains__('data_network_ids'):
+        data_network_ids = vm_deployment_config.pop('data_network_ids')
+        transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
+    elif vm_deployment_config.__contains__('data_networks'):
+        data_networks = vm_deployment_config.pop('data_networks')
+        data_network_ids = get_data_network_id_from_name(module, vc_ip, vc_username, vc_password,
+                                                         data_networks, ignore_ssl_verification)
+        transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
+    else:
+        module.fail_json(msg="Error: Either 'data_network_ids' or 'data_networks' must be provided.")
+        
+    if vm_deployment_config.__contains__('vm_folder'):
+      vm_folder = vm_deployment_config.pop('vm_folder')
+      vm_folder_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                               'folder', vm_folder, ignore_ssl_verification)
+      transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_folder_id'] = str(vm_folder_id)
         
     if vm_deployment_config.__contains__('host'):
       transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('host', None)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('cluster', None)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('storage', None)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('management_network', None)
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks', None)
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vm_folder', None)
   else:
     if vm_deployment_config.__contains__('host'):
       host_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('host', None)
@@ -983,15 +1018,28 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
     cluster_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('compute', None)
     storage_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('storage', None)
     management_network_id = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('management_network', None)
-    data_network_ids = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks', None)
+    
+    if transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].__contains__('data_network_ids') and transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].__contains__('data_networks'):
+        module.fail_json(msg="Error: Either 'data_network_ids' or 'data_networks' should be provided, but not both.")
+    elif transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].__contains__('data_network_ids'):
+        data_network_ids = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_network_ids')
+    elif transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].__contains__('data_networks'):
+        data_network_ids = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('data_networks')
+    else:
+        module.fail_json(msg="Error: Either 'data_network_ids' or 'data_networks' must be provided.")
+        
+    if transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].__contains__('vm_folder'):
+      vm_folder = transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config'].pop('vm_folder')
+      vm_folder_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                               'folder', vm_folder, ignore_ssl_verification)
+      transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_folder_id'] = str(vm_folder_id)
         
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = cluster_id
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = storage_id
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['management_network_id'] = management_network_id
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['data_network_ids'] = data_network_ids
     transport_node_params['node_deployment_info']['vm_deployment_config'].pop('ignore_ssl_verification', None)
-
-
+    
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
@@ -1010,7 +1058,8 @@ def main():
                        cli_password=dict(required=False, type='str', no_log=True),
                        audit_password=dict(required=False, type='str', no_log=True)),
                        vm_deployment_config=dict(required=True, type='dict',
-                       data_networks=dict(required=True, type='list'),
+                       data_networks=dict(required=False, type='list'),
+                       data_network=dict(required=False, type='list'),
                        management_network=dict(required=True, type='str'),
                        vc_username=dict(required=False, type='str'),
                        vc_password=dict(required=False, type='str', no_log=True),
@@ -1072,6 +1121,7 @@ def main():
                        subnet_mask=dict(required=False, type='dict',
                        IPAddress=dict(required=False, type='str')))),
                        tags=dict(required=False, type='list'),
+                       vm_folder=dict(required=False, type='str'),
                        state=dict(required=True, choices=['present', 'absent']))
 
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
