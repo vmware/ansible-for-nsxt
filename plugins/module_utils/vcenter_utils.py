@@ -82,7 +82,7 @@ def get_resource_id_from_name(module, vCenter_host, username, password,
                               resource_type, resource_name, ignore_ssl_verification):
     """
     params:
-    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage' and 'network'.
+    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage', 'network', and 'folder'.
     - resource_name: Name of the resource.
     result:
     - moref id of the resource name and type given.
@@ -101,16 +101,28 @@ def get_resource_id_from_name(module, vCenter_host, username, password,
         elif resource_type == 'network':
             objview = content.viewManager.CreateContainerView(content.rootFolder,
                                                               [vim.Network], True)
+        elif resource_type == 'folder':
+            objview = content.viewManager.CreateContainerView(content.rootFolder,
+                                                              [vim.Folder], True)
         else:
             module.fail_json(msg='Resource type provided by user either doesn\'t'
                                  ' exist or is not supported')
         all_resources = objview.view
         objview.Destroy()
         for resource in all_resources:
-            if resource.name == resource_name:
+            if resource_type == 'folder' and resource.name == resource_name.split('/')[-1]:
+                folder_path = resource_name.split('/')
+                current_folder = resource.parent
+                for folder_name in reversed(folder_path[:-1]):
+                    if current_folder.name == folder_name:
+                        current_folder = current_folder.parent
+                    else:
+                        module.fail_json(msg='Folder path %s does not exist' % resource_name)
                 return resource._moId
-        module.fail_json(msg='%s doesnt exist in %s' % (resource_name,
-                                                        resource_type))
+            elif resource.name == resource_name:
+                return resource._moId
+        module.fail_json(msg='%s doesn\'t exist in %s' % (resource_name,
+                                                          resource_type))
     except vmodl.MethodFault as error:
         print("Caught vmodl fault while fetching info from vCenter: " + error.msg)
         return -1
