@@ -77,12 +77,11 @@ def establish_vcenter_connection(module, vCenter_host, username, password, ignor
                 module.fail_json(msg="Caught vmodl fault while connecting to vCenter: " + error.msg)
     return service_instance.RetrieveContent()
 
-
 def get_resource_id_from_name(module, vCenter_host, username, password,
                               resource_type, resource_name, ignore_ssl_verification):
     """
     params:
-    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage', 'network', and 'folder'.
+    - resource_type: Type of vCenter resource. Accepted values 'host', 'cluster', 'storage', 'network', 'folder', and 'compute'.
     - resource_name: Name of the resource.
     result:
     - moref id of the resource name and type given.
@@ -104,11 +103,17 @@ def get_resource_id_from_name(module, vCenter_host, username, password,
         elif resource_type == 'folder':
             objview = content.viewManager.CreateContainerView(content.rootFolder,
                                                               [vim.Folder], True)
+        elif resource_type == 'compute':
+            # For 'compute', we need to look for both clusters and resource pools
+            objview = content.viewManager.CreateContainerView(content.rootFolder,
+                                                              [vim.ClusterComputeResource, vim.ResourcePool], True)
         else:
             module.fail_json(msg='Resource type provided by user either doesn\'t'
                                  ' exist or is not supported')
+        
         all_resources = objview.view
         objview.Destroy()
+        
         for resource in all_resources:
             if resource_type == 'folder' and resource.name == resource_name.split('/')[-1]:
                 folder_path = resource_name.split('/')
@@ -121,12 +126,20 @@ def get_resource_id_from_name(module, vCenter_host, username, password,
                 return resource._moId
             elif resource.name == resource_name:
                 return resource._moId
-        module.fail_json(msg='%s doesn\'t exist in %s' % (resource_name,
-                                                          resource_type))
+        
+        if resource_type == 'compute':
+            # If we're here, we didn't find a matching cluster or top-level resource pool
+            # Let's search for nested resource pools
+            for resource in all_resources:
+                if isinstance(resource, vim.ClusterComputeResource):
+                    for rp in resource.resourcePool.resourcePool:  # Search immediate child resource pools
+                        if rp.name == resource_name:
+                            return rp._moId
+        
+        module.fail_json(msg='%s doesn\'t exist in %s' % (resource_name, resource_type))
     except vmodl.MethodFault as error:
         print("Caught vmodl fault while fetching info from vCenter: " + error.msg)
         return -1
-
 
 def get_data_network_id_from_name(module, vCenter_host, username, password,
                                   data_network_name_list, ignore_ssl_verification):

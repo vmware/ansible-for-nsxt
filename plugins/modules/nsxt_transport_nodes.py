@@ -975,10 +975,15 @@ def inject_vcenter_info(module, manager_url, mgr_username, mgr_password, validat
                                            'storage', storage, ignore_ssl_verification)
     transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['storage_id'] = str(storage_id)
 
-    cluster = vm_deployment_config.pop('compute')
-    cluster_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
-                                           'cluster', cluster, ignore_ssl_verification)
-    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = str(cluster_id)
+    cluster_or_rp = vm_deployment_config.pop('compute')
+    # Try to get the cluster ID or resource pool ID
+    compute_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
+                                           'compute', cluster_or_rp, ignore_ssl_verification)
+    
+    if compute_id == -1:
+        module.fail_json(msg=f"Neither cluster nor resource pool with name '{cluster_or_rp}' found.")
+
+    transport_node_params['node_deployment_info']['deployment_config']['vm_deployment_config']['compute_id'] = str(compute_id)
 
     management_network = vm_deployment_config.pop('management_network')
     management_network_id = get_resource_id_from_name(module, vc_ip, vc_username, vc_password,
