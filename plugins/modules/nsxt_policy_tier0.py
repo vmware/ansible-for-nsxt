@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright 2018 VMware, Inc.
@@ -1347,18 +1347,8 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 options=dict(
                     # Note that only default site_id and
                     # enforcementpoint_id are used
-                    description=dict(
-                        type='str',
-                        default=""
-                    ),
-                    display_name=dict(
-                        type='str',
-                    ),
                     evpn_transit_vni=dict(
                         type='int'
-                    ),
-                    id=dict(
-                        type='str'
                     ),
                     route_distinguisher=dict(
                         type='str'
@@ -1455,13 +1445,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
             # vrf config is attached
             vrf_config = nsx_resource_params['vrf_config']
 
-            vrf_id = vrf_config.get('id')
-            vrf_display_name = vrf_config.get('display_name')
-            if not (vrf_display_name or vrf_id):
-                self.exit_with_failure(msg="Please specify either the ID or "
-                                       "display_name of the VRF in the "
-                                       "vrf_config using id or display_name")
-
             tier0_id = vrf_config.pop('tier0_id', None)
             if not tier0_id:
                 tier0_id = self.get_id_using_attr_name_else_fail(
@@ -1469,8 +1452,6 @@ class NSXTTier0(NSXTBaseRealizableResource):
                     'Tier0')
             vrf_config['tier0_path'] = (
                 NSXTTier0.get_resource_base_url() + "/" + tier0_id)
-
-            vrf_config['resource_type'] = 'Tier0VrfConfig'
 
             if 'route_targets' in vrf_config:
                 route_targets = vrf_config['route_targets'] or []
@@ -2018,8 +1999,7 @@ class NSXTTier0(NSXTBaseRealizableResource):
                                 type='str'
                             ),
                             summary_only=dict(
-                                type='bool',
-                                default=True
+                                type='bool'
                             )
                         )
                     )
