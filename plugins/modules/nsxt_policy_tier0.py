@@ -683,6 +683,16 @@ options:
                                       IPSec VPN local-endpoint subnets
                                       advertised by TIER1.
                                 type: list
+                            destinations:
+                                description:
+                                    - List of destinations for a given
+                                      redistribution rule
+                                    - Each rule can have more than one
+                                      destination. If destinations not
+                                      specified for a given rule, default
+                                      destination will be BGP
+                                default: ["BGP"]
+                                choices: ["BGP", "OSPF"]
             ha_vip_configs:
                 type: list
                 elements: dict
@@ -1347,8 +1357,18 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 options=dict(
                     # Note that only default site_id and
                     # enforcementpoint_id are used
+                    description=dict(
+                        type='str',
+                        default=""
+                    ),
+                    display_name=dict(
+                        type='str',
+                    ),
                     evpn_transit_vni=dict(
                         type='int'
+                    ),
+                    id=dict(
+                        type='str'
                     ),
                     route_distinguisher=dict(
                         type='str'
@@ -1442,16 +1462,21 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 DHCP_RELAY_CONFIG_URL + "/" + dhcp_config_id]
 
         if 'vrf_config' in nsx_resource_params:
-            # vrf config is attached
             vrf_config = nsx_resource_params['vrf_config']
 
+            # Only perform actions related to tier0 if tier0_id or tier0_display_name is provided
             tier0_id = vrf_config.pop('tier0_id', None)
-            if not tier0_id:
-                tier0_id = self.get_id_using_attr_name_else_fail(
-                    'tier0', vrf_config, NSXTTier0.get_resource_base_url(),
-                    'Tier0')
-            vrf_config['tier0_path'] = (
-                NSXTTier0.get_resource_base_url() + "/" + tier0_id)
+            tier0_display_name = vrf_config.pop('tier0_display_name', None)
+
+            if tier0_id or tier0_display_name:
+                if not tier0_id:
+                    tier0_id = self.get_id_using_attr_name_else_fail(
+                        'tier0', vrf_config, NSXTTier0.get_resource_base_url(),
+                        'Tier0')
+                vrf_config['tier0_path'] = (
+                    NSXTTier0.get_resource_base_url() + "/" + tier0_id)
+
+            vrf_config['resource_type'] = 'Tier0VrfConfig'
 
             if 'route_targets' in vrf_config:
                 route_targets = vrf_config['route_targets'] or []
@@ -1671,6 +1696,12 @@ class NSXTTier0(NSXTBaseRealizableResource):
                                     elements='str',
                                     required=False
                                 ),
+                                destinations=dict(
+                                    type='list',
+                                    elements='str',
+                                    required=False,
+                                    default=["BGP"],
+                                ),
                             )
                         )
                     )
@@ -1886,39 +1917,38 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 ipv6_profile_paths = []
                 if self.do_resource_params_have_attr_with_id_or_display_name(
                         "ipv6_ndra_profile"):
-                    ipv6_ndra_profile_id = (
-                        self.get_id_using_attr_name_else_fail(
-                            "ipv6_ndra_profile", nsx_resource_params,
-                            IPV6_NDRA_PROFILE_URL, "Ipv6NdraProfile"))
+                    ipv6_ndra_profile_id = self.get_id_using_attr_name_else_fail(
+                        "ipv6_ndra_profile", nsx_resource_params,
+                        IPV6_NDRA_PROFILE_URL, "Ipv6NdraProfile")
                     ipv6_profile_paths.append(
                         IPV6_NDRA_PROFILE_URL + "/" + ipv6_ndra_profile_id)
                 if ipv6_profile_paths:
-                    nsx_resource_params[
-                        "ipv6_profile_paths"] = ipv6_profile_paths
+                    nsx_resource_params["ipv6_profile_paths"] = ipv6_profile_paths
 
-                # segment_id is a required attr
+                # Ensure segment_id is set correctly
                 segment_id = self.get_id_using_attr_name_else_fail(
                     "segment", nsx_resource_params, SEGMENT_URL, "Segment")
                 nsx_resource_params["segment_path"] = (
                     SEGMENT_URL + "/" + segment_id)
 
-                # edge_node_info is a required attr
-                edge_node_info = nsx_resource_params.pop("edge_node_info")
-                site_id = edge_node_info.get("site_id", "default")
-                enforcementpoint_id = edge_node_info.get(
-                    "enforcementpoint_id", "default")
-                edge_cluster_base_url = (
-                    EDGE_CLUSTER_URL.format(site_id, enforcementpoint_id))
-                edge_cluster_id = self.get_id_using_attr_name_else_fail(
-                    "edge_cluster", edge_node_info,
-                    edge_cluster_base_url, "Edge Cluster")
-                edge_node_base_url = EDGE_NODE_URL.format(
-                    site_id, enforcementpoint_id, edge_cluster_id)
-                edge_node_id = self.get_id_using_attr_name_else_fail(
-                    "edge_node", edge_node_info, edge_node_base_url,
-                    'Edge Node')
-                nsx_resource_params["edge_path"] = (
-                    edge_node_base_url + "/" + edge_node_id)
+                # Check if edge_node_info exists before using it
+                edge_node_info = nsx_resource_params.get("edge_node_info")
+                if edge_node_info:
+                    site_id = edge_node_info.get("site_id", "default")
+                    enforcementpoint_id = edge_node_info.get(
+                        "enforcementpoint_id", "default")
+                    edge_cluster_base_url = (
+                        EDGE_CLUSTER_URL.format(site_id, enforcementpoint_id))
+                    edge_cluster_id = self.get_id_using_attr_name_else_fail(
+                        "edge_cluster", edge_node_info,
+                        edge_cluster_base_url, "Edge Cluster")
+                    edge_node_base_url = EDGE_NODE_URL.format(
+                        site_id, enforcementpoint_id, edge_cluster_id)
+                    edge_node_id = self.get_id_using_attr_name_else_fail(
+                        "edge_node", edge_node_info, edge_node_base_url,
+                        'Edge Node')
+                    nsx_resource_params["edge_path"] = (
+                        edge_node_base_url + "/" + edge_node_id)
 
         class NSXTTier0LocaleServiceBGP(NSXTBaseRealizableResource):
             def __init__(self):
@@ -1999,7 +2029,8 @@ class NSXTTier0(NSXTBaseRealizableResource):
                                 type='str'
                             ),
                             summary_only=dict(
-                                type='bool'
+                                type='bool',
+                                default=True
                             )
                         )
                     )
