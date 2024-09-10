@@ -13,10 +13,11 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json, os, re
-from ansible.module_utils.urls import open_url, fetch_url
+from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
-from urllib.parse import urlparse, parse_qs, urlencode, unquote, urlunparse
+
+import six.moves.urllib.parse as urlparse
 
 def vmware_argument_spec():
     return dict(
@@ -44,30 +45,69 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
     else:
         client_cert = None
 
-    ca_path = get_certificate_file_path('NSX_MANAGER_CA_PATH')
+    if method == 'GET':
+        return get_all_results(
+            url, data, headers, method, use_proxy, force, last_mod_time,
+            timeout, validate_certs, url_username, url_password, http_agent,
+            force_basic_auth, ignore_errors, client_cert)
+    return _request(
+        url, data, headers, method, use_proxy, force, last_mod_time, timeout,
+        validate_certs, url_username, url_password, http_agent,
+        force_basic_auth, ignore_errors, client_cert)
+
+def get_all_results(
+        url, data, headers, method, use_proxy, force, last_mod_time, timeout,
+        validate_certs, url_username, url_password, http_agent,
+        force_basic_auth, ignore_errors, client_cert):
+    rc, resp = _request(
+        url, data, headers, method, use_proxy, force, last_mod_time, timeout,
+        validate_certs, url_username, url_password, http_agent,
+        force_basic_auth, ignore_errors, client_cert)
+    if rc != 200:
+        return rc, None
+    cursor = resp.get('cursor')
+    op = '&' if urlparse.urlparse(url).query else '?'
+    url += op + 'cursor='
     NULL_CURSOR_PREFIX = '0000'
+    while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
+        rc, page = _request(
+            url + cursor, data, headers, method, use_proxy, force,
+            last_mod_time, timeout, validate_certs, url_username,
+            url_password, http_agent, force_basic_auth, ignore_errors,
+            client_cert)
+        if rc != 200:
+            return rc, None
+        resp['results'].extend(page.get('results', []))
+        cursor = page.get('cursor')
+    return rc, resp
+
+def _request(url, data, headers, method, use_proxy,
+             force, last_mod_time, timeout, validate_certs,
+             url_username, url_password, http_agent, force_basic_auth,
+             ignore_errors, client_cert):
+    ca_path = get_certificate_file_path('NSX_MANAGER_CA_PATH')
     resp_data = None
-    page = None
     try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     client_cert=client_cert, force_basic_auth=force_basic_auth, ca_path=ca_path)
+        r = open_url(
+            url=url, data=data, headers=headers, method=method,
+            use_proxy=use_proxy, force=force, last_mod_time=last_mod_time,
+            timeout=timeout, validate_certs=validate_certs,
+            url_username=url_username, url_password=url_password,
+            http_agent=http_agent, client_cert=client_cert,
+            force_basic_auth=force_basic_auth, ca_path=ca_path)
     except HTTPError as err:
         r = err
 
     try:
-        raw_data = r.read()
+        raw_data = r.read().decode('utf-8')
         if raw_data:
             if is_json(raw_data):
                 resp_data = json.loads(raw_data)
             else:
                 resp_data = raw_data
-    except Exception as e:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(e)
+    except Exception:
+        if not ignore_errors:
+            raise
 
     resp_code = r.getcode()
 
@@ -75,31 +115,6 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         raise Exception(resp_code, resp_data)
     if not (resp_data is None) and resp_data.__contains__('error_code'):
         raise Exception (resp_data['error_code'], resp_data)
-    if resp_code != 200:
-        return resp_code, resp_data
-
-    elif resp_code == 200 and resp_data is not None:
-        cursor = resp_data.get('cursor', NULL_CURSOR_PREFIX)
-        parsed_url = urlparse(url)
-        query_params = parse_qs(parsed_url.query)
-        while cursor and not cursor.startswith(NULL_CURSOR_PREFIX):
-            if page is not None and isinstance(page, dict):
-                resp_data['results'].extend(page.get('results', []))
-                cursor = page.get('cursor', NULL_CURSOR_PREFIX)
-            if cursor == NULL_CURSOR_PREFIX:
-                return resp_code, resp_data
-
-            # Add or update the query parameter
-            query_params['cursor'] = cursor
-            # Reconstruct the URL with updated query parameters
-            updated_query = urlencode(query_params, doseq=True)
-            updated_url = unquote(urlunparse(parsed_url._replace(query=updated_query)))
-            resp_code, page = request(updated_url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                            force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                            url_username=url_username, url_password=url_password, http_agent=http_agent,
-                            force_basic_auth=force_basic_auth)
-
-        return resp_code, resp_data
     return resp_code, resp_data
 
 def get_certificate_string(crt_file):
