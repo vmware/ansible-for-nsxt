@@ -206,8 +206,8 @@ class PolicyCommunicator:
         request['request_url'] = url
         request['request_method'] = method
 
-        return hashlib.md5(json.dumps(request, sort_keys=True).
-                           encode('utf-8')).hexdigest()
+        return hashlib.sha256(
+            json.dumps(request, sort_keys=True).encode('utf-8')).hexdigest()
 
     def register_request(self, request_id):
         """
