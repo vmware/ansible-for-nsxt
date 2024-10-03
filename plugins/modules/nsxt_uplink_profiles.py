@@ -142,16 +142,16 @@ EXAMPLES = '''
       username: "admin"
       password: "Admin!23Admin"
       validate_certs: False
-      display_name: "uplinkProfile1",
+      display_name: "uplinkProfile1"
       mtu: 1600,
-      resource_type: "UplinkHostSwitchProfile",
+      resource_type: "UplinkHostSwitchProfile"
       teaming:
         active_list:
         - uplink_name: "uplink-1"
           uplink_type: PNIC
         policy: FAILOVER_ORDER
-      transport_vlan: 0,
-      state: "present",
+      transport_vlan: 0
+      state: "present"
 '''
 
 RETURN = '''# '''

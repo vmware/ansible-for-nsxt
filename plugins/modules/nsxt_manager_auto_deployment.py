@@ -74,8 +74,8 @@ EXAMPLES = '''
       validate_certs: False
       deployment_requests:
       - roles:
-      - MANAGER
-      - CONTROLLER
+      - MANAGER:
+      - CONTROLLER:
         form_factor: "MEDIUM"
         user_settings:
           cli_password: "Admin!23Admin"
@@ -95,11 +95,11 @@ EXAMPLES = '''
           - ip_addresses:
             - 10.112.201.25
             prefix_length: "19"
-           management_port_ipv6_subnets:
+            management_port_ipv6_subnets:
                 - ip_addresses:
                     - 2620:124:6020:1045::1c
                   prefix_length: "64"
-              default_ipv6_gateway_addresses:
+            default_ipv6_gateway_addresses:
                 - 2620:124:6020:1045::253
       state: present
 '''

@@ -73,10 +73,6 @@ options:
         description: Name of VM
         required: true
         type: 'str'
-    hostname:
-        description: Name of host
-        required: true 
-        type: 'str'
     dns_server:
         description: DNS server address
         required: true
