@@ -57,7 +57,7 @@ options:
         description: "Action can be either 'clear_virtual_ip' or 'clear_virtual_ip6'.
                       'clear_virtual_ip' is used to clear Virtual IPv4.
                       'clear_virtual_ip6' is used to clear Virtual IPv6."
-        required: true only if state is absent
+        required: true
     state:
         choices:
             - present
@@ -65,7 +65,7 @@ options:
         description: "State can be either 'present' or 'absent'.
                       'present' is used to create or update resource.
                       'absent' is used to delete resource."
-        required: true   
+        required: true
 '''
 
 EXAMPLES = '''

@@ -400,12 +400,10 @@ options:
                         type: list
                     lease_time:
                         description:
-                            - DHCP lease time in seconds. When specified, this
+                            - DHCP lease time in seconds (60 - 4294967295). When specified, this
                               property overwrites lease time configured DHCP
                               server config
-                            - Minimum: 60
-                            - Maximum: 4294967295
-                            - Default: "86400"
+                        default: 86400
                         type: int
                     resource_type:
                         description: Resource type
@@ -488,9 +486,9 @@ options:
                                     65 NIS+-Server-Addr
                                     66 TFTP Server-Name (used by PXE)
                                     67 Bootfile-Name (used by PXE)
-                                    93 PXE: Client system architecture
-                                    94 PXE: Client NDI
-                                    97 PXE: UUID/UNDI
+                                    93 PXE Client system architecture
+                                    94 PXE Client NDI
+                                    97 PXE UUID/UNDI
                                     117 Name Service Search
                                     119 Domain Search
                                     150 TFTP server address (used by PXE)
@@ -521,12 +519,11 @@ options:
                               allocation ranges
                         type: list
                     preferred_time:
+                        description:
                             - Property of SegmentDhcpV6Config
-                            - The length of time that a valid address is
+                            - The length of time (60-4294967295) that a valid address is
                               preferred. When the preferred lifetime expires,
                               the address becomes deprecated
-                            - Minimum: 60
-                            - Maximum: 4294967295
                         type: int
                     sntp_servers:
                         description:
@@ -561,15 +558,15 @@ options:
                 type: list
                 elements: dict
                 suboptions:
-                ip_address:
-                    description: IP Address for port binding.
-                    type: str
-                mac_address:
-                    description: Mac address for port binding.
-                    type: str
-                vlan_id:
-                    description: VLAN ID for port binding.
-                    type: str
+                    ip_address:
+                        description: IP Address for port binding.
+                        type: str
+                    mac_address:
+                        description: Mac address for port binding.
+                        type: str
+                    vlan_id:
+                        description: VLAN ID for port binding.
+                        type: str
             attachment:
                 description: VIF attachment.
                 type: dict
@@ -667,15 +664,15 @@ options:
                       supported.
                 type: dict
                 suboptions:
-                ip_address:
-                    description: IP Address for port binding.
-                    type: str
-                mac_address:
-                    description: Mac address for port binding.
-                    type: str
-                vlan_id:
-                    description: VLAN ID for port binding.
-                    type: str
+                    ip_address:
+                        description: IP Address for port binding.
+                        type: str
+                    mac_address:
+                        description: Mac address for port binding.
+                        type: str
+                    vlan_id:
+                        description: VLAN ID for port binding.
+                        type: str
             init_state:
                 description:
                     - Initial state of this logical ports
