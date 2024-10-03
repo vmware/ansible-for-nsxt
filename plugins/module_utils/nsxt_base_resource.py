@@ -25,6 +25,8 @@ from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.policy_com
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+import collections
+
 import sys
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
@@ -257,6 +259,18 @@ class NSXTBaseRealizableResource(ABC):
         # Should be overridden in the subclass if needed
         pass
 
+    def convert_to_ordered_data(self, data):
+        if isinstance(data, list):
+            data = sorted([self.convert_to_ordered_data(d) for d in data],
+                          key=str)
+        elif isinstance(data, dict):
+            # sort dict with keys
+            data = collections.OrderedDict(
+                sorted(data.items(), key=lambda d: d[0]))
+            for key in data:
+                data[key] = self.convert_to_ordered_data(data[key])
+        return data
+
     def check_for_update(self, existing_params, resource_params):
         """
             resource_params: dict
@@ -274,22 +288,23 @@ class NSXTBaseRealizableResource(ABC):
         for k, v in resource_params.items():
             if k not in existing_params:
                 return True
-            elif type(v).__name__ == 'dict':
+            elif isinstance(v, collections.OrderedDict):
                 if self.check_for_update(existing_params[k], v):
                     return True
             elif v != existing_params[k]:
-                def compare_lists(list1, list2):
+                def do_lists_differ(list1, list2):
                     # Returns True if list1 and list2 differ
-                    try:
-                        # If the lists can be converted into sets, do so and
-                        # compare lists as sets.
-                        set1 = set(list1)
-                        set2 = set(list2)
-                        return set1 != set2
-                    except Exception:
+                    if len(list1) != len(list2):
                         return True
-                if type(v).__name__ == 'list':
-                    if compare_lists(v, existing_params[k]):
+                    for e1, e2 in zip(list1, list2):
+                        if isinstance(e1, collections.OrderedDict):
+                            return self.check_for_update(e1, e2)
+                        elif isinstance(e1, list):
+                            return do_lists_differ(e1, e2)
+                        else:
+                            return e1 != e2
+                if isinstance(v, list):
+                    if do_lists_differ(existing_params[k], v):
                         return True
                     continue
                 return True
@@ -549,19 +564,47 @@ class NSXTBaseRealizableResource(ABC):
     def _extract_nsx_resource_params(self, resource_params):
         # extract the params belonging to this resource only.
         filtered_params = {}
-
-        def filter_with_spec(spec):
+        def filter_with_spec(spec, filtered_params, resource_params):
             for key in spec.keys():
                 if (key in resource_params and
                         resource_params[key] is not None):
-                    filtered_params[key] = resource_params[key]
+                    v = resource_params[key]
+                    current_spec = spec[key]
+                    current_spec_type = current_spec.get("type")
+                    if current_spec_type == 'dict':
+                        params = filter_with_spec(
+                            current_spec, {}, v)
+                        if params:
+                            filtered_params[key] = params
+                    elif current_spec_type == 'list' and v:
+                        if current_spec.get("elements") == "dict":
+                            all_params = []
+                            for element in v:
+                                params = filter_with_spec(
+                                    current_spec['options'], {}, element)
+                                if params:
+                                    all_params.append(params)
+                            if all_params:
+                                filtered_params[key] = all_params
+                        else:
+                            filtered_params[key] = v
+                    else:
+                        filtered_params[key] = v
+            return filtered_params
 
-        filter_with_spec(self.get_resource_spec())
-        filter_with_spec(self._get_base_arg_spec_of_nsx_resource())
+        filtered_params = filter_with_spec(
+            self.get_resource_spec(), filtered_params, resource_params)
+        filtered_params = filter_with_spec(
+            self._get_base_arg_spec_of_nsx_resource(), filtered_params,
+            resource_params)
         return filtered_params
 
     def _achieve_present_state(self, successful_resource_exec_logs):
         self.update_resource_params(self.nsx_resource_params)
+        self.nsx_resource_params = self.convert_to_ordered_data(
+            self.nsx_resource_params)
+        self.existing_resource = self.convert_to_ordered_data(
+            self.existing_resource)
         is_resource_updated = self.check_for_update(
             self.existing_resource, self.nsx_resource_params)
         if not is_resource_updated:
