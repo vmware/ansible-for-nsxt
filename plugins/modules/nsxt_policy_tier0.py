@@ -57,6 +57,30 @@ options:
             - 'ACTIVE_ACTIVE'
         default: 'ACTIVE_ACTIVE'
         type: str
+    stateful_services:
+            description: For ACTIVE-ACTIVE, this is used to enable/disable
+                        stateful services.
+            type: dict
+            suboptions:
+                enabled:
+                    description: Flag to enable ACTIVE-ACTIVE stateful services
+                    type: bool
+                    default: False
+                redirection_policy:
+                    description:
+                        - Redirection policy configuration
+                        - Redirection policy to load balance traffic among nodes
+                          IP_HASH: Hash Source IP or destination ip to redirect
+                          packet for load sharing and stateful services.
+                          NONE: Disable redirection. It requires user to define
+                          static traffic group per edge node and expects external
+                          router to forward return packet back to the same edge node.
+                          SRC_DST_IP_HASH: Hash both source and desitnation ip to
+                          redirect packet for load sharing. This mode doesn't support
+                          NAT and presumes source and destination IP remains same in
+                          either direction.
+                    type: str
+                    default: "IP_HASH"
     disable_firewall:
         description: Disable or enable gateway fiewall.
         default: False
@@ -1162,7 +1186,10 @@ EXAMPLES = '''
     validate_certs: False
     display_name: test-tier0-1
     state: present
-    ha_mode: "ACTIVE_STANDBY"
+    ha_mode: "ACTIVE_ACTIVE"
+    stateful_services:
+      enabled: True
+      redirection_policy: "IP_HASH"
     failover_mode: "PREEMPTIVE"
     disable_firewall: True
     force_whitelisting: True
@@ -1266,6 +1293,20 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 type='str',
                 default="ACTIVE_ACTIVE",
                 choices=['ACTIVE_STANDBY', 'ACTIVE_ACTIVE']
+            ),
+            stateful_services=dict(
+                required=False,
+                type='dict',
+                options=dict(
+                    enabled=dict(
+                        required=False,
+                        type='bool'
+                    ),
+                    redirection_policy=dict(
+                        default="IP_HASH",
+                        type='str'
+                    ),
+                )
             ),
             disable_firewall=dict(
                 required=False,
@@ -1450,6 +1491,15 @@ class NSXTTier0(NSXTBaseRealizableResource):
                 DHCP_RELAY_CONFIG_URL, "DhcpRelayConfig")
             nsx_resource_params["dhcp_config_paths"] = [
                 DHCP_RELAY_CONFIG_URL + "/" + dhcp_config_id]
+
+        if "stateful_services" in nsx_resource_params:
+            stateful_services = nsx_resource_params['stateful_services']
+            if stateful_services.get('enabled'):
+              ha_mode = nsx_resource_params['ha_mode']
+              if ha_mode != "ACTIVE_ACTIVE":
+                  self.exit_with_failure(msg="stateful_services can only be "
+                                        "enabled when ha_mode is set to "
+                                        "ACTIVE_ACTIVE")
 
         if 'vrf_config' in nsx_resource_params:
             # vrf config is attached
