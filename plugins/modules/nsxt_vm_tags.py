@@ -257,7 +257,7 @@ def realize():
                 scope_list=_read_tags_from_module_params(
                     module.params, 'remove_tags_with_scope'))
             for i, tag in enumerate(all_tags):
-                if TagElement(tag) in tags_to_remove:
+                if TagElement(tag).scope in [ex_tag.scope for ex_tag in tags_to_remove]:
                     all_tags[i] = None
 
         final_tags = [tag for tag in all_tags if tag is not None]
