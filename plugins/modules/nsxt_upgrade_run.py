@@ -62,7 +62,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import get_attribute_from_endpoint, clean_and_get_params, get_upgrade_orchestrator_node
 from ansible.module_utils._text import to_native
-# import ansible_collections.vmware.ansible_for_nsxt.plugins.modules.nsxt_upgrade_run_reverse_order as nsxt_upgrade_run_reverse_order
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.upgrade_reverse_order import trigger_upgrade_reverse_order
 
 def get_upgrade_status(module, manager_url, mgr_username, mgr_password, validate_certs):
