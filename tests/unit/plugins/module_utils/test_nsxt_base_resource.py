@@ -265,6 +265,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'message': ('NestedDummyNSXTResource with id dummy'
                                 ' created.'),
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy'
                 },
                 {
@@ -272,6 +273,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'resource_type': 'SubDummyResource1',
                     'message': 'SubDummyResource1 with id dummy1 created.',
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy1'
                 },
                 {
@@ -279,6 +281,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'resource_type': 'SubDummyResource2',
                     'message': 'SubDummyResource2 with id dummy2-1 created.',
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy2-1'
                 },
                 {
@@ -286,6 +289,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'resource_type': 'SubDummyResource2',
                     'message': 'SubDummyResource2 with id dummy2-2 created.',
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy2-2'
                 },
                 {
@@ -293,6 +297,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'resource_type': 'SubDummyResource3',
                     'message': 'SubDummyResource3 with id dummy3 created.',
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy3'
                 }
             ]
@@ -361,30 +366,36 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     "id": "dummy3"
                 }
             })
+
             expected_exec_logs = [
                 {
                     'msg': 'No SubDummyResource1 exist with id dummy1',
                     'changed': False,
+                    'diff': {'after': {}, 'before': {}},
                     'resource_type': 'SubDummyResource1'
                 },
                 {
                     'msg': 'No SubDummyResource2 exist with id dummy2-1',
                     'changed': False,
+                    'diff': {'after': {}, 'before': {}},
                     'resource_type': 'SubDummyResource2'
                 },
                 {
                     'msg': 'No SubDummyResource2 exist with id dummy2-2',
                     'changed': False,
+                    'diff': {'after': {}, 'before': {}},
                     'resource_type': 'SubDummyResource2'
                 },
                 {
                     'msg': 'No SubDummyResource3 exist with id dummy3',
                     'changed': False,
+                    'diff': {'after': {}, 'before': {}},
                     'resource_type': 'SubDummyResource3'
                 },
                 {
                     'msg': 'No NestedDummyNSXTResource exist with id dummy',
                     'changed': False,
+                    'diff': {'after': {}, 'before': {}},
                     'resource_type': 'NestedDummyNSXTResource'
                 }
             ]
@@ -415,10 +426,15 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 exec_logs = []
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
+                expected_exec_logs_nested = expected_exec_logs[4]
+                expected_exec_logs_nested['diff'] = {
+                    'after': {'display_name': 'dummy'},
+                    'before': {'display_name': None}
+                }
                 self.assertEqual(exec_logs[0], expected_exec_logs[3])
                 self.assertEqual(exec_logs[1:3], expected_exec_logs[1:3])
                 self.assertEqual(exec_logs[3], expected_exec_logs[0])
-                self.assertEqual(exec_logs[4], expected_exec_logs[4])
+                self.assertEqual(exec_logs[4], expected_exec_logs_nested)
 
             test_delete_base_resource_first()
             test_delete_sub_resource_first()
@@ -463,26 +479,31 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 {
                     'msg': 'No SubDummyResource1 exist with id dummy1',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource1'
                 },
                 {
                     'msg': 'No SubDummyResource2 exist with id dummy2-1',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource2'
                 },
                 {
                     'msg': 'No SubDummyResource2 exist with id dummy2-2',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource2'
                 },
                 {
                     'msg': 'No SubDummyResource3 exist with id dummy3',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource3'
                 },
                 {
                     'msg': 'No NestedDummyNSXTResource exist with id dummy',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'NestedDummyNSXTResource'
                 },
                 {
@@ -490,6 +511,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'resource_type': 'SubDummyResource2',
                     'message': 'SubDummyResource2 with id dummy2-1 created.',
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy2-1'
                 },
                 {
@@ -497,6 +519,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'resource_type': 'SubDummyResource2',
                     'message': 'SubDummyResource2 with id dummy2-2 created.',
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy2-2'
                 }
             ]
@@ -528,10 +551,15 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 nested_dummy_resource.realize(
                     successful_resource_exec_logs=exec_logs)
                 print(exec_logs)
+                expected_exec_logs_nested = expected_exec_logs[4]
+                expected_exec_logs_nested['diff'] = {
+                    'after': {'display_name': 'dummy'},
+                    'before': {'display_name': None}
+                }
                 self.assertEqual(exec_logs[0], expected_exec_logs[3])
                 self.assertEqual(exec_logs[1:3], expected_exec_logs[5:])
                 self.assertEqual(exec_logs[3], expected_exec_logs[0])
-                self.assertEqual(exec_logs[4], expected_exec_logs[4])
+                self.assertEqual(exec_logs[4], expected_exec_logs_nested)
 
             test_without_flag_achieve_subresource_state_if_del_parent()
             test_with_flag_achieve_subresource_state_if_del_parent()
@@ -576,26 +604,31 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 {
                     'msg': 'No SubDummyResource1 exist with id dummy1',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource1'
                 },
                 {
                     'msg': 'No SubDummyResource2 exist with id dummy2-1',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource2'
                 },
                 {
                     'msg': 'No SubDummyResource2 exist with id dummy2-2',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource2'
                 },
                 {
                     'msg': 'No SubDummyResource3 exist with id dummy3',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'SubDummyResource3'
                 },
                 {
                     'msg': 'No NestedDummyNSXTResource exist with id dummy',
                     'changed': False,
+                    "diff": {"after": {}, "before": {}},
                     'resource_type': 'NestedDummyNSXTResource'
                 },
                 {
@@ -604,6 +637,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                     'message': ('NestedDummyNSXTResource with id dummy'
                                 ' created.'),
                     'changed': True,
+                    "diff": {"after": {}, "before": {}},
                     'id': 'dummy'
                 }
             ]
@@ -623,109 +657,6 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         test_detached_delete_child()
 
         nsxt_base_resource.BASE_RESOURCES = init_base_resources
-
-    def test_check_for_update(self):
-        simple_dummy_resource = SimpleDummyNSXTResource()
-
-        def test_with_no_existing_resource():
-            self.assertFalse(simple_dummy_resource.check_for_update(
-                None, "dummy"))
-
-        def test_with_same_params():
-            existing_params = {"dummy": "dummy"}
-            resource_params = {"dummy": "dummy"}
-
-            self.assertFalse(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_diff_params_simple():
-            existing_params = {"dummy": "dummy"}
-            resource_params = {"dummy1": "dummy"}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_same_params_list_same_order():
-            existing_params = {"dummy": ["dummy1", "dummy2"]}
-            resource_params = {"dummy": ["dummy1", "dummy2"]}
-
-            self.assertFalse(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_same_params_list_different_order():
-            existing_params = {"dummy": ["dummy1", "dummy2"]}
-            resource_params = {"dummy": ["dummy2", "dummy1"]}
-
-            self.assertFalse(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_same_params_single_dict():
-            existing_params = {"dummy": {"dummy": "dummy"}}
-            resource_params = {"dummy": {"dummy": "dummy"}}
-
-            self.assertFalse(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_diff_params_single_dict():
-            existing_params = {"dummy": {"dummy": "dummy"}}
-            resource_params = {"dummy": {"dummy1": "dummy"}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-            existing_params = {"dummy": {"dummy": "dummy"}}
-            resource_params = {"dummy": {"dummy": "dummy1"}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-            existing_params = {"dummy": {"dummy": "dummy"}}
-            resource_params = {"dummy1": {"dummy": "dummy"}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_same_params_multilevel_dict():
-            existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
-            resource_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
-
-            self.assertFalse(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        def test_with_diff_params_multilevel_dict():
-            existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
-            resource_params = {"dummy1": {"dummy": {"dummy": "dummy"}}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-            existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
-            resource_params = {"dummy": {"dummy1": {"dummy": "dummy"}}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-            existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
-            resource_params = {"dummy": {"dummy": {"dummy1": "dummy"}}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-            existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
-            resource_params = {"dummy": {"dummy": {"dummy": "dummy1"}}}
-
-            self.assertTrue(simple_dummy_resource.check_for_update(
-                existing_params, resource_params))
-
-        test_with_no_existing_resource()
-        test_with_same_params()
-        test_with_diff_params_simple()
-        test_with_same_params_list_same_order()
-        test_with_same_params_list_different_order()
-        test_with_same_params_single_dict()
-        test_with_diff_params_single_dict()
-        test_with_same_params_multilevel_dict()
-        test_with_diff_params_multilevel_dict()
 
     def test_get_attribute(self):
         simple_dummy_resource = SimpleDummyNSXTResource()
@@ -856,6 +787,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             expected_exec_logs = [
                 {
                     "changed": False,
+                    "diff": {"after": {}, "before": {}},
                     "id": simple_dummy_resource.id,
                     "message": "%s with id %s already exists." %
                     (simple_dummy_resource.__class__.__name__,
@@ -899,6 +831,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
                 expected_exec_logs = [
                     {
                         "changed": True,
+                        "diff": {"after": {"dummy": "dummy"}, "before": {"dummy": None}},
                         "id": simple_dummy_resource.id,
                         "body": "OK",
                         "message": expected_message,
@@ -947,6 +880,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
 
         def test_when_resource_exists_but_policy_request_fails():
             simple_dummy_resource.existing_resource = {}
+            simple_dummy_resource.nsx_resource_params = {}
             mock_policy_communicator.request.return_value = Mock(
                 side_effect=Exception)
 
@@ -959,6 +893,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
 
         def test_when_resource_exists_and_policy_request_succeeds():
             simple_dummy_resource.existing_resource = {}
+            simple_dummy_resource.nsx_resource_params = {}
             mock_policy_communicator.request.side_effect = [
                 (200, "OK"),
                 Mock(side_effect=Exception)
@@ -968,6 +903,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             expected_exec_logs = [
                 {
                     "changed": True,
+                    "diff": {"before": {}, "after": {}},
                     "id": simple_dummy_resource.id,
                     "message": "%s with id %s deleted." %
                     (simple_dummy_resource.__class__.__name__,
@@ -986,6 +922,7 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
             expected_exec_logs = [
                 {
                     "changed": False,
+                    "diff": {"before": {}, "after": {}},
                     "msg": 'No %s exist with id %s' %
                     (simple_dummy_resource.__class__.__name__,
                      simple_dummy_resource.id),
