@@ -272,12 +272,12 @@ def realize():
             module.exit_json(msg="No tags detected to update")
 
         post_body = {
-            "external_id": virtual_machine_id,
             "tags": final_tags
         }
         policy_communicator.request(
-            VM_UPDATE_URL + '?action=update_tags', data=post_body,
-            method="POST", base_url='fabric')
+            VM_UPDATE_URL + '/' + virtual_machine_id + '/tags', data=post_body,
+            method="POST", base_url='policy')
+
         module.exit_json(msg="Successfully updated tags on VM {}".format(
             virtual_machine_id), changed=True)
     except Exception as err:
