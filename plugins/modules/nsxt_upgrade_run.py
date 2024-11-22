@@ -62,6 +62,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import get_attribute_from_endpoint, clean_and_get_params, get_upgrade_orchestrator_node
 from ansible.module_utils._text import to_native
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.upgrade_reverse_order import trigger_upgrade_reverse_order
 
 def get_upgrade_status(module, manager_url, mgr_username, mgr_password, validate_certs):
   '''
@@ -185,6 +186,16 @@ def check_continuity(module, manager_url, mgr_username, mgr_password, validate_c
     can_continue = True
     is_failed = True
     return can_continue, is_failed
+  
+def fetch_target_version(module, manager_url, mgr_username, mgr_password,
+                     validate_certs):
+  try:
+    target_version = get_attribute_from_endpoint(module, manager_url, '/upgrade/summary',
+                      mgr_username, mgr_password, validate_certs, 'target_version',
+                      False)
+  except Exception as err:
+    return
+  return target_version
 
 def main():
   argument_spec = vmware_argument_spec()
@@ -204,6 +215,12 @@ def main():
                                             mgr_password, headers, validate_certs)
   
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
+
+  target_version = fetch_target_version(module, manager_url, mgr_username, mgr_password,
+                     validate_certs)
+  
+  if int(target_version[0])>=9 :
+    trigger_upgrade_reverse_order(module, mgr_hostname, mgr_username, mgr_password, validate_certs)
 
   if module.check_mode:
     if paused_upgrade:

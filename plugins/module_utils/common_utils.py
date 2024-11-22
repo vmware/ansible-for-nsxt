@@ -70,7 +70,7 @@ def get_attribute_from_endpoint(module, manager_url, endpoint, mgr_username,
             module.fail_json(msg='Error while retrieving'
                              ' %s. Error [%s]' % (attribute_name, to_native(err)))
         else:
-            pass
+            return None
     if resp.__contains__(attribute_name):
         return resp[attribute_name]
     return None
