@@ -36,7 +36,7 @@ def check_upgrade_status_at_start(module, manager_url, mgr_username, mgr_passwor
    if overall_upgrade_status == 'PAUSED' :
       if upgrade_status_summary['component_status'][0]['status'] == 'SUCCESS':
          MP_UPGRADE_DONE = True
-  
+
    return overall_upgrade_status
 
 def get_upgrade_status_summary(module, manager_url, mgr_username, mgr_password, validate_certs , ignore_errors):
@@ -83,8 +83,7 @@ def check_component_upgrade_completion_status(module, manager_url, mgr_username,
                 MP_UPGRADE_DONE = True
             return
         
-      elapsed_time = time.time - component_upgrade_start_time
-         
+      elapsed_time = time.time() - component_upgrade_start_time
       if MP_UPGRADE_DONE and count_upgrade_status_api_no_resp >= 5:
         module.fail_json(msg='Error while triggering api:'
                     ' %s. API failed 5 times' %UPGRADE_STATUS_SUMMARY_API)
@@ -95,7 +94,7 @@ def check_component_upgrade_completion_status(module, manager_url, mgr_username,
        
 
 def check_component_statuses(module, component_status_list):
-    for component_status in enumerate(component_status_list):
+    for component_status in component_status_list:
         if component_status['status'] == 'FAILED':
             module.fail_json(msg='Failed to upgrade system as Component : %s'
                         'has Status : %s ' %(component_status['component_type'], component_status['status']))
