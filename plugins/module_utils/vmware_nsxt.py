@@ -154,10 +154,10 @@ def get_private_key_string(p12_file):
     certificate_string = ""
     got_start_line = False
     for string in file_content:
-        if re.match("-+BEGIN[ \w]+PRIVATE[ ]+KEY-+", string):
+        if re.match(r"-+BEGIN[ \w]+PRIVATE[ ]+KEY-+", string):
             got_start_line = True
             certificate_string = certificate_string + string + "\n"
-        elif re.match("-+END[ \w]+PRIVATE[ ]+KEY-+", string):
+        elif re.match(r"-+END[ \w]+PRIVATE[ ]+KEY-+", string):
             certificate_string = certificate_string + "\n" + string
             break
         elif got_start_line:
