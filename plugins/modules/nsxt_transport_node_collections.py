@@ -81,7 +81,7 @@ options:
 
 EXAMPLES = '''
 - name: Create transport node collection
-    nsxt_transport_node_collections:
+  nsxt_transport_node_collections:
       hostname: "{{hostname}}"
       username: "{{username}}"
       password: "{{password}}"

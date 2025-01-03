@@ -488,9 +488,9 @@ options:
                                     65 NIS+-Server-Addr
                                     66 TFTP Server-Name (used by PXE)
                                     67 Bootfile-Name (used by PXE)
-                                    93 PXE: Client system architecture
-                                    94 PXE: Client NDI
-                                    97 PXE: UUID/UNDI
+                                    93 PXE Client system architecture
+                                    94 PXE Client NDI
+                                    97 PXE UUID/UNDI
                                     117 Name Service Search
                                     119 Domain Search
                                     150 TFTP server address (used by PXE)
@@ -521,6 +521,7 @@ options:
                               allocation ranges
                         type: list
                     preferred_time:
+                        description:
                             - Property of SegmentDhcpV6Config
                             - The length of time that a valid address is
                               preferred. When the preferred lifetime expires,

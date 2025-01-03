@@ -85,9 +85,9 @@ EXAMPLES = '''
     username: "admin"
     password: "Admin!23Admin"
     validate_certs: False
-    client_id: "OAuth2Client_NsxClientId",
+    client_id: "OAuth2Client_NsxClientId"
     client_secret: "23424234234234"
-    host_name: "lbhost_vidm.eng.vmware.com",
+    host_name: "lbhost_vidm.eng.vmware.com"
     lb_enable: False
     node_host_name: "jt-vidm.eng.vmware.com"
     thumbprint: "898b75618e3e56615d53f987a720ff22b6381f4b85bec1eb973214ff7361f8b8"
