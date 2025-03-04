@@ -917,7 +917,7 @@ options:
                                              255
                                 type: int
                                 default: 1
-                            address:
+                            neighbor_address:
                                 description: Neighbor IP Address
                                 type: str
                                 required: True
@@ -1207,7 +1207,7 @@ EXAMPLES = '''
               summary_only: False
           neighbors:
             - display_name: neigh1
-              address: "1.2.3.4"
+              neighbor_address: "1.2.3.4"
               remote_as_num: "12"
               state: present
         interfaces:
