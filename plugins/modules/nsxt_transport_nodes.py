@@ -724,10 +724,10 @@ def get_tn_from_display_name(module, manager_url, mgr_username, mgr_password, va
     return None
 
 def get_dn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name):
-  transport_nodes = get_discovered_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
-  for transport_node in transport_nodes['results']:
-    if transport_node.__contains__('display_name') and transport_node['display_name'] == display_name:
-      return transport_node
+  discovered_nodes = get_discovered_nodes(module, manager_url, mgr_username, mgr_password, validate_certs)
+  for discovered_node in discovered_nodes['results']:
+    if discovered_node.__contains__('display_name') and discovered_node['display_name'] == display_name:
+      return discovered_node
   return None
 
 def get_host_switch_id_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, endpoint,
