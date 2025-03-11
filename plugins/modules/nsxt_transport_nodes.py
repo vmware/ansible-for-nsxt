@@ -1084,8 +1084,10 @@ def main():
   display_name = module.params['display_name']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
-  discovered_node_dict = get_dn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                 display_name)
+  if transport_node_params.__contains__('node_deployment_info') and transport_node_params['node_deployment_info'].__contains__('display_name'):
+    dn_display_name = transport_node_params['node_deployment_info']['display_name']
+    discovered_node_dict = get_dn_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs,
+                                                 dn_display_name)
   discovered_node_id, revision, node_deployment_revision = None, None, None
   if discovered_node_dict:
     discovered_node_id = discovered_node_dict['external_id']

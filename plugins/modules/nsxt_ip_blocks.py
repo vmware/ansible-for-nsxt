@@ -99,7 +99,7 @@ def get_ip_block_params(args=None):
 
 def get_ip_blocks(module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
-      (rc, resp) = request(manager_url+ '/pools/ip-blocks', headers=dict(Accept='application/json'),
+      (rc, resp) = request(manager_url+ '/infra/ip-blocks', headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
       module.fail_json(msg='Error accessing ip blocks. Error [%s]' % (to_native(err)))
@@ -136,7 +136,7 @@ def main():
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
   display_name = module.params['display_name']
-  manager_url = 'https://{}/api/v1'.format(mgr_hostname)
+  manager_url = 'https://{}/policy/api/v1'.format(mgr_hostname)
 
   block_dict = get_ip_block_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   block_id, revision = None, None
@@ -157,12 +157,12 @@ def main():
       try:
           if block_id:
               module.exit_json(changed=False, id=block_id, message="IP block with display_name %s already exist."% module.params['display_name'])
-          (rc, resp) = request(manager_url+ '/pools/ip-blocks', data=request_data, headers=headers, method='POST',
+          (rc, resp) = request(f"{manager_url}/infra/ip-blocks/{display_name}", data=request_data, headers=headers, method='PATCH',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
           module.fail_json(msg="Failed to add ip block. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="IP block with display name %s created." % module.params['display_name'])
+      module.exit_json(changed=True, body= str(resp), message="IP block with display name %s created." % module.params['display_name'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(ip_block_params)), id=block_id)
@@ -171,13 +171,13 @@ def main():
       request_data = json.dumps(ip_block_params)
       id = block_id
       try:
-          (rc, resp) = request(manager_url+ '/pools/ip-blocks/%s' % id, data=request_data, headers=headers, method='PUT',
+          (rc, resp) = request(f"{manager_url}/infra/ip-blocks/{id}", data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
           module.fail_json(msg="Failed to update ip block with id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
 
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="ip block with block id %s updated." % id)
+      module.exit_json(changed=True, body= str(resp), message="ip block with block id %s updated." % id)
 
   elif state == 'absent':
     # delete the array
@@ -187,7 +187,7 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True, debug_out=str(json.dumps(ip_block_params)), id=id)
     try:
-        (rc, resp) = request(manager_url + "/pools/ip-blocks/%s" % id, method='DELETE',
+        (rc, resp) = request(f"{manager_url}/infra/ip-blocks/{id}", method='DELETE',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
     except Exception as err:
         module.fail_json(msg="Failed to delete ip block with id %s. Error[%s]." % (id, to_native(err)))

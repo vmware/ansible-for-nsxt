@@ -43,11 +43,10 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        resource_type: "TransportZone"
+        resource_type: "PolicyTransportZone"
         display_name: "{{item.display_name}}"
         description: "NSX configured Test Transport Zone"
-        transport_type: "{{item.transport_type}}"
-        host_switch_name: "{{item.host_switch_name}}"
+        tz_type: "{{item.tz_type}}"
         state: "present"
       with_items:
         - "{{transportzones}}"
@@ -60,7 +59,6 @@
         validate_certs: False
         resource_type: UplinkHostSwitchProfile
         display_name: "{{item.display_name}}"
-        mtu: 1600
         teaming: "{{item.teaming}}"
         transport_vlan: "{{item.transport_vlan}}"
         state: "present"
@@ -73,13 +71,12 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        resource_type: TransportNodeProfile
+        resource_type: PolicyHostTransportNodeProfile
         display_name: "{{item.display_name}}"
         description: NSX configured Test Transport Node Profile
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
           host_switches: "{{item.host_switches}}"
-        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
         state: present
       with_items:
         - "{{transport_node_profiles}}"

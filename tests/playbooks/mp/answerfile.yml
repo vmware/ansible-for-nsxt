@@ -13,6 +13,8 @@ ip_pools:
     - start: "10.112.201.28"
       end: "10.112.201.35"
     cidr: "10.112.201.0/24"
+    resource_type: "IpAddressPoolStaticSubnet"
+    name: subnet-1
 
 transportzones:
 - display_name: "TZ1"
@@ -38,28 +40,29 @@ uplink_profiles:
 
 host_transport_nodes:
 - display_name: TN1
+  resource_type: "HostTransportNode"
   host_switches:
   - host_switch_profiles:
     - name: uplinkProfile1
       type: UplinkHostSwitchProfile
     host_switch_name: hostswitch1
-    host_switch_mode: STANDARD
-    pnics:
-    - device_name: "vmnic1"
-      uplink_name: "uplink-1"
+    host_switch_mode: ENS_INTERRUPT
+#    host_switch_mode: STANDARD
+    host_switch_type: VDS
+    uplinks:
+    - vds_uplink_name: Uplink 1
+      uplink_name: uplink-1
     ip_assignment_spec:
       resource_type: StaticIpPoolSpec
       ip_pool_name: "IPPool-IPV4-1"
     transport_zone_endpoints:
     - transport_zone_name: "TZ1"
-  transport_zone_endpoints:
-  - transport_zone_name: "TZ1"
   node_deployment_info:
     resource_type: "HostNode"
     display_name: "Host_1"
     ip_addresses: ["10.161.136.35"]
     os_type: "ESXI"
-    os_version: "6.5.0"
+    os_version: "9.0.0"
     host_credential:
       username: "root"
       password: "ca$hc0w"
@@ -117,18 +120,20 @@ edge_transport_nodes:
       allow_ssh_root_login: true
       enable_ssh: true
       hostname: "edge.vmware.com"
-      
+
 transport_node_profiles:
 - display_name: TNP1
   host_switches:
   - host_switch_profiles:
     - name: uplinkProfile1
       type: UplinkHostSwitchProfile
-    host_switch_name: hostswitch1
+#    host_switch_name: hostswitch1
+    host_switch_id: "50 17 4c 3f 86 bf 44 be-11 6f 69 80 90 f7 22 21"
     host_switch_mode: STANDARD
-    pnics:
-    - device_name: vmnic1
-      uplink_name: "uplink-1"
+    host_switch_type: VDS
+    uplinks:
+    - vds_uplink_name: Uplink 1
+      uplink_name: uplink-1
     ip_assignment_spec:
       resource_type: StaticIpPoolSpec
       ip_pool_name: "IPPool-IPV4-1"

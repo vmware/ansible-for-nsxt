@@ -24,13 +24,14 @@
         netmask: "255.255.224.0"
         admin_password: "Admin!23Admin"
         cli_password: "Admin!23Admin"
-        path_to_ova: "http://build-squid.eng.vmware.com/build/mts/release/bora-8411846/publish/nsx-unified-appliance/exports/ovf"
-        ova_file: "nsx-unified-appliance-2.2.0.0.0.8411854.ovf"
-        vcenter: "10.161.244.213"
+        path_to_ova: "http://build-squid.vcfd.broadcom.net/build/mts/release/bora-24563316/publish/nsx-unified-appliance/exports/ovf"
+        ova_file: "nsx-unified-appliance-9.0.0.0.24562919.ovf"
+        vcenter: "10.162.72.205"
         vcenter_user: "administrator@vsphere.local"
         vcenter_passwd: "Admin!23"
         deployment_size: "small"
-        role: "nsx-manager nsx-controller"
+        role: "NSX Manager"
+#        role: "nsx-manager nsx-controller"
 
     - name: Check manager status
       vmware.ansible_for_nsxt.nsxt_manager_status:
@@ -46,8 +47,8 @@
           username: "{{username}}"
           password: "{{password}}"
           validate_certs: False
-          display_name: "vCenter"
-          server: "10.161.244.213"
+          display_name: "VC1"
+          server: "10.162.72.205"
           origin_type: vCenter
           credential:
             credential_type: UsernamePasswordLoginCredential
@@ -57,37 +58,37 @@
           state: present
       register: compute_manager
 
-    - name: Deploy controller
-      vmware.ansible_for_nsxt.nsxt_controllers:
-          hostname: "{{hostname}}"
-          username: "{{username}}"
-          password: "{{password}}"
-          validate_certs: False
-          deployment_requests:
-          - roles:
-            - CONTROLLER
-            form_factor: "MEDIUM"
-            user_settings:
-              cli_password: "Admin!23Admin"
-              root_password: "Admin!23Admin"
-            deployment_config:
-              placement_type: VsphereClusterNodeVMDeploymentConfig
-              vc_id: "{{compute_manager.id}}"
-              management_network_id: "network-44"
-              hostname: "controller-1"
-              compute_id: "domain-c49"
-              storage_id: "datastore-43"
-              default_gateway_addresses:
-              - 11.122.203.253
-              management_port_subnets:
-              - ip_addresses:
-                - 11.142.201.25
-                prefix_length: "19"
-          clustering_config:
-            clustering_type: ControlClusteringConfig
-            shared_secret: "123456"
-            join_to_existing_cluster: false
-          state: present
+#    - name: Deploy controller
+#      vmware.ansible_for_nsxt.nsxt_controllers:
+#          hostname: "{{hostname}}"
+#          username: "{{username}}"
+#          password: "{{password}}"
+#          validate_certs: False
+#          deployment_requests:
+#          - roles:
+#            - CONTROLLER
+#            form_factor: "MEDIUM"
+#            user_settings:
+#              cli_password: "Admin!23Admin"
+#              root_password: "Admin!23Admin"
+#            deployment_config:
+#              placement_type: VsphereClusterNodeVMDeploymentConfig
+#              vc_id: "{{compute_manager.id}}"
+#              management_network_id: "network-44"
+#              hostname: "controller-1"
+#              compute_id: "domain-c49"
+#              storage_id: "datastore-43"
+#              default_gateway_addresses:
+#              - 11.122.203.253
+#              management_port_subnets:
+#              - ip_addresses:
+#                - 11.142.201.25
+#                prefix_length: "19"
+#          clustering_config:
+#            clustering_type: ControlClusteringConfig
+#            shared_secret: "123456"
+#            join_to_existing_cluster: false
+#          state: present
 
     - name: Create ip pool
       vmware.ansible_for_nsxt.nsxt_ip_pools:
@@ -110,8 +111,7 @@
         resource_type: "TransportZone"
         display_name: "{{item.display_name}}"
         description: "NSX configured Test Transport Zone"
-        transport_type: "{{item.transport_type}}"
-        host_switch_name: "{{item.host_switch_name}}"
+        tz_type: "{{item.tz_type}}"
         #zone_id: "21ff0e36-1624-4c18-be2f-070513079185"
         state: "present"
       with_items:
@@ -138,7 +138,6 @@
         validate_certs: False
         resource_type: UplinkHostSwitchProfile
         display_name: "{{item.display_name}}"
-        mtu: 1600
         teaming: "{{item.teaming}}"
         transport_vlan: "{{item.transport_vlan}}"
         state: "present"
@@ -151,16 +150,15 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        resource_type: TransportNode
+#        resource_type: TransportNode
         display_name: "{{item.display_name}}"
         description: NSX configured Test Transport Node
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
           host_switches: "{{item.host_switches}}"
-        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
-        fabric_node_name: "{{item.fabric_node_name}}"
+        node_deployment_info: "{{item.node_deployment_info}}"
         state: present
       with_items:
-        - "{{transport_nodes}}"
+        - "{{host_transport_nodes}}"
 
 #- debug: var=deploy_nsx_ova
