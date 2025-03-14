@@ -1127,7 +1127,8 @@ class NSXTSegment(NSXTBaseRealizableResource):
                 nsx_resource_params['advanced_config'][
                     'address_pool_paths'] = address_pool_paths
 
-        self._updateSubnetsAsPerIpvType(nsx_resource_params)
+        if nsx_resource_params.__contains__('subnets'):
+            self._updateSubnetsAsPerIpvType(nsx_resource_params)
 
     def _updateSubnetsAsPerIpvType(self, nsx_resource_params):
         subnets = nsx_resource_params.get('subnets', [])
