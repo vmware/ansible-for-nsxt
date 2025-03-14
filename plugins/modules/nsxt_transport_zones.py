@@ -128,6 +128,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.common_utils import diff_for_update
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
 from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.nsxt_resource_urls import TRANSPORT_ZONE_URL
 from ansible.module_utils._text import to_native
@@ -170,35 +171,6 @@ def get_tz_from_display_name(module, manager_url, mgr_username, mgr_password, va
   return None
 
 
-def check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs, transport_zone_params, transport_zone_base_url):
-  existing_transport_zone = get_tz_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs,
-                                                     transport_zone_params['display_name'], transport_zone_base_url)
-  if existing_transport_zone is None:
-    return False
-  if existing_transport_zone.__contains__('is_default') and transport_zone_params.__contains__('is_default') and \
-          existing_transport_zone['is_default'] != transport_zone_params['is_default']:
-    return True
-  if not existing_transport_zone.__contains__('description') and transport_zone_params.__contains__('description'):
-    return True
-  if existing_transport_zone.__contains__('description') and not transport_zone_params.__contains__('description'):
-    return True
-  if existing_transport_zone.__contains__('description') and transport_zone_params.__contains__('description') and \
-          existing_transport_zone['description'] != transport_zone_params['description']:
-    return True
-  if not existing_transport_zone.__contains__('uplink_teaming_policy_names') and transport_zone_params.__contains__(
-          'uplink_teaming_policy_names'):
-    return True
-  if existing_transport_zone.__contains__('uplink_teaming_policy_names') and not transport_zone_params.__contains__(
-          'uplink_teaming_policy_names'):
-    return True
-  if existing_transport_zone.__contains__('uplink_teaming_policy_names') and transport_zone_params.__contains__(
-          'uplink_teaming_policy_names') and \
-          existing_transport_zone['uplink_teaming_policy_names'] != transport_zone_params[
-    'uplink_teaming_policy_names']:
-    return True
-  return False
-
-
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
@@ -225,6 +197,11 @@ def main():
   zone_dict = get_tz_from_display_name(module, manager_url, mgr_username, mgr_password, validate_certs, display_name,
                                        transport_zone_base_url)
   zone_id, revision = None, None
+  updated, diff = diff_for_update(existing_params=zone_dict,
+                                  resource_params=transport_zone_params,
+                                  strict_keys=['is_default', 'description', 'uplink_teaming_policy_names'],
+                                  lazy_keys=['is_default'])
+
   if zone_dict:
     zone_id = zone_dict['id']
     revision = zone_dict['_revision']
@@ -232,19 +209,19 @@ def main():
   if state == 'present':
     headers = dict(Accept="application/json")
     headers['Content-Type'] = 'application/json'
-    updated = check_for_update(module, manager_url, mgr_username, mgr_password, validate_certs,
-                               transport_zone_params, transport_zone_base_url)
 
     if not updated:
       # add the node
       if module.check_mode:
-        module.exit_json(changed=True, debug_out=str(json.dumps(transport_zone_params)), id='12345')
+        module.exit_json(changed=False, debug_out=str(json.dumps(transport_zone_params)), diff=diff, id='12345')
       request_data = json.dumps(transport_zone_params)
       try:
         if zone_id:
-          module.exit_json(changed=False, id=zone_id,
-                           message="Transport zone with display_name %s already exist." % module.params[
-                             'display_name'])
+          module.exit_json(changed=False,
+                           diff=diff,
+                           id=zone_id,
+                           message="Transport zone with display_name %s already exist." % module.params['display_name'])
+
         (rc, resp) = request(manager_url + transport_zone_base_url + '/%s' % module.params['display_name'],
                              data=request_data, headers=headers, method='PUT',
                              url_username=mgr_username, url_password=mgr_password,
@@ -253,11 +230,14 @@ def main():
         module.fail_json(
           msg="Failed to add transport zone. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body=str(resp),
+      module.exit_json(changed=True,
+                       diff=diff,
+                       id=resp["id"],
+                       body=str(resp),
                        message="Transport zone with display name %s created. " % (module.params['display_name']))
     else:
       if module.check_mode:
-        module.exit_json(changed=True, debug_out=str(json.dumps(transport_zone_params)), id=zone_id)
+        module.exit_json(changed=True, debug_out=str(json.dumps(transport_zone_params)), diff=diff, id=zone_id)
 
       transport_zone_params['_revision'] = revision  # update current revision
       request_data = json.dumps(transport_zone_params)
@@ -272,16 +252,16 @@ def main():
           id, request_data, to_native(err)))
 
       time.sleep(5)
-      module.exit_json(changed=True, id=resp["id"], body=str(resp),
+      module.exit_json(changed=True, diff=diff, id=resp["id"], body=str(resp),
                        message="Transport zone with zone id %s updated." % id)
 
   elif state == 'absent':
     # delete the array
     id = zone_id
     if id is None:
-      module.exit_json(changed=False, msg='No transport zone exist with display name %s' % display_name)
+      module.exit_json(changed=False, diff=diff, msg='No transport zone exist with display name %s' % display_name)
     if module.check_mode:
-      module.exit_json(changed=True, debug_out=str(json.dumps(transport_zone_params)), id=id)
+      module.exit_json(changed=True, debug_out=str(json.dumps(transport_zone_params)), diff=diff, id=id)
     try:
       (rc, resp) = request(manager_url + transport_zone_base_url + "/%s" % id, method='DELETE',
                            url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
@@ -289,7 +269,7 @@ def main():
       module.fail_json(msg="Failed to delete transport zone with id %s. Error[%s]." % (id, to_native(err)))
 
     time.sleep(5)
-    module.exit_json(changed=True, object_name=id, message="Transport zone with zone id %s deleted." % id)
+    module.exit_json(changed=True, diff=diff, object_name=id, message="Transport zone with zone id %s deleted." % id)
 
 
 if __name__ == '__main__':
