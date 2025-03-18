@@ -206,3 +206,21 @@ def is_json(myjson):
     except ValueError as e:
         return False
     return True
+
+def version_tuple(v):
+    return tuple(map(int, (v.split("."))))[:3] # Ignore build number
+
+def get_nsx_version(module, manager_url, mgr_username, mgr_password, validate_certs):
+    try:
+        (rc, resp) = request(manager_url+ '/node/version', headers=dict(Accept='application/json'),
+                             url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
+    except Exception as err:
+        module.fail_json(msg='Failed to retrieve NSX version. Error [%s]' % (to_native(err)))
+    return resp
+
+def validate_nsx_mp_support(module, manager_url, mgr_username, mgr_password, validate_certs):
+    version = get_nsx_version(module, manager_url, mgr_username, mgr_password, validate_certs)
+
+    # MP resources deprecated since v9.0.0
+    if version_tuple(version["product_version"]) >= version_tuple("9.0.0"):
+        module.fail_json(msg='NSX v9.0.0 and above do not support MP resources.')

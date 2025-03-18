@@ -4,3 +4,5 @@
 .DS_Store
 # test output
 *.retry
+# JetBrains project dir
+.idea
