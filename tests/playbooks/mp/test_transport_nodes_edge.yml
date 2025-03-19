@@ -4,8 +4,6 @@
 - hosts: 127.0.0.1
   connection: local
   become: yes
-  vars_files:
-    - answerfile.yml
   tasks:
     - name: Create edge transport nodes
       vmware.ansible_for_nsxt.nsxt_transport_nodes:
@@ -13,11 +11,12 @@
         username: "{{username}}"
         password: "{{password}}"
         validate_certs: False
-        display_name: "{{item.display_name}}"
+        display_name: "{{display_name}}"
         description: "Edge transport node ansible"
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
           host_switches: "{{item.host_switches}}"
+        transport_zone_endpoints: "{{item.transport_zone_endpoints}}"
         node_deployment_info: "{{item.node_deployment_info}}"
         state: present
       with_items:

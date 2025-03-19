@@ -19,6 +19,7 @@
         host_switch_spec:
           resource_type: StandardHostSwitchSpec
           host_switches: "{{ item.host_switches }}"
+        transport_zone_endpoints: "{{ item.transport_zone_endpoints }}"
         state: "{{ state }}"
       with_items:
         - "{{ transport_node_profiles }}"

@@ -16,7 +16,8 @@
         resource_type: "TransportZone"
         display_name: "{{ item.display_name }}"
         description: "{{ item.description }}"
-        tz_type: "{{item.tz_type}}"
+        transport_type: "{{ item.transport_type }}"
+        host_switch_name: "{{ item.host_switch_name }}"
         state: "{{ state }}"
       with_items:
         - "{{ transport_zones }}"

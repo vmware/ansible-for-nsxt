@@ -43,18 +43,20 @@
     {
       "display_name": "Overlay-TZ",
       "description": "NSX Configured Overlay Transport Zone",
-      "tz_type": "OVERLAY_BACKED"
+      "transport_type": "OVERLAY",
+      "host_switch_name": "nvds"
     },
     {
       "display_name": "VLAN-TZ",
       "description": "NSX Configured VLAN Transport Zone",
-      "tz_type": "VLAN_BACKED"
+      "transport_type": "VLAN",
+      "host_switch_name": "nvds"
     }
   ],
 
   "ip_pools": [
     {
-      "display_name": "TEP-IP-Pool",
+      "display_name": "to-del-TEP-IP-Pool",
       "pool_static_subnets": [
         {
           "display_name": "TEP_ip_pool_subnet",
@@ -92,11 +94,11 @@
           "pnics": [],
           "uplinks": [
             {
-              "vds_uplink_name": "Uplink 1",
+              "vds_uplink_name": "uplink1",
               "uplink_name": "uplink-1"
             },
             {
-              "vds_uplink_name": "Uplink 2",
+              "vds_uplink_name": "uplink2",
               "uplink_name": "uplink-2"
             }
           ],
@@ -110,7 +112,8 @@
             }
           ]
         }
-      ]
+      ],
+      "transport_zone_endpoints": []
     }
   ],
 
@@ -161,6 +164,7 @@
           ]
         }
       ],
+      "transport_zone_endpoints": [],
       "node_deployment_info": {
         "deployment_type": "VIRTUAL_MACHINE",
         "deployment_config": {
@@ -174,8 +178,8 @@
             "host": "10.114.200.7",
             "data_networks": [
               "VM Network",
-#              "lab-dvpg",
-#              "lab-dvpg"
+              "lab-dvpg",
+              "lab-dvpg"
             ],
             "default_gateway_addresses": [ "10.114.200.1" ],
             "management_network": "VM Network",
