@@ -62,14 +62,12 @@ RETURN = '''# '''
 
 def main():
   argument_spec = vmware_argument_spec()
-  #raise ValueError(argument_spec)
   module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
   mgr_hostname = module.params['hostname']
   mgr_username = module.params['username']
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
-  #raise ValueError(argument_spec)
   manager_url = 'https://{}/policy/api/v1'.format(mgr_hostname)
 
   changed = False

@@ -95,7 +95,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request, get_nsx_version, version_tuple
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request, validate_nsx_mp_support
 from ansible.module_utils._text import to_native
 
 def get_ip_pool_params(args=None):
@@ -138,13 +138,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     return False
 
-def validate_mp_resource_support(module, manager_url, mgr_username, mgr_password, validate_certs):
-    version = get_nsx_version(module, manager_url, mgr_username, mgr_password, validate_certs)
-
-    # MP resources deprecated since v9.0.0
-    if version_tuple(version["product_version"]) >= version_tuple("9.0.0"):
-        module.fail_json(msg='NSX v9.0.0 and above do not support MP resources in nsxt_ip_pools.py. Please use nsxt_policy_ip_pool.py module.')
-
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
@@ -164,7 +157,8 @@ def main():
   display_name = module.params['display_name']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
-  validate_mp_resource_support(module, manager_url, mgr_username, mgr_password, validate_certs)
+  err_msg = 'NSX v9.0.0 and above do not support MP resources in nsxt_ip_pools.py. Please use nsxt_policy_ip_pool.py module.'
+  validate_nsx_mp_support(module, manager_url, mgr_username, mgr_password, validate_certs, err_msg)
 
   pool_dict = get_ip_pool_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   pool_id, revision = None, None
