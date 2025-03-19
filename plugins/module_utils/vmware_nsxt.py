@@ -218,9 +218,11 @@ def get_nsx_version(module, manager_url, mgr_username, mgr_password, validate_ce
         module.fail_json(msg='Failed to retrieve NSX version. Error [%s]' % (to_native(err)))
     return resp
 
-def validate_nsx_mp_support(module, manager_url, mgr_username, mgr_password, validate_certs):
+def validate_nsx_mp_support(module, manager_url, mgr_username, mgr_password, validate_certs, err_msg=None):
     version = get_nsx_version(module, manager_url, mgr_username, mgr_password, validate_certs)
 
     # MP resources deprecated since v9.0.0
     if version_tuple(version["product_version"]) >= version_tuple("9.0.0"):
-        module.fail_json(msg='NSX v9.0.0 and above do not support MP resources.')
+        if err_msg is None:
+            err_msg = 'NSX v9.0.0 and above do not support MP resources.'
+        module.fail_json(msg=err_msg)

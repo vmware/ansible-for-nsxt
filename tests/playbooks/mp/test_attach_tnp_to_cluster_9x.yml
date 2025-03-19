@@ -1,0 +1,96 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  vars_files:
+    - answerfile_attach_tnp_to_cluster_9x.yml
+  tasks:
+    - name: Register compute manager
+      vmware.ansible_for_nsxt.nsxt_fabric_compute_managers:
+          hostname: "{{hostname}}"
+          username: "{{username}}"
+          password: "{{password}}"
+          validate_certs: False
+          display_name: "{{item.display_name}}"
+          server: "{{item.server}}"
+          origin_type: "{{item.origin_type}}"
+          credential:
+            credential_type: "{{item.credential_type}}"
+            username: "{{item.username}}"
+            password: "{{item.password}}"
+            thumbprint: "{{item.thumbprint}}"
+          state: present
+      with_items:
+        - "{{compute_managers}}"
+
+    - name: Create ip pool
+      vmware.ansible_for_nsxt.nsxt_policy_ip_pool:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "{{item.display_name}}"
+        pool_static_subnets: "{{item.pool_static_subnets}}"
+        state: present
+      with_items:
+        - "{{ip_pools}}"
+
+    - name: Create transport zone
+      vmware.ansible_for_nsxt.nsxt_transport_zones:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: "PolicyTransportZone"
+        display_name: "{{item.display_name}}"
+        description: "NSX configured Test Transport Zone"
+        tz_type: "{{item.tz_type}}"
+        state: "present"
+      with_items:
+        - "{{transportzones}}"
+
+    - name: Create uplink profile
+      vmware.ansible_for_nsxt.nsxt_uplink_profiles:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: UplinkHostSwitchProfile
+        display_name: "{{item.display_name}}"
+        teaming: "{{item.teaming}}"
+        transport_vlan: "{{item.transport_vlan}}"
+        state: "present"
+      with_items:
+        - "{{uplink_profiles}}"
+
+    - name: Create transport node profile
+      vmware.ansible_for_nsxt.nsxt_transport_node_profiles:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        resource_type: PolicyHostTransportNodeProfile
+        display_name: "{{item.display_name}}"
+        description: NSX configured Test Transport Node Profile
+        host_switch_spec:
+          resource_type: StandardHostSwitchSpec
+          host_switches: "{{item.host_switches}}"
+        state: present
+      with_items:
+        - "{{transport_node_profiles}}"
+
+    - name: Attach Transport node profile to cluster
+      vmware.ansible_for_nsxt.nsxt_transport_node_collections:
+        hostname: "{{hostname}}"
+        username: "{{username}}"
+        password: "{{password}}"
+        validate_certs: False
+        display_name: "TNC1"
+        resource_type: "TransportNodeCollection"
+        description: "Transport Node Collections 1"
+        compute_manager_name: "VC1"
+        cluster_name: "os-compute-cluster-1"
+        transport_node_profile_name: "TNP1"
+        state: present

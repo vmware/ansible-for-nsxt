@@ -85,7 +85,7 @@ RETURN = '''# '''
 
 import json, time
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request
+from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsxt import vmware_argument_spec, request, validate_nsx_mp_support
 from ansible.module_utils._text import to_native
 
 def get_ip_block_params(args=None):
@@ -137,6 +137,9 @@ def main():
   validate_certs = module.params['validate_certs']
   display_name = module.params['display_name']
   manager_url = 'https://{}/api/v1'.format(mgr_hostname)
+
+  err_msg = 'NSX v9.0.0 and above do not support MP resources in nsxt_ip_blocks.py. Please use nsxt_policy_ip_block.py module.'
+  validate_nsx_mp_support(module, manager_url, mgr_username, mgr_password, validate_certs, err_msg)
 
   block_dict = get_ip_block_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   block_id, revision = None, None

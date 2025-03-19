@@ -1,0 +1,59 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+---
+hostname: "10.161.157.200"
+username: "admin"
+password: "Admin!23Admin"
+validate_certs: False
+
+ip_pools:
+- display_name: IPPool-IPV4-1
+  pool_static_subnets:
+  - display_name: test-ip-static-subnet-1
+    state: present
+    allocation_ranges:
+    - start: "10.112.201.28"
+      end: "10.112.201.35"
+    cidr: "10.112.201.0/24"
+
+transportzones:
+- display_name: "TZ1"
+  tz_type: "OVERLAY_BACKED"
+
+uplink_profiles:
+- display_name: uplinkProfile1
+  teaming:
+    active_list:
+    - uplink_name: "uplink-1"
+      uplink_type: PNIC
+    policy: FAILOVER_ORDER
+  transport_vlan: 0
+
+transport_nodes:
+- display_name: TN1
+  host_switches:
+  - host_switch_profiles:
+    - name: uplinkProfile1
+      type: UplinkHostSwitchProfile
+    host_switch_name: hostswitch1
+    host_switch_type: VDS
+    host_switch_mode: ENS_INTERRUPT
+    uplinks:
+      - vds_uplink_name: Uplink 1
+        uplink_name: uplink-1
+    ip_assignment_spec:
+      resource_type: StaticIpPoolSpec
+      ip_pool_name: "IPPool-IPV4-1"
+    transport_zone_endpoints:
+    - transport_zone_name: "TZ1"
+  node_deployment_info:
+    # Host node deployment info ESXI
+     resource_type: "HostNode"
+     display_name: "Host_1"
+     ip_addresses: ["10.161.96.247"]
+     os_type: "ESXI"
+     os_version: "9.0.0"
+     host_credential:
+       username: "root"
+       password: "ca$hc0w"
+       thumbprint: "85:03:6A:33:CA:AF:EE:24:67:C0:02:F5:B0:77:AE:DD:FC:31:19:93:44:77:76:C9:E6:4B:61:4D:9A:9E:72:98"

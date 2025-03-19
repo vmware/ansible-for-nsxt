@@ -1,0 +1,306 @@
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-only
+#
+#
+# Variables file for Day-0/1 setup
+# Creates the following:
+#   - 2 Transport Zones
+#   - 1 IP Pool (used by Edge)
+#   - 1 Transport Node Profile with 2 TZ endpoints
+#   - 2 Edge Transport Nodes
+#   - 2 ESX Host Transport Nodes
+#   - 1 Edge Cluster with the 2 Edge Nodes
+#
+{
+
+  #
+  # Flag to create or delete all the objects
+  # Accepts: 'present' to create; 'absent' to delete
+  #
+  "state": "present",
+
+  #
+  # Common NSX Appliance variables
+  #
+  "nsx_username": "admin",
+  "nsx_password": "myPassword1!myPassword1!",
+  "validate_certs": False,
+
+  #
+  # First NSX appliance node. Defined separate based on the consumption.
+  # Accepts both IP (IPv4) and FQDN for 'mgmt_ip'
+  #
+  "nsx_node1": {
+    "hostname": "mynsx-01.mylab.local",
+    "mgmt_ip": "10.114.200.41",
+    "datacenter": "Datacenter",
+    "cluster": "Management",
+    "datastore": "datastore36",
+    "portgroup": "VM Network"
+  },
+
+  "transport_zones": [
+    {
+      "display_name": "Overlay-TZ",
+      "description": "NSX Configured Overlay Transport Zone",
+      "tz_type": "OVERLAY_BACKED"
+    },
+    {
+      "display_name": "VLAN-TZ",
+      "description": "NSX Configured VLAN Transport Zone",
+      "tz_type": "VLAN_BACKED"
+    }
+  ],
+
+  "ip_pools": [
+    {
+      "display_name": "TEP-IP-Pool",
+      "pool_static_subnets": [
+        {
+          "display_name": "TEP_ip_pool_subnet",
+          "state": "present",
+          "allocation_ranges": [
+            {
+              "start": "172.16.227.50",
+              "end": "172.16.227.59"
+            }
+          ],
+          "gateway_ip": "172.16.227.1",
+          "cidr": "172.16.227.0/24"
+        }
+      ]
+    }
+  ],
+
+  "transport_node_profiles": [
+    {
+      "display_name": "TNP-1",
+      "description": "Compute Transport Node Profile",
+      "host_switches": [
+        {
+
+          "host_switch_name": "vds7",
+          "host_switch_id": "50 35 17 4a 3d be 59 37-57 d0 0d 03 11 ae 7e a2",
+          "host_switch_type": "VDS",
+          "host_switch_mode": "STANDARD",
+          "host_switch_profiles": [
+            {
+              "name": "nsx-default-uplink-hostswitch-profile",
+              "type": "UplinkHostSwitchProfile"
+            }
+          ],
+          "pnics": [],
+          "uplinks": [
+            {
+              "vds_uplink_name": "Uplink 1",
+              "uplink_name": "uplink-1"
+            },
+            {
+              "vds_uplink_name": "Uplink 2",
+              "uplink_name": "uplink-2"
+            }
+          ],
+          "ip_assignment_spec": {
+              "resource_type": "StaticIpPoolSpec",
+              "ip_pool_name": "TEP-IP-Pool"
+          },
+          "transport_zone_endpoints": [
+            {
+              "transport_zone_name": "Overlay-TZ"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+
+  "transport_node_collections": [
+    {
+      "state": "present",
+      "display_name": "workload-cluster-1-collection",
+      "description": "TNP for cluster1",
+      "resource_type": "TransportNodeCollection",
+      "compute_manager_name": "vcenter7",
+      "cluster_name": "workload-cluster1",
+      "transport_node_profile_name": "TNP-1"
+    }
+  ],
+
+
+  "transport_nodes": [
+    {
+      "display_name": "EdgeNode-01",
+      "description": "NSX Edge Node 01",
+      "host_switches": [
+        {
+          "host_switch_name": "nvds",
+          "host_switch_type": "NVDS",
+          "host_switch_mode": "STANDARD",
+          "host_switch_profiles": [
+            {
+              "name": "nsx-edge-single-nic-uplink-profile",
+              "type": "UplinkHostSwitchProfile"
+            }
+          ],
+          "pnics": [
+            {
+              "device_name": "fp-eth0",
+              "uplink_name": "uplink-1"
+            }
+          ],
+          "ip_assignment_spec":
+            {
+              "resource_type": "StaticIpPoolSpec",
+              "ip_pool_name": "TEP-IP-Pool"
+            },
+          "transport_zone_endpoints": [
+            {
+              "transport_zone_name": "Overlay-TZ"
+            }
+          ]
+        }
+      ],
+      "node_deployment_info": {
+        "deployment_type": "VIRTUAL_MACHINE",
+        "deployment_config": {
+          "form_factor": "SMALL",
+          "vm_deployment_config": {
+            "vc_name": "vcenter",
+            "vc_username": "administrator@madhu.local",
+            "vc_password": "VMware1!",
+            "storage": "datastore7",
+            "compute": "Management",
+            "host": "10.114.200.7",
+            "data_networks": [
+              "VM Network",
+#              "lab-dvpg",
+#              "lab-dvpg"
+            ],
+            "default_gateway_addresses": [ "10.114.200.1" ],
+            "management_network": "VM Network",
+            "management_port_subnets": [
+              {
+                "ip_addresses": [ "10.114.200.14" ],
+                "prefix_length": 27
+              }
+            ],
+            "placement_type": "VsphereDeploymentConfig"
+          },
+          "node_user_settings": {
+            "cli_username": "admin" ,
+            "root_password": "myPassword1!myPassword1!",
+            "cli_password": "myPassword1!myPassword1!",
+            "audit_username": "audit",
+            "audit_password": "myPassword1!myPassword1!"
+          }
+        },
+        "node_settings": {
+          "allow_ssh_root_login": "True",
+          "enable_ssh": "True",
+          "hostname": "edgenode-01.madhu.local"
+        },
+        "resource_type": "EdgeNode",
+        "display_name": "EdgeNode-01"
+      }
+    },
+    {
+      "resource_type": "TransportNode",
+      "display_name": "esx7-12",
+      "description": "Host Transport Node for ESXi7-12",
+      "host_switches": [
+        {
+          "host_switch_name": "nsxvswitch",
+          "host_switch_type": "NVDS",
+          "host_switch_mode": "STANDARD",
+          "host_switch_profiles": [
+            {
+              "name": "nsx-default-uplink-hostswitch-profile",
+              "type": "UplinkHostSwitchProfile"
+            }
+          ],
+          "pnics": [
+            {
+              "device_name": "vmnic1",
+              "uplink_name": "uplink-1"
+            }
+          ],
+          "ip_assignment_spec": {
+            "resource_type": "StaticIpPoolSpec",
+            "ip_pool_name": "TEP-IP-Pool"
+          },
+          "transport_zone_endpoints": [
+            {
+              "transport_zone_name": "Overlay-TZ"
+            }
+          ]
+        }
+      ],
+      "transport_zone_endpoints": [ ],
+      "node_deployment_info": {
+        "resource_type": "HostNode",
+        "ip_addresses": ["10.114.200.12"],
+        "os_type": "ESXI",
+        "host_credential": {
+          "username": "root",
+          "password": "VMware1!"
+        }
+      }
+    },
+    {
+      "resource_type": "TransportNode",
+      "display_name": "esx7-c13",
+      "description": "Host Transport Node for esxi c13",
+      "host_switches": [
+        {
+          "host_switch_name": "nsxvswitch",
+          "host_switch_type": "NVDS",
+          "host_switch_mode": "STANDARD",
+          "host_switch_profiles": [
+            {
+              "name": "nsx-default-uplink-hostswitch-profile",
+              "type": "UplinkHostSwitchProfile"
+            }
+          ],
+          "pnics": [
+            {
+              "device_name": "vmnic1",
+              "uplink_name": "uplink-1"
+            }
+          ],
+          "ip_assignment_spec": {
+            "resource_type": "StaticIpPoolSpec",
+            "ip_pool_name": "TEP-IP-Pool"
+          },
+          "transport_zone_endpoints": [
+            {
+              "transport_zone_name": "Overlay-TZ"
+            }
+          ]
+        }
+      ],
+      "transport_zone_endpoints": [ ],
+      "node_deployment_info": {
+        "resource_type": "HostNode",
+        "ip_addresses": ["10.114.200.13"],
+        "os_type": "ESXI",
+        "host_credential": {
+          "username": "root",
+          "password": "VMware1!"
+        }
+      }
+    }
+  ],
+
+  "edge_clusters": [
+    {
+      "display_name": "Edge-Cluster-01",
+      "cluster_profile_bindings": [
+        { "profile_name": "nsx-default-edge-high-availability-profile" }
+      ],
+      "members": [
+        { "transport_node_name": "EdgeNode-01" }
+      ]
+    }
+  ]
+}
