@@ -99,7 +99,7 @@ from ansible_collections.vmware.ansible_for_nsxt.plugins.module_utils.vmware_nsx
 from ansible.module_utils._text import to_native
 
 def get_ip_pool_params(args=None):
-    args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs', 'subnets']
+    args_to_remove = ['state', 'username', 'password', 'port', 'hostname', 'validate_certs']
     for key in args_to_remove:
         args.pop(key, None)
     for key, value in args.copy().items():
@@ -109,7 +109,7 @@ def get_ip_pool_params(args=None):
 
 def get_ip_pools(module, manager_url, mgr_username, mgr_password, validate_certs):
     try:
-      (rc, resp) = request(f"{manager_url}/infra/ip-pools", headers=dict(Accept='application/json'),
+      (rc, resp) = request(manager_url+ '/pools/ip-pools', headers=dict(Accept='application/json'),
                       url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
     except Exception as err:
       module.fail_json(msg='Error accessing ip pools. Error [%s]' % (to_native(err)))
@@ -138,20 +138,6 @@ def check_for_update(module, manager_url, mgr_username, mgr_password, validate_c
         return True
     return False
 
-def create_or_update_subnets(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, headers):
-    for subnet in module.params['subnets']:
-        subnet_name = subnet['name']
-        subnet_dict = dict()
-        subnet_dict['allocation_ranges'] = subnet['allocation_ranges']
-        subnet_dict['cidr'] = subnet['cidr']
-        subnet_dict['resource_type'] = subnet['resource_type']
-        request_data = json.dumps(subnet_dict)
-        (rc, resp) = request(f"{manager_url}/infra/ip-pools/{display_name}/ip-subnets/{subnet_name}", data=request_data,
-                             headers=headers, method='PATCH',
-                             url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs,
-                             ignore_errors=True)
-        time.sleep(5)
-
 def main():
   argument_spec = vmware_argument_spec()
   argument_spec.update(display_name=dict(required=True, type='str'),
@@ -169,7 +155,7 @@ def main():
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
   display_name = module.params['display_name']
-  manager_url = 'https://{}/policy/api/v1'.format(mgr_hostname)
+  manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
   pool_dict = get_ip_pool_from_display_name (module, manager_url, mgr_username, mgr_password, validate_certs, display_name)
   pool_id, revision = None, None
@@ -188,15 +174,15 @@ def main():
           module.exit_json(changed=True, debug_out=str(json.dumps(ip_pool_params)), id='12345')
       request_data = json.dumps(ip_pool_params)
       try:
-          (rc, resp) = request(f"{manager_url}/infra/ip-pools/{display_name}", data=request_data, headers=headers, method='PATCH',
+          if pool_id:
+              module.exit_json(changed=False, id=pool_id, message="IP pool with display_name %s already exist."% module.params['display_name'])
+          (rc, resp) = request(manager_url+ '/pools/ip-pools', data=request_data, headers=headers, method='POST',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
-          time.sleep(5)
-          create_or_update_subnets(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, headers)
       except Exception as err:
           module.fail_json(msg="Failed to add ip pool. Request body [%s]. Error[%s]." % (request_data, to_native(err)))
 
       time.sleep(5)
-      module.exit_json(changed=True, body= str(resp), message="IP pool with display name %s created." % module.params['display_name'])
+      module.exit_json(changed=True, id=resp["id"], body= str(resp), message="IP pool with display name %s created." % module.params['display_name'])
     else:
       if module.check_mode:
           module.exit_json(changed=True, debug_out=str(json.dumps(ip_pool_params)), id=pool_id)
@@ -204,12 +190,11 @@ def main():
       request_data = json.dumps(ip_pool_params)
       id = pool_id
       try:
-          (rc, resp) = request(f"{manager_url}/infra/ip-pools/{id}", data=request_data, headers=headers, method='PUT',
+          (rc, resp) = request(manager_url+ '/pools/ip-pools/%s' % id, data=request_data, headers=headers, method='PUT',
                                 url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
       except Exception as err:
           module.fail_json(msg="Failed to update ip pool with id %s. Request body [%s]. Error[%s]." % (id, request_data, to_native(err)))
       time.sleep(5)
-      create_or_update_subnets(module, manager_url, mgr_username, mgr_password, validate_certs, display_name, headers)
       module.exit_json(changed=True, id=resp["id"], body= str(resp), message="ip pool with pool id %s updated." % id)
 
   elif state == 'absent':
@@ -220,16 +205,7 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True, debug_out=str(json.dumps(ip_pool_params)), id=id)
     try:
-        (rc, resp) = request(f"{manager_url}/infra/ip-pools/{id}/ip-subnets", method='GET',
-                             url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
-        if resp:
-            for subnet in resp['results']:
-                subnet_id = subnet['id']
-                _, _ = request(f"{manager_url}/infra/ip-pools/{id}/ip-subnets/{subnet_id}", method='DELETE',
-                                     url_username=mgr_username, url_password=mgr_password,
-                                     validate_certs=validate_certs)
-                time.sleep(5)
-        (rc, resp) = request(f"{manager_url}/infra/ip-pools/{id}", method='DELETE',
+        (rc, resp) = request(manager_url + "/pools/ip-pools/%s" % id, method='DELETE',
                               url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs)
     except Exception as err:
         module.fail_json(msg="Failed to delete ip pool with id %s. Error[%s]." % (id, to_native(err)))

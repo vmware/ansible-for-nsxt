@@ -73,11 +73,11 @@ def main():
   mgr_password = module.params['password']
   validate_certs = module.params['validate_certs']
   #raise ValueError(argument_spec)
-  manager_url = 'https://{}/policy/api/v1'.format(mgr_hostname)
+  manager_url = 'https://{}/api/v1'.format(mgr_hostname)
 
   changed = False
   try:
-    (rc, resp) = request(f"{manager_url}/infra/ip-blocks", headers=dict(Accept='application/json'),
+    (rc, resp) = request(manager_url+ '/pools/ip-blocks', headers=dict(Accept='application/json'),
                     url_username=mgr_username, url_password=mgr_password, validate_certs=validate_certs, ignore_errors=True)
   except Exception as err:
     module.fail_json(msg='Error accessing list of ip blocks. Error [%s]' % (to_native(err)))
