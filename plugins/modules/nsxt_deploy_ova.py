@@ -321,6 +321,9 @@ def main():
     ovf_deployement_size = ['--deploymentOption={}'.format(module.params['deployment_size'])]
     ovf_command.extend(ovf_deployement_size)
 
+    if module.params['folder']:
+        ovf_command.extend(['--vmFolder'.format(module.params['folder'])])
+
     ovf_ext_prop = ['--prop:nsx_hostname={}'.format(module.params['hostname']),
                     '--prop:nsx_dns1_0={}'.format(module.params['dns_server']),
                     '--prop:nsx_domain_0={}'.format(module.params['dns_domain']),
@@ -352,8 +355,6 @@ def main():
 
     vi_string = 'vi://{}:{}@{}/'.format(module.params['vcenter_user'],
                                         module.params['vcenter_passwd'], module.params['vcenter'])
-    if module.params.__contains__('folder') and module.params['folder']:
-        vi_string = vi_string + module.params['folder']
 
     vi_string = vi_string + '/{}/host/{}/'.format(module.params['datacenter'], module.params['cluster'])
 
