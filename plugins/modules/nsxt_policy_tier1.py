@@ -579,6 +579,16 @@ options:
                                       IPSec VPN local-endpoint subnets
                                       advertised by TIER1.
                                 type: list
+                            destinations:
+                                description:
+                                    - List of destinations for a given
+                                      redistribution rule
+                                    - Each rule can have more than one
+                                      destination. If destinations not
+                                      specified for a given rule, default
+                                      destination will be BGP
+                                default: ["BGP"]
+                                choices: ["BGP", "OSPF"]
             ha_vip_configs:
                 type: list
                 elements: dict
@@ -1129,6 +1139,12 @@ class NSXTTier1(NSXTBaseRealizableResource):
                                     type='list',
                                     elements='str',
                                     required=False
+                                ),
+                                destinations=dict(
+                                    type='list',
+                                    elements='str',
+                                    required=False,
+                                    default=["BGP"],
                                 ),
                             )
                         )

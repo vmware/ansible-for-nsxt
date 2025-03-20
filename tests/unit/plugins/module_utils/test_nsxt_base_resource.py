@@ -18,6 +18,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import collections
 
 import unittest
 import json
@@ -624,6 +625,24 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
 
         nsxt_base_resource.BASE_RESOURCES = init_base_resources
 
+    def test_convert_to_ordered_data(self):
+        simple_dummy_resource = SimpleDummyNSXTResource()
+        resource_params = {"dummy": ["dummy2", "dummy1"]}
+        observed = simple_dummy_resource.convert_to_ordered_data(
+            resource_params)
+        expected = collections.OrderedDict({"dummy": ["dummy1", "dummy2"]})
+        self.assertEqual(observed, expected)
+
+        resource_params = {"dummy2": {"dummy1": "dummy", "dummy2": "dummy"},
+                           "dummy1": {"dummy4": "dummy", "dummy2": "dummy"}}
+        observed = simple_dummy_resource.convert_to_ordered_data(
+            resource_params)
+        expected = collections.OrderedDict(
+            {"dummy1": collections.OrderedDict(
+                {"dummy2": "dummy", "dummy4": "dummy"}),
+             "dummy2": {"dummy1": "dummy", "dummy2": "dummy"}})
+        self.assertEqual(observed, expected)
+
     def test_check_for_update(self):
         simple_dummy_resource = SimpleDummyNSXTResource()
 
@@ -634,6 +653,10 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_same_params():
             existing_params = {"dummy": "dummy"}
             resource_params = {"dummy": "dummy"}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertFalse(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
@@ -641,6 +664,10 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_diff_params_simple():
             existing_params = {"dummy": "dummy"}
             resource_params = {"dummy1": "dummy"}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
@@ -648,13 +675,21 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_same_params_list_same_order():
             existing_params = {"dummy": ["dummy1", "dummy2"]}
             resource_params = {"dummy": ["dummy1", "dummy2"]}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertFalse(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
         def test_with_same_params_list_different_order():
-            existing_params = {"dummy": ["dummy1", "dummy2"]}
-            resource_params = {"dummy": ["dummy2", "dummy1"]}
+            existing_params = {"dummy": ["dummy1", "dummy2", "dummy3"]}
+            resource_params = {"dummy": ["dummy2", "dummy1", "dummy3"]}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertFalse(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
@@ -662,6 +697,10 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_same_params_single_dict():
             existing_params = {"dummy": {"dummy": "dummy"}}
             resource_params = {"dummy": {"dummy": "dummy"}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertFalse(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
@@ -669,18 +708,30 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_diff_params_single_dict():
             existing_params = {"dummy": {"dummy": "dummy"}}
             resource_params = {"dummy": {"dummy1": "dummy"}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
             existing_params = {"dummy": {"dummy": "dummy"}}
             resource_params = {"dummy": {"dummy": "dummy1"}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
             existing_params = {"dummy": {"dummy": "dummy"}}
             resource_params = {"dummy1": {"dummy": "dummy"}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
@@ -688,6 +739,10 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_same_params_multilevel_dict():
             existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
             resource_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertFalse(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
@@ -695,24 +750,40 @@ class NSXTBaseRealizableResourceTestCase(unittest.TestCase):
         def test_with_diff_params_multilevel_dict():
             existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
             resource_params = {"dummy1": {"dummy": {"dummy": "dummy"}}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
             existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
             resource_params = {"dummy": {"dummy1": {"dummy": "dummy"}}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
             existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
             resource_params = {"dummy": {"dummy": {"dummy1": "dummy"}}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
 
             existing_params = {"dummy": {"dummy": {"dummy": "dummy"}}}
             resource_params = {"dummy": {"dummy": {"dummy": "dummy1"}}}
+            existing_params = simple_dummy_resource.convert_to_ordered_data(
+                existing_params)
+            resource_params = simple_dummy_resource.convert_to_ordered_data(
+                resource_params)
 
             self.assertTrue(simple_dummy_resource.check_for_update(
                 existing_params, resource_params))
